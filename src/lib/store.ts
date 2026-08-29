@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { UserResponse } from 'tipforge-sdk';
+import type { UserResponse } from 'Dorisio-sdk';
 
 interface AuthStore {
   token: string | null;

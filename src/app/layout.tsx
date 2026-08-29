@@ -3,7 +3,7 @@ import { Providers } from './providers';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'TipForge - Creator Tipping Platform',
+  title: 'Dorisio - Creator Tipping Platform',
   description: 'Support creators across platforms with instant USDC payments powered by Stellar',
 };
 

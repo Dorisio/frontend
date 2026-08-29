@@ -1,6 +1,6 @@
 /**
  * Features Section
- * Showcase of TipForge features
+ * Showcase of Dorisio features
  */
 
 import { CheckCircle, Zap, Globe, Lock, BarChart3, Headphones } from 'lucide-react';
@@ -44,7 +44,7 @@ export function FeaturesSection(): JSX.Element {
       <div className="container-tight space-y-12">
         {/* Header */}
         <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold">Why Choose TipForge?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold">Why Choose Dorisio?</h2>
           <p className="text-lg text-muted-foreground">
             Everything you need for a seamless creator support experience
           </p>
@@ -78,7 +78,7 @@ export function FeaturesSection(): JSX.Element {
 
           <div className="grid md:grid-cols-4 gap-6">
             {[
-              { step: '1', title: 'Sign Up', description: 'Create your TipForge account' },
+              { step: '1', title: 'Sign Up', description: 'Create your Dorisio account' },
               { step: '2', title: 'Connect Wallet', description: 'Link your Stellar wallet' },
               { step: '3', title: 'Find Creators', description: 'Browse verified creators' },
               { step: '4', title: 'Send Tips', description: 'Support with instant USDC' },

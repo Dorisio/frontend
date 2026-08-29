@@ -23,7 +23,7 @@ export function Navigation(): JSX.Element {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary">
           <span>💰</span>
-          TipForge
+          Dorisio
         </Link>
 
         {/* Desktop Menu */}

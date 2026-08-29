@@ -20,7 +20,7 @@ export function ThemeProvider({
   attribute = 'class',
   defaultTheme = 'system',
   enableSystem = true,
-  storageKey = 'tipforge-theme',
+  storageKey = 'Dorisio-theme',
 }: ThemeProviderProps): JSX.Element {
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<string | undefined>();

@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthStore>()(
         }),
     }),
     {
-      name: 'tipforge-auth',
+      name: 'Dorisio-auth',
       partialize: (state) => ({
         token: state.token,
         user: state.user,

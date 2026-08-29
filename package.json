@@ -1,7 +1,7 @@
 {
-  "name": "tipforge-frontend",
+  "name": "dorisio-frontend",
   "version": "0.1.0",
-  "description": "TipForge frontend - Next.js web application",
+  "description": "Dorisio frontend - Next.js web application",
   "private": true,
   "scripts": {
     "dev": "next dev",

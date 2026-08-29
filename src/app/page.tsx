@@ -1,6 +1,6 @@
 /**
  * Home Page
- * Landing page for TipForge
+ * Landing page for Dorisio
  */
 
 import Link from 'next/link';

@@ -1,6 +1,6 @@
-# TipForge Frontend
+# Dorisio Frontend
 
-Web application for TipForge — user-facing experience layer for sending tips and managing creator accounts.
+Web application for Dorisio — user-facing experience layer for sending tips and managing creator accounts.
 
 ## Purpose
 
@@ -20,7 +20,7 @@ The frontend is the **dumb UI layer** that:
 - **Animation:** Framer Motion
 - **State:** Zustand (light client state), TanStack Query (server state)
 - **Forms:** React Hook Form + Zod
-- **SDK:** tipforge-sdk (from workspace)
+- **SDK:** Dorisio-sdk (from workspace)
 
 ## Prerequisites
 
@@ -109,7 +109,7 @@ const result = await sdk.createTip({ creatorId, amount });
 ❌ Don't do this:
 
 ```typescript
-const response = await fetch('http://api.tipforge.com/api/v1/tips', {
+const response = await fetch('http://api.Dorisio.com/api/v1/tips', {
   method: 'POST',
   body: JSON.stringify(payload),
 });
@@ -133,10 +133,10 @@ const tip = await sdk.createTip(payload);
 'use client'; // Most components are client components in App Router
 
 import { useQuery } from '@tanstack/react-query';
-import { useTipForge } from 'tipforge-sdk/react';
+import { useDorisio } from 'Dorisio-sdk/react';
 
 export function MyComponent(): JSX.Element {
-  const { client } = useTipForge();
+  const { client } = useDorisio();
   const { data, isLoading } = useQuery({
     queryKey: ['data'],
     queryFn: () => client.getCreatorProfile('id'),
@@ -179,7 +179,7 @@ Example:
 ```typescript
 'use client';
 
-import { useCreator } from 'tipforge-sdk/react';
+import { useCreator } from 'Dorisio-sdk/react';
 
 export default function CreatorPage({
   params,

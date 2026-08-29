@@ -18,14 +18,14 @@ export function Footer(): JSX.Element {
           <div className="space-y-4">
             <div className="flex items-center gap-2 font-bold text-lg text-primary">
               <span>💰</span>
-              TipForge
+              Dorisio
             </div>
             <p className="text-sm text-muted-foreground">
               Support creators instantly with USDC on Stellar.
             </p>
             <div className="flex gap-3 pt-2">
               <a
-                href="https://twitter.com/tipforge"
+                href="https://twitter.com/dorisio"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-smooth"
@@ -33,7 +33,7 @@ export function Footer(): JSX.Element {
                 <Twitter className="w-5 h-5" />
               </a>
               <a
-                href="https://github.com/tipforge"
+                href="https://github.com/dorisio"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-smooth"
@@ -41,7 +41,7 @@ export function Footer(): JSX.Element {
                 <Github className="w-5 h-5" />
               </a>
               <a
-                href="mailto:hello@tipforge.io"
+                href="mailto:hello@dorisio.io"
                 className="text-muted-foreground hover:text-primary transition-smooth"
               >
                 <Mail className="w-5 h-5" />
@@ -147,7 +147,7 @@ export function Footer(): JSX.Element {
         <div className="border-t border-border pt-8">
           {/* Bottom Section */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>&copy; {currentYear} TipForge. All rights reserved.</p>
+            <p>&copy; {currentYear} Dorisio. All rights reserved.</p>
             <div className="flex gap-4">
               <a
                 href="https://stellar.org"

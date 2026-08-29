@@ -11,9 +11,9 @@ import { cn } from '@/lib/utils';
 
 const faqs = [
   {
-    question: 'Is TipForge secure?',
+    question: 'Is Dorisio secure?',
     answer:
-      'Yes, TipForge uses Stellar blockchain technology with enterprise-grade security. All transactions are verified and immutable. Your wallet is secured with industry-standard encryption.',
+      'Yes, Dorisio uses Stellar blockchain technology with enterprise-grade security. All transactions are verified and immutable. Your wallet is secured with industry-standard encryption.',
   },
   {
     question: 'What is USDC and why use it?',
@@ -48,7 +48,7 @@ const faqs = [
   {
     question: 'How do I contact support?',
     answer:
-      "Email us at support@tipforge.io or use the chat widget in the app. Response time is typically under 2 hours during business hours. We're here to help!",
+      "Email us at support@dorisio.io or use the chat widget in the app. Response time is typically under 2 hours during business hours. We're here to help!",
   },
 ];
 
@@ -91,7 +91,7 @@ export function FAQSection(): JSX.Element {
         <div className="text-center space-y-4 max-w-2xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold">Frequently Asked Questions</h2>
           <p className="text-lg text-muted-foreground">
-            Everything you need to know about TipForge
+            Everything you need to know about Dorisio
           </p>
         </div>
 
@@ -106,7 +106,7 @@ export function FAQSection(): JSX.Element {
         <div className="text-center pt-12 space-y-4">
           <p className="text-muted-foreground">Still have questions?</p>
           <a
-            href="mailto:support@tipforge.io"
+            href="mailto:support@dorisio.io"
             className="text-primary hover:underline font-semibold"
           >
             Get in touch with our support team →

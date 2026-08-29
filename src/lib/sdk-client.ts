@@ -1,17 +1,17 @@
 /**
- * TipForge SDK Client
+ * Dorisio SDK Client
  * Singleton SDK instance for the application
  */
 
-import { TipForgeClient } from 'tipforge-sdk';
+import { DorisioClient } from 'dorisio-sdk';
 import { useAuthStore } from '@/stores/auth-store';
 
-let sdkClient: TipForgeClient | null = null;
+let sdkClient: DorisioClient | null = null;
 
 /**
  * Initialize SDK client
  */
-export function initSDKClient(): TipForgeClient {
+export function initSDKClient(): DorisioClient {
   if (sdkClient) {
     return sdkClient;
   }
@@ -19,7 +19,7 @@ export function initSDKClient(): TipForgeClient {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const token = useAuthStore.getState().token;
 
-  sdkClient = new TipForgeClient({
+  sdkClient = new DorisioClient({
     baseUrl,
     token: token || undefined,
     timeout: 30000,
@@ -31,7 +31,7 @@ export function initSDKClient(): TipForgeClient {
 /**
  * Get SDK client instance
  */
-export function getSDKClient(): TipForgeClient {
+export function getSDKClient(): DorisioClient {
   if (!sdkClient) {
     return initSDKClient();
   }
@@ -57,7 +57,7 @@ export function updateSDKToken(token: string | null): void {
 /**
  * Hook to get SDK client
  */
-export function useSDKClient(): TipForgeClient {
+export function useSDKClient(): DorisioClient {
   const token = useAuthStore((state) => state.token);
 
   if (!sdkClient) {
