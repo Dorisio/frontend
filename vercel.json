@@ -1,0 +1,22 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "nodeVersion": "20.x",
+  "env": {
+    "NEXT_PUBLIC_API_URL": {
+      "description": "Backend API URL",
+      "default": "https://api.dorisio.dev"
+    },
+    "NEXT_PUBLIC_STELLAR_NETWORK": {
+      "description": "Stellar network to use",
+      "default": "testnet"
+    },
+    "NEXT_PUBLIC_STELLAR_HORIZON_URL": {
+      "description": "Stellar Horizon API URL",
+      "default": "https://horizon-testnet.stellar.org"
+    }
+  },
+  "buildOutputDirectory": ".next"
+}

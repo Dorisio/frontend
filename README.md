@@ -2,6 +2,10 @@
 
 Web application for Dorisio — user-facing experience layer for sending tips and managing creator accounts.
 
+## Live Demo
+
+🚀 **Deployed on Vercel:** https://dorisio.vercel.app
+
 ## Purpose
 
 The frontend is the **dumb UI layer** that:
@@ -21,6 +25,17 @@ The frontend is the **dumb UI layer** that:
 - **State:** Zustand (light client state), TanStack Query (server state)
 - **Forms:** React Hook Form + Zod
 - **SDK:** Dorisio-sdk (from workspace)
+- **Deployment:** Vercel
+
+## Features
+
+- ✅ User authentication (sign up / log in)
+- ✅ Creator profile pages (public profiles)
+- ✅ Creator discovery & search
+- ✅ Send tip flow (Freighter wallet integration)
+- ✅ Creator dashboard (earnings, transactions, wallet management)
+- ✅ Real-time blockchain confirmation tracking
+- ✅ Stellar testnet integration
 
 ## Prerequisites
 
@@ -48,6 +63,8 @@ Update values to match your backend:
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_STELLAR_NETWORK=testnet
+NEXT_PUBLIC_STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
 ```
 
 ### 3. Start development server
@@ -62,94 +79,65 @@ Open http://localhost:3000
 
 ```
 src/
-├── app/
+├── app/                  # Next.js App Router
 │   ├── layout.tsx        # Root layout
 │   ├── page.tsx          # Home page
-│   ├── globals.css       # Global styles
-│   └── providers.tsx     # Context providers
+│   ├── (app)/            # Protected routes
+│   │   ├── creators/[username]/page.tsx       # Creator profile
+│   │   ├── creators/[username]/dashboard/     # Creator dashboard
+│   │   └── creators/page.tsx                  # Discovery page
+│   └── globals.css       # Global styles
+├── components/
+│   ├── sections/         # Page sections
+│   │   ├── dorisio-button.tsx       # Send tip button
+│   │   ├── dorisio-modal.tsx        # Tip flow modal
+│   │   ├── wallet-manager.tsx       # Wallet management
+│   │   └── creator-spotlight.tsx    # Featured creators
+│   ├── ui/               # Reusable UI components
+│   └── shared/           # Shared utilities
+├── hooks/
+│   ├── use-create-tip.ts           # Tip creation flow
+│   ├── use-wallet.ts               # Wallet management
+│   ├── use-creator-balance.ts      # Creator earnings
+│   └── use-transaction-history.ts  # Transaction list
 ├── lib/
-│   └── store.ts          # Zustand stores
-└── components/           # Reusable components (to be built)
+│   ├── sdk-client.ts     # SDK initialization
+│   └── stellar/          # Stellar utilities
+├── stores/
+│   └── auth-store.ts     # Auth state (Zustand)
+├── types/
+│   └── index.ts          # TypeScript types
+└── utils/
+    ├── formatters.ts     # Format utilities
+    └── validators.ts     # Zod schemas
 ```
 
-## Minimal Scope (MVP)
+## Key Pages
 
-Start with just:
+| Route | Purpose | Auth Required |
+|-------|---------|---------------|
+| `/` | Landing page with features | No |
+| `/creators` | Creator discovery & search | No |
+| `/creators/[username]` | Creator public profile | No |
+| `/creators/[username]/dashboard` | Creator earnings & wallet | Yes |
 
-- **Landing page** — hero, features, CTA
-- **Login/Signup** — basic auth flow
-- **Creator profile page** — public view
-- **Send tip flow** — minimal payment UI
-- **Basic dashboard** — for creators to see earnings
+## Environment Variables
 
-Don't expand beyond this until the core works.
+### Required
 
-## Key Principles
+- `NEXT_PUBLIC_API_URL` — Backend API base URL (required)
+- `NEXT_PUBLIC_STELLAR_NETWORK` — `testnet` or `mainnet` (default: `testnet`)
+- `NEXT_PUBLIC_STELLAR_HORIZON_URL` — Stellar Horizon endpoint (default: testnet)
 
-### Frontend Stays Dumb
+### Optional
 
-❌ Don't do this:
-
-```typescript
-// Business logic in component
-const amountUSD = amount * exchangeRate;
-const fee = amount * 0.025;
-const total = amount + fee;
-```
-
-✅ Do this:
-
-```typescript
-// Business logic in backend/SDK
-const result = await sdk.createTip({ creatorId, amount });
-```
-
-### Call SDK, Not Backend Directly
-
-❌ Don't do this:
-
-```typescript
-const response = await fetch('http://api.Dorisio.com/api/v1/tips', {
-  method: 'POST',
-  body: JSON.stringify(payload),
-});
-```
-
-✅ Do this:
-
-```typescript
-const tip = await sdk.createTip(payload);
-```
-
-### State Management
-
-- **Server state** (data from API) → TanStack Query
-- **Client state** (UI state, auth token) → Zustand
-- **Component state** (form input) → React useState
-
-### Component Pattern
-
-```typescript
-'use client'; // Most components are client components in App Router
-
-import { useQuery } from '@tanstack/react-query';
-import { useDorisio } from 'Dorisio-sdk/react';
-
-export function MyComponent(): JSX.Element {
-  const { client } = useDorisio();
-  const { data, isLoading } = useQuery({
-    queryKey: ['data'],
-    queryFn: () => client.getCreatorProfile('id'),
-  });
-
-  return <div>...</div>;
-}
-```
+- `NEXT_PUBLIC_ENABLE_ANALYTICS` — Enable analytics (default: `false`)
+- `NEXT_PUBLIC_ENABLE_ERROR_REPORTING` — Enable error reporting (default: `false`)
 
 ## Scripts
 
 ```bash
-npm run dev              # Start dev server
+npm run dev              # Start dev server (port 3000)
 npm run build            # Build for production
 npm run start            # Run production build
 npm run lint             # Run ESLint
@@ -179,23 +167,15 @@ Example:
 ```typescript
 'use client';
 
-import { useCreator } from 'Dorisio-sdk/react';
+import { useCreatorBalance } from '@/hooks/use-creator-balance';
 
-export default function CreatorPage({
-  params,
-}: {
-  params: { id: string };
-}): JSX.Element {
-  const { creator, loading, error } = useCreator(params.id);
+export default function CreatorDashboard() {
+  const { balance, loading, error } = useCreatorBalance(username);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
-  return (
-    <div>
-      <h1>{creator?.user.name}</h1>
-    </div>
-  );
+  return <div>Total Earnings: ${balance?.totalEarnings}</div>;
 }
 ```
 
@@ -205,11 +185,93 @@ export default function CreatorPage({
 2. Keep it presentational (props-driven)
 3. Logic lives in parent or SDK hooks
 
-## Environment Variables
+## Deployment
 
-- `NEXT_PUBLIC_API_URL` — Backend API base URL (required, must be public)
-- `NEXT_PUBLIC_STELLAR_NETWORK` — `testnet` or `mainnet` (optional)
-- `NEXT_PUBLIC_STELLAR_HORIZON_URL` — Stellar Horizon endpoint (optional)
+### To Vercel
+
+1. Push code to GitHub
+2. Import repository in Vercel dashboard
+3. Set environment variables (see DEPLOYMENT.md)
+4. Deploy
+
+```bash
+vercel --prod
+```
+
+### Environment Setup for Production
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for:
+- Environment variable configuration
+- Vercel setup steps
+- Health checks and monitoring
+- Troubleshooting guide
+
+## Key Principles
+
+### Frontend Stays Dumb
+
+❌ Don't do this:
+
+```typescript
+// Business logic in component
+const fee = amount * 0.025;
+const total = amount + fee;
+```
+
+✅ Do this:
+
+```typescript
+// Business logic in backend/SDK
+const result = await sdk.createTip({ creatorId, amount });
+```
+
+### Call SDK, Not Backend Directly
+
+❌ Don't do this:
+
+```typescript
+const response = await fetch('http://api.dorisio.com/api/v1/tips', {
+  method: 'POST',
+  body: JSON.stringify(payload),
+});
+```
+
+✅ Do this:
+
+```typescript
+const tip = await sdk.createTip(payload);
+```
+
+### State Management
+
+- **Server state** (data from API) → TanStack Query
+- **Client state** (UI state, auth token) → Zustand
+- **Component state** (form input) → React useState
+
+## Testing the Tip Flow
+
+1. **Create Account**
+   - Go to home page, click "Sign Up"
+   - Enter email and password
+   - Verify email (testnet only)
+
+2. **Link Wallet**
+   - Go to `/creators/[any-username]/dashboard`
+   - Click "+ Add Wallet"
+   - Sign challenge with Freighter wallet
+
+3. **Send Tip**
+   - Go to `/creators/[creator-username]`
+   - Click "💰 Send a Tip"
+   - Enter amount, optional message
+   - Select wallet and confirm
+   - Wait for blockchain confirmation
+
+4. **View Earnings**
+   - Creator goes to their dashboard
+   - See earnings overview card
+   - Check transaction history table
+   - Verify wallet management section
 
 ## Notes
 
@@ -218,3 +280,13 @@ export default function CreatorPage({
 - Keep routes simple — one responsibility per page
 - Use Next.js middleware for auth guard routes (future)
 - All API calls go through SDK, never directly to backend
+
+## Support & Troubleshooting
+
+For issues:
+
+1. Check browser console for errors
+2. Verify environment variables are set
+3. Check backend is running (NEXT_PUBLIC_API_URL)
+4. Review [DEPLOYMENT.md](./DEPLOYMENT.md) for production issues
+5. Contact: support@dorisio.dev
