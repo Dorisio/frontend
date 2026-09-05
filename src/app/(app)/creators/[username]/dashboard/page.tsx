@@ -35,7 +35,7 @@ export default function CreatorDashboardPage() {
   const [walletManagerOpen, setWalletManagerOpen] = useState(false);
 
   const { balance, loading: balanceLoading } = useCreatorBalance(username);
-  const { transactions, pagination, goToPage, setPageSize } = useTransactionHistory(username);
+  const { transactions, total, page, pageSize, goToPage, setPageSize, loading: historyLoading } = useTransactionHistory(username);
   const { wallets, loading: walletLoading } = useWallet();
 
   // Check if user is viewing their own dashboard
@@ -158,15 +158,19 @@ export default function CreatorDashboardPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground truncate">
-                      <a
-                        href={`https://stellar.expert/explorer/testnet/tx/${tx.transactionHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-primary"
-                        title={tx.transactionHash}
-                      >
-                        {tx.transactionHash?.slice(0, 8)}...
-                      </a>
+                      {tx.transactionHash ? (
+                        <a
+                          href={`https://stellar.expert/explorer/testnet/tx/${tx.transactionHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-primary"
+                          title={tx.transactionHash}
+                        >
+                          {tx.transactionHash.slice(0, 8)}...
+                        </a>
+                      ) : (
+                        '-'
+                      )}
                     </td>
                   </tr>
                 ))
@@ -176,28 +180,28 @@ export default function CreatorDashboardPage() {
         </div>
 
         {/* Pagination */}
-        {pagination && transactions.length > 0 && (
+        {total > pageSize && transactions.length > 0 && (
           <div className="flex items-center justify-between pt-4">
             <p className="text-sm text-muted-foreground">
-              Page {pagination.page} of {pagination.totalPages} • Total: {pagination.total}
+              Page {page} of {Math.ceil(total / pageSize)} • Total: {total}
             </p>
             <div className="flex gap-2">
               <button
-                onClick={() => goToPage(pagination.page - 1)}
-                disabled={pagination.page === 1}
+                onClick={() => goToPage(page - 1)}
+                disabled={page === 1}
                 className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-muted transition"
               >
                 ← Prev
               </button>
-              {Array.from({ length: Math.min(5, pagination.totalPages) }).map((_, i) => {
-                const pageNum = pagination.page - 2 + i;
-                if (pageNum < 1 || pageNum > pagination.totalPages) return null;
+              {Array.from({ length: Math.min(5, Math.ceil(total / pageSize)) }).map((_, i) => {
+                const pageNum = page - 2 + i;
+                if (pageNum < 1 || pageNum > Math.ceil(total / pageSize)) return null;
                 return (
                   <button
                     key={pageNum}
                     onClick={() => goToPage(pageNum)}
                     className={`px-3 py-1 rounded ${
-                      pageNum === pagination.page
+                      pageNum === page
                         ? 'bg-primary text-primary-foreground'
                         : 'border hover:bg-muted'
                     } transition`}
@@ -207,8 +211,8 @@ export default function CreatorDashboardPage() {
                 );
               })}
               <button
-                onClick={() => goToPage(pagination.page + 1)}
-                disabled={pagination.page === pagination.totalPages}
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= Math.ceil(total / pageSize)}
                 className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-muted transition"
               >
                 Next →
