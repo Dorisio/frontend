@@ -1,6 +1,6 @@
 /**
  * Dorisio Modal Component
- * Modal dialog for sending tips (tasks #6 and #7)
+ * Modal dialog for sending tips
  * Handles: amount input, message, wallet selection, Freighter signing, and transaction states
  */
 
@@ -21,13 +21,28 @@ interface DorisioModalProps {
   onClose: () => void;
 }
 
-type TipStep = 'amount' | 'confirm' | 'signing' | 'pending' | 'success' | 'error';
-
 export default function DorisioModal({ creatorId, isOpen, onClose }: DorisioModalProps) {
   const user = useAuthStore((state) => state.user);
-  const { createTip, loading: tipLoading, error: tipError } = useCreateTip();
-  const { wallets, selectedWallet, selectWallet, loading: walletLoading } = useWallet();
-  const [step, setStep] = useState<TipStep>('amount');
+  const {
+    createTip,
+    buildTransaction,
+    submitTransaction,
+    confirmTransaction,
+    loading: tipLoading,
+    error: tipError,
+    step: tipStep,
+    reset: resetTip,
+  } = useCreateTip();
+  const {
+    wallets,
+    selectedWallet,
+    selectWallet,
+    generateNonce,
+    getChallenge,
+    verifyWallet,
+    loading: walletLoading,
+  } = useWallet();
+  const [step, setStep] = useState<'amount' | 'confirm' | 'signing' | 'pending' | 'success' | 'error'>('amount');
   const [transactionError, setTransactionError] = useState<string | null>(null);
 
   const {
@@ -46,13 +61,18 @@ export default function DorisioModal({ creatorId, isOpen, onClose }: DorisioModa
   useEffect(() => {
     if (isOpen) {
       reset();
+      resetTip();
       setStep('amount');
       setTransactionError(null);
     }
-  }, [isOpen, reset]);
+  }, [isOpen, reset, resetTip]);
 
   const onSubmit = async (data: TipFormData) => {
     try {
+      if (!selectedWallet) {
+        throw new Error('Please select a wallet');
+      }
+
       // Step 1: Create tip
       setStep('confirm');
       const tip = await createTip({
@@ -65,51 +85,32 @@ export default function DorisioModal({ creatorId, isOpen, onClose }: DorisioModa
         throw new Error('Failed to create tip');
       }
 
-      // Step 2: Simulate Freighter signing flow
+      // Step 2: Build transaction
       setStep('signing');
-      // In production, integrate with Freighter here
-      // For now, simulate with a timeout
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const { transactionEnvelope } = await buildTransaction(tip.id, {
+        senderPublicKey: selectedWallet.publicKey,
+        creatorPublicKey: creatorId, // Would need creator's wallet from profile
+        amount: String(data.amount),
+      });
 
-      // Step 3: Poll for transaction confirmation
+      // Step 3: Sign with Freighter (simulated for now)
+      // In production, integrate with Freighter SDK here
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Step 4: Submit transaction
       setStep('pending');
-      let confirmed = false;
-      let attempts = 0;
-      const maxAttempts = 30; // 30 attempts = ~1.5 minutes
+      await submitTransaction(tip.id, transactionEnvelope);
 
-      while (!confirmed && attempts < maxAttempts) {
-        try {
-          const status = await fetch(
-            `/api/transactions/${tip.id}`,
-            {
-              headers: { 'Content-Type': 'application/json' },
-            }
-          ).then((r) => r.json());
+      // Step 5: Confirm on blockchain
+      const confirmed = await confirmTransaction(tip.id);
 
-          if (status.status === 'confirmed') {
-            confirmed = true;
-            setStep('success');
-            setTimeout(() => {
-              onClose();
-              reset();
-            }, 2000);
-          } else if (status.status === 'failed') {
-            setTransactionError('Transaction failed on the blockchain');
-            setStep('error');
-          }
-        } catch (err) {
-          // Continue polling even if fetch fails
-        }
-
-        if (!confirmed) {
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-          attempts++;
-        }
-      }
-
-      if (!confirmed && attempts >= maxAttempts) {
-        setTransactionError('Transaction confirmation timeout');
-        setStep('error');
+      if (confirmed) {
+        setStep('success');
+        setTimeout(() => {
+          onClose();
+          reset();
+          resetTip();
+        }, 2000);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to process tip';
