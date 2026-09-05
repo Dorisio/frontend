@@ -8,9 +8,9 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Creator } from '@/types';
-import { useSDKClient } from '@/lib/sdk-client';
 import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
+import { useDorisio } from 'dorisio-sdk/react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import DorisioButton from '@/components/sections/dorisio-button';
 
@@ -23,7 +23,7 @@ interface CreatorPageState {
 export default function CreatorProfilePage() {
   const params = useParams();
   const username = params.username as string;
-  const sdk = useSDKClient();
+  const { client } = useDorisio();
 
   const [state, setState] = useState<CreatorPageState>({
     creator: null,
@@ -38,8 +38,8 @@ export default function CreatorProfilePage() {
   useEffect(() => {
     async function fetchCreator() {
       try {
-        const creator = await sdk.getCreatorProfile(username);
-        setState({ creator, loading: false, error: null });
+        const creator = await client.getCreatorProfile(username);
+        setState({ creator: creator as Creator, loading: false, error: null });
       } catch (err) {
         const error = err instanceof Error ? err.message : 'Failed to load creator profile';
         setState({ creator: null, loading: false, error });
@@ -49,7 +49,7 @@ export default function CreatorProfilePage() {
     if (username) {
       fetchCreator();
     }
-  }, [username, sdk]);
+  }, [username, client]);
 
   if (state.loading) {
     return (
