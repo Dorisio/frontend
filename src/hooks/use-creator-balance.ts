@@ -1,10 +1,10 @@
 /**
  * useCreatorBalance Hook
- * Fetches creator earnings and balance
+ * Wrapper around SDK's useCreatorBalance hook
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { useSDKClient } from '@/lib/sdk-client';
+import { useCreatorBalance as sdkUseCreatorBalance } from 'dorisio-sdk/react';
+import { useEffect } from 'react';
 
 export interface CreatorBalance {
   totalEarnings: number;
@@ -12,56 +12,35 @@ export interface CreatorBalance {
   availableBalance?: number;
 }
 
-interface UseCreatorBalanceState {
-  balance: CreatorBalance | null;
-  loading: boolean;
-  error: string | null;
-}
-
 export function useCreatorBalance(creatorId: string | null | undefined) {
-  const sdk = useSDKClient();
-  const [state, setState] = useState<UseCreatorBalanceState>({
-    balance: null,
-    loading: false,
-    error: null,
-  });
+  const {
+    balance: sdkBalance,
+    loading,
+    error,
+    fetchBalance: sdkFetchBalance,
+    refetch,
+    reset,
+  } = sdkUseCreatorBalance(creatorId || undefined);
 
-  const fetchBalance = useCallback(async () => {
-    if (!creatorId) return;
+  // Map SDK balance to frontend format
+  const balance: CreatorBalance | null = sdkBalance
+    ? {
+        totalEarnings: sdkBalance.totalEarnings || 0,
+        pendingBalance: sdkBalance.pendingBalance || 0,
+        availableBalance: (sdkBalance.totalEarnings || 0) - (sdkBalance.pendingBalance || 0),
+      }
+    : null;
 
-    setState({ loading: true, error: null, balance: null });
-
-    try {
-      const earnings = await sdk.getCreatorEarnings(creatorId);
-      const balance: CreatorBalance = {
-        totalEarnings: earnings.total || 0,
-        pendingBalance: earnings.pending || 0,
-        availableBalance: (earnings.total || 0) - (earnings.pending || 0),
-      };
-
-      setState({ loading: false, error: null, balance });
-      return balance;
-    } catch (err) {
-      const error = err instanceof Error ? err.message : 'Failed to fetch creator balance';
-      setState({ loading: false, error, balance: null });
-      throw err;
-    }
-  }, [sdk, creatorId]);
-
-  const refetch = useCallback(async () => {
-    return fetchBalance();
-  }, [fetchBalance]);
-
-  // Auto-fetch on mount or when creatorId changes
-  useEffect(() => {
-    if (creatorId) {
-      fetchBalance();
-    }
-  }, [creatorId, fetchBalance]);
+  const fetchBalance = async () => {
+    return sdkFetchBalance(creatorId || '');
+  };
 
   return {
-    ...state,
+    balance,
+    loading,
+    error,
     fetchBalance,
     refetch,
+    reset,
   };
 }

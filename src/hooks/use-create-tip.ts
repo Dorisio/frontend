@@ -1,10 +1,9 @@
 /**
  * useCreateTip Hook
- * Manages the tip creation flow with SDK integration
+ * Wrapper around SDK's useCreateTip hook with frontend-specific types
  */
 
-import { useState, useCallback } from 'react';
-import { useSDKClient } from '@/lib/sdk-client';
+import { useCreateTip as sdkUseCreateTip } from 'dorisio-sdk/react';
 
 export interface CreateTipPayload {
   creatorId: string;
@@ -14,59 +13,55 @@ export interface CreateTipPayload {
 
 export interface TipResponse {
   id: string;
-  status: 'pending' | 'confirmed' | 'failed';
+  status: 'pending' | 'confirmed' | 'failed' | 'creating' | 'building' | 'submitting' | 'confirming' | 'success' | 'error';
   transactionHash?: string;
-}
-
-interface UseCreateTipState {
-  loading: boolean;
-  error: string | null;
-  tip: TipResponse | null;
+  amount?: number;
 }
 
 export function useCreateTip() {
-  const sdk = useSDKClient();
-  const [state, setState] = useState<UseCreateTipState>({
-    loading: false,
-    error: null,
-    tip: null,
-  });
+  const {
+    createTip: sdkCreateTip,
+    buildTransaction,
+    submitTransaction,
+    confirmTransaction,
+    data,
+    loading,
+    error,
+    step,
+    reset,
+  } = sdkUseCreateTip();
 
-  const createTip = useCallback(
-    async (payload: CreateTipPayload): Promise<TipResponse> => {
-      setState({ loading: true, error: null, tip: null });
+  const createTip = async (payload: CreateTipPayload): Promise<TipResponse> => {
+    const result = await sdkCreateTip({
+      creatorId: payload.creatorId,
+      amount: payload.amount,
+      message: payload.message,
+    });
 
-      try {
-        const result = await sdk.createTip({
-          creatorId: payload.creatorId,
-          amount: payload.amount,
-          message: payload.message,
-        });
-
-        const tip: TipResponse = {
-          id: result.id,
-          status: result.status as any,
-          transactionHash: result.stellarTxHash,
-        };
-
-        setState({ loading: false, error: null, tip });
-        return tip;
-      } catch (err) {
-        const error = err instanceof Error ? err.message : 'Failed to create tip';
-        setState({ loading: false, error, tip: null });
-        throw err;
-      }
-    },
-    [sdk]
-  );
-
-  const reset = useCallback(() => {
-    setState({ loading: false, error: null, tip: null });
-  }, []);
+    return {
+      id: result.id,
+      status: result.status as any,
+      transactionHash: result.transactionHash,
+      amount: result.amount,
+    };
+  };
 
   return {
-    ...state,
+    loading,
+    error,
+    tip: data
+      ? {
+          id: data.id,
+          status: step as any,
+          transactionHash: data.transactionHash,
+          amount: data.amount,
+        }
+      : null,
     createTip,
+    buildTransaction,
+    submitTransaction,
+    confirmTransaction,
     reset,
+    step,
   };
 }
