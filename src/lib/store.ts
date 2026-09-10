@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { UserResponse } from 'Dorisio-sdk';
+import type { UserResponse } from 'dorisio-sdk';
 
 interface AuthStore {
   token: string | null;

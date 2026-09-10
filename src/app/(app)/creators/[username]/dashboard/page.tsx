@@ -35,7 +35,15 @@ export default function CreatorDashboardPage() {
   const [walletManagerOpen, setWalletManagerOpen] = useState(false);
 
   const { balance, loading: balanceLoading } = useCreatorBalance(username);
-  const { transactions, total, page, pageSize, goToPage, setPageSize, loading: historyLoading } = useTransactionHistory(username);
+  const {
+    transactions,
+    total,
+    page,
+    pageSize,
+    goToPage,
+    setPageSize,
+    loading: historyLoading,
+  } = useTransactionHistory(username);
   const { wallets, loading: walletLoading } = useWallet();
 
   // Check if user is viewing their own dashboard

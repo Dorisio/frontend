@@ -80,7 +80,7 @@ export function resetSDKClient(): void {
 /**
  * React Hook: Get SDK client with automatic token sync
  * Use this in components to get the SDK client
- * 
+ *
  * @example
  * ```tsx
  * function MyComponent() {
@@ -94,7 +94,7 @@ export function useSDKClient(): DorisioClient {
 
   // Initialize if needed
   if (!sdkClient) {
-    sdkClient = initSDKClient(token);
+    sdkClient = initSDKClient(token ?? undefined);
   }
 
   // Sync token if it changed
