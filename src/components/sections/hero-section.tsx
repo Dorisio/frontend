@@ -1,93 +1,113 @@
 /**
  * Hero Section
- * Main landing page hero
+ * ClickHouse Design System - Black canvas with electric yellow accents
  */
 
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Zap, Shield, Coins } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowRight, Zap, Shield, Coins, Sparkles } from 'lucide-react';
 
 export function HeroSection(): JSX.Element {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background py-20 md:py-32">
-      {/* Background Decoration */}
+    <section className="relative overflow-hidden bg-canvas py-24 md:py-40">
+      {/* Decorative Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 -right-32 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-20 -left-32 w-96 h-96 bg-secondary/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 -right-48 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-32 -left-48 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="container-tight relative z-10 space-y-8">
+      <div className="section-container relative z-10 space-y-12">
         {/* Main Content */}
-        <div className="max-w-3xl space-y-6 animate-in">
-          <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter">
+        <div className="max-w-5xl space-y-8">
+          <div className="space-y-6 animate-slide-up">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 badge badge-primary">
+              <Sparkles className="w-4 h-4" />
+              <span>Powered by Stellar Blockchain</span>
+            </div>
+
+            {/* Headline */}
+            <h1 className="text-display-xl tracking-tight text-ink">
               Support Creators
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+              <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                 Instantly & Securely
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-              Send tips to your favorite creators using USDC on Stellar. Fast, transparent, and
-              powered by blockchain technology.
+
+            {/* Subheadline */}
+            <p className="text-title-md text-body max-w-2xl leading-relaxed">
+              Send tips to your favorite creators using USDC on Stellar. Experience lightning-fast
+              transactions with zero intermediaries.
             </p>
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Link href="/auth/signup">
-              <Button size="lg" className="w-full sm:w-auto">
-                Start Supporting
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+            <Link href="/auth/signup" className="group">
+              <button className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2">
+                Start Supporting Today
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
             </Link>
             <Link href="#features">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                Learn More
-              </Button>
+              <button className="btn-secondary w-full sm:w-auto">Explore Features</button>
             </Link>
           </div>
 
           {/* Stats */}
-          <div className="pt-8 grid grid-cols-3 gap-4 md:gap-8">
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">50K+</p>
-              <p className="text-sm text-muted-foreground">Active Creators</p>
+          <div className="pt-12 grid grid-cols-3 gap-8 divider">
+            <div className="space-y-2">
+              <p className="text-stat">50K+</p>
+              <p className="text-body-sm text-muted">Active Creators</p>
             </div>
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">$10M+</p>
-              <p className="text-sm text-muted-foreground">Tips Sent</p>
+            <div className="space-y-2">
+              <p className="text-stat">$10M+</p>
+              <p className="text-body-sm text-muted">Tips Sent</p>
             </div>
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">100K+</p>
-              <p className="text-sm text-muted-foreground">Happy Supporters</p>
+            <div className="space-y-2">
+              <p className="text-stat">100K+</p>
+              <p className="text-body-sm text-muted">Happy Supporters</p>
             </div>
           </div>
         </div>
 
         {/* Feature Pills */}
-        <div className="pt-12 grid md:grid-cols-3 gap-4">
-          <div className="flex gap-3 items-start p-4 rounded-lg border border-border hover:bg-accent transition-smooth">
-            <Zap className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-semibold text-sm">Instant Payments</h3>
-              <p className="text-xs text-muted-foreground">Settle in seconds</p>
+        <div className="pt-8 grid md:grid-cols-3 gap-6">
+          <div className="card-dark hover:border-primary/50 transition-colors group">
+            <div className="flex gap-4 items-start">
+              <div className="p-3 bg-surface-elevated rounded-lg group-hover:bg-primary/10 transition-colors">
+                <Zap className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-ink mb-1">Lightning Fast</h3>
+                <p className="text-body-sm text-muted">Settle in seconds</p>
+              </div>
             </div>
           </div>
-          <div className="flex gap-3 items-start p-4 rounded-lg border border-border hover:bg-accent transition-smooth">
-            <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-semibold text-sm">Verified Creators</h3>
-              <p className="text-xs text-muted-foreground">100% authentic</p>
+
+          <div className="card-dark hover:border-primary/50 transition-colors group">
+            <div className="flex gap-4 items-start">
+              <div className="p-3 bg-surface-elevated rounded-lg group-hover:bg-primary/10 transition-colors">
+                <Shield className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-ink mb-1">Verified Creators</h3>
+                <p className="text-body-sm text-muted">100% authentic</p>
+              </div>
             </div>
           </div>
-          <div className="flex gap-3 items-start p-4 rounded-lg border border-border hover:bg-accent transition-smooth">
-            <Coins className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-semibold text-sm">USDC Stablecoin</h3>
-              <p className="text-xs text-muted-foreground">No volatility</p>
+
+          <div className="card-dark hover:border-primary/50 transition-colors group">
+            <div className="flex gap-4 items-start">
+              <div className="p-3 bg-surface-elevated rounded-lg group-hover:bg-primary/10 transition-colors">
+                <Coins className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-ink mb-1">USDC Stablecoin</h3>
+                <p className="text-body-sm text-muted">No volatility</p>
+              </div>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 /**
  * Features Section
- * Showcase of Dorisio features
+ * ClickHouse Design System styling
  */
 
 import { CheckCircle, Zap, Globe, Lock, BarChart3, Headphones } from 'lucide-react';
@@ -40,12 +40,12 @@ const features = [
 
 export function FeaturesSection(): JSX.Element {
   return (
-    <section id="features" className="py-20 md:py-32 bg-background">
-      <div className="container-tight space-y-12">
+    <section id="features" className="py-section bg-canvas">
+      <div className="section-container space-y-16">
         {/* Header */}
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold">Why Choose Dorisio?</h2>
-          <p className="text-lg text-muted-foreground">
+        <div className="text-center space-y-4 max-w-2xl mx-auto animate-slide-up">
+          <h2 className="text-display-lg text-ink">Why Choose Dorisio?</h2>
+          <p className="text-title-md text-body">
             Everything you need for a seamless creator support experience
           </p>
         </div>
@@ -57,26 +57,29 @@ export function FeaturesSection(): JSX.Element {
             return (
               <div
                 key={index}
-                className="space-y-4 p-6 rounded-lg border border-border hover:border-primary hover:shadow-lg transition-smooth group"
+                className="card-dark group"
+                style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-smooth">
-                  <Icon className="w-6 h-6 text-primary" />
+                <div className="space-y-4">
+                  <div className="w-12 h-12 rounded-lg bg-surface-elevated flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <Icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-bold text-ink text-title-md">{feature.title}</h3>
+                  <p className="text-body leading-relaxed">{feature.description}</p>
                 </div>
-                <h3 className="font-semibold text-lg">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
               </div>
             );
           })}
         </div>
 
         {/* How It Works */}
-        <div className="mt-20 pt-20 border-t border-border space-y-12">
+        <div className="mt-24 pt-16 divider space-y-16">
           <div className="text-center space-y-4 max-w-2xl mx-auto">
-            <h3 className="text-2xl md:text-3xl font-bold">How It Works</h3>
-            <p className="text-muted-foreground">Get started in just a few simple steps</p>
+            <h3 className="text-display-md text-ink">How It Works</h3>
+            <p className="text-body">Get started in just a few simple steps</p>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-4 gap-8">
             {[
               { step: '1', title: 'Sign Up', description: 'Create your Dorisio account' },
               { step: '2', title: 'Connect Wallet', description: 'Link your Stellar wallet' },
@@ -85,14 +88,20 @@ export function FeaturesSection(): JSX.Element {
             ].map((item, index) => (
               <div key={index} className="relative">
                 <div className="space-y-3">
-                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors"
+                    style={{
+                      backgroundColor: 'var(--primary)',
+                      color: 'var(--on-primary)',
+                    }}
+                  >
                     {item.step}
                   </div>
-                  <h4 className="font-semibold">{item.title}</h4>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <h4 className="font-bold text-ink">{item.title}</h4>
+                  <p className="text-body-sm text-muted">{item.description}</p>
                 </div>
                 {index < 3 && (
-                  <div className="hidden md:block absolute top-5 -right-3 text-2xl text-muted-foreground">
+                  <div className="hidden md:block absolute top-5 -right-4 text-2xl text-muted">
                     →
                   </div>
                 )}

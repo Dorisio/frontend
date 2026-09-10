@@ -35,6 +35,9 @@ importers:
       clsx:
         specifier: ^2.0.0
         version: 2.1.1
+      dorisio-sdk:
+        specifier: file:../sdk
+        version: file:../sdk(react@18.3.1)
       framer-motion:
         specifier: ^10.16.4
         version: 10.18.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1142,6 +1145,12 @@ packages:
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
+
+  dorisio-sdk@file:../sdk:
+    resolution: {directory: ../sdk, type: directory}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      react: ^18.0.0
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -3431,6 +3440,16 @@ snapshots:
   doctrine@2.1.0:
     dependencies:
       esutils: 2.0.3
+
+  dorisio-sdk@file:../sdk(react@18.3.1):
+    dependencies:
+      '@stellar/stellar-sdk': 12.3.0
+      react: 18.3.1
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - bare-url
+      - debug
+      - supports-color
 
   dunder-proto@1.0.1:
     dependencies:
