@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCreatorBalance } from '@/hooks/use-creator-balance';
@@ -16,34 +16,16 @@ import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
 import WalletManager from '@/components/sections/wallet-manager';
 import Link from 'next/link';
 
-interface DashboardState {
-  creator: { id: string; username: string; displayName: string } | null;
-  loading: boolean;
-  error: string | null;
-}
-
 export default function CreatorDashboardPage() {
   const params = useParams();
   const router = useRouter();
   const username = params.username as string;
   const user = useAuthStore((state) => state.user);
-  const [state, setState] = useState<DashboardState>({
-    creator: null,
-    loading: true,
-    error: null,
-  });
   const [walletManagerOpen, setWalletManagerOpen] = useState(false);
 
   const { balance, loading: balanceLoading } = useCreatorBalance(username);
-  const {
-    transactions,
-    total,
-    page,
-    pageSize,
-    goToPage,
-    setPageSize,
-    loading: historyLoading,
-  } = useTransactionHistory(username);
+  const { transactions, total, page, pageSize, goToPage, setPageSize } =
+    useTransactionHistory(username);
   const { wallets, loading: walletLoading } = useWallet();
 
   // Check if user is viewing their own dashboard
@@ -52,18 +34,6 @@ export default function CreatorDashboardPage() {
       router.replace(`/creators/${username}`);
     }
   }, [user, username, router]);
-
-  useEffect(() => {
-    // Load creator info from username
-    setState((prev) => ({
-      ...prev,
-      creator: {
-        id: 'creator-id', // Would come from SDK
-        username,
-        displayName: user?.displayName || username,
-      },
-    }));
-  }, [username, user]);
 
   if (!user || user.username !== username) {
     return (
@@ -154,7 +124,7 @@ export default function CreatorDashboardPage() {
                     <td className="px-4 py-3">{formatDate(tx.createdAt)}</td>
                     <td className="px-4 py-3 font-semibold">{formatCurrency(tx.amount)}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground truncate">
-                      {tx.senderUsername || `${tx.senderId.slice(0, 8)}...`}
+                      {tx.senderUsername || `${(tx.senderId || '').slice(0, 8)}...`}
                     </td>
                     <td className="px-4 py-3">
                       <span

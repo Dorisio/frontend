@@ -17,6 +17,18 @@ export interface Transaction {
   transactionHash?: string;
 }
 
+interface SDKTransaction {
+  id: string;
+  creatorId?: string;
+  senderId?: string;
+  senderUsername?: string;
+  amount: number;
+  message?: string | null;
+  status: 'pending' | 'confirmed' | 'failed';
+  createdAt: string;
+  transactionHash?: string;
+}
+
 export function useTransactionHistory(
   creatorId: string | null | undefined,
   initialPage = 1,
@@ -39,13 +51,13 @@ export function useTransactionHistory(
   } = sdkUseTransactionHistory({ page: initialPage, pageSize: initialPageSize });
 
   // Map SDK transactions to frontend format
-  const transactions: Transaction[] = sdkTransactions.map((t: any) => ({
+  const transactions: Transaction[] = sdkTransactions.map((t: SDKTransaction) => ({
     id: t.id,
     creatorId: t.creatorId,
     senderId: t.senderId,
     senderUsername: t.senderUsername,
     amount: t.amount,
-    message: t.message,
+    message: t.message || undefined,
     status: t.status,
     createdAt: t.createdAt,
     transactionHash: t.transactionHash,

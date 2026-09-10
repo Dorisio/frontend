@@ -17,6 +17,13 @@ export interface WalletInfo {
   };
 }
 
+interface SDKWallet {
+  id: string;
+  publicKey: string;
+  name?: string | null;
+  verified?: boolean;
+}
+
 export function useWallet() {
   const {
     wallets: sdkWallets,
@@ -35,10 +42,10 @@ export function useWallet() {
   } = sdkUseWallet();
 
   // Map SDK wallets to frontend format
-  const wallets: WalletInfo[] = sdkWallets.map((w: any) => ({
+  const wallets: WalletInfo[] = sdkWallets.map((w: SDKWallet) => ({
     id: w.id,
     publicKey: w.publicKey,
-    name: w.name,
+    name: w.name || undefined,
     verified: w.verified || false,
   }));
 
@@ -52,7 +59,7 @@ export function useWallet() {
     : null;
 
   const selectWallet = (wallet: WalletInfo) => {
-    const sdkWallet = sdkWallets.find((w: any) => w.id === wallet.id);
+    const sdkWallet = sdkWallets.find((w: SDKWallet) => w.id === wallet.id);
     if (sdkWallet) {
       sdkSelectWallet(sdkWallet);
     }

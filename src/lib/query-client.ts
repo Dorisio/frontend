@@ -4,6 +4,10 @@
 
 import { QueryClient } from '@tanstack/react-query';
 
+interface ErrorWithStatus extends Error {
+  status?: number;
+}
+
 export const createQueryClient = (): QueryClient => {
   return new QueryClient({
     defaultOptions: {
@@ -13,7 +17,7 @@ export const createQueryClient = (): QueryClient => {
         retry: (failureCount, error) => {
           // Don't retry on 4xx errors (except 408)
           if (error instanceof Error) {
-            const status = (error as any).status;
+            const status = (error as ErrorWithStatus).status;
             if (status && status >= 400 && status < 500 && status !== 408) {
               return false;
             }

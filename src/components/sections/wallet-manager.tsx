@@ -23,19 +23,12 @@ interface DisconnectConfirm {
 }
 
 export default function WalletManager({ isOpen, onClose }: WalletManagerProps) {
-  const {
-    wallets,
-    loading,
-    error,
-    disconnectWallet,
-    fetchWallets,
-    getBalance,
-  } = useWallet();
+  const { wallets, loading, error, disconnectWallet, getBalance } = useWallet();
 
   const [step, setStep] = useState<ManagerStep>('list');
   const [disconnectConfirm, setDisconnectConfirm] = useState<DisconnectConfirm | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
-  const [walletBalances, setWalletBalances] = useState<Record<string, any>>({});
+  const [walletBalances, setWalletBalances] = useState<Record<string, { available: number }>>({});
   const [loadingBalances, setLoadingBalances] = useState<Set<string>>(new Set());
 
   if (!isOpen) return null;
@@ -78,10 +71,7 @@ export default function WalletManager({ isOpen, onClose }: WalletManagerProps) {
             {step === 'connect' && 'Connect Wallet'}
             {step === 'confirm-disconnect' && 'Disconnect Wallet?'}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground text-xl"
-          >
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl">
             ✕
           </button>
         </div>
@@ -95,17 +85,16 @@ export default function WalletManager({ isOpen, onClose }: WalletManagerProps) {
                 {loading ? (
                   <p className="text-muted-foreground text-center py-4">Loading wallets...</p>
                 ) : wallets.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">No wallets connected yet.</p>
+                  <p className="text-muted-foreground text-center py-4">
+                    No wallets connected yet.
+                  </p>
                 ) : (
                   <>
                     <p className="text-sm font-medium text-muted-foreground">
                       Connected Wallets ({wallets.length})
                     </p>
                     {wallets.map((wallet) => (
-                      <div
-                        key={wallet.id}
-                        className="p-4 border rounded-lg bg-muted/30 space-y-2"
-                      >
+                      <div key={wallet.id} className="p-4 border rounded-lg bg-muted/30 space-y-2">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 space-y-1">
                             <p className="font-semibold text-sm">
@@ -144,9 +133,7 @@ export default function WalletManager({ isOpen, onClose }: WalletManagerProps) {
                           ) : walletBalances[wallet.id] ? (
                             <>
                               <span className="font-semibold">
-                                {formatCurrency(
-                                  walletBalances[wallet.id]?.available || 0
-                                )}
+                                {formatCurrency(walletBalances[wallet.id]?.available || 0)}
                               </span>
                               {' available'}
                             </>
@@ -173,8 +160,8 @@ export default function WalletManager({ isOpen, onClose }: WalletManagerProps) {
             <>
               <div className="space-y-4 py-4">
                 <p className="text-sm text-muted-foreground">
-                  To connect a wallet, you'll need to sign a message with your wallet. Make sure
-                  you have Freighter installed and configured.
+                  To connect a wallet, you'll need to sign a message with your wallet. Make sure you
+                  have Freighter installed and configured.
                 </p>
 
                 {connectError && (

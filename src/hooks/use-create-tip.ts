@@ -11,9 +11,20 @@ export interface CreateTipPayload {
   message?: string;
 }
 
+export type TipStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'failed'
+  | 'creating'
+  | 'building'
+  | 'submitting'
+  | 'confirming'
+  | 'success'
+  | 'error';
+
 export interface TipResponse {
   id: string;
-  status: 'pending' | 'confirmed' | 'failed' | 'creating' | 'building' | 'submitting' | 'confirming' | 'success' | 'error';
+  status: TipStatus;
   transactionHash?: string;
   amount?: number;
 }
@@ -38,11 +49,13 @@ export function useCreateTip() {
       message: payload.message,
     });
 
+    const resultWithHash = result as unknown as { transactionHash?: string };
+
     return {
-      id: result.id,
-      status: result.status as any,
-      transactionHash: result.transactionHash,
-      amount: result.amount,
+      id: result?.id || '',
+      status: ((result?.status || step) as unknown as TipStatus) || 'pending',
+      transactionHash: resultWithHash?.transactionHash,
+      amount: result?.amount,
     };
   };
 
@@ -51,9 +64,9 @@ export function useCreateTip() {
     error,
     tip: data
       ? {
-          id: data.id,
-          status: step as any,
-          transactionHash: data.transactionHash,
+          id: data.id || '',
+          status: (step as unknown as TipStatus) || 'pending',
+          transactionHash: (data as unknown as { transactionHash?: string })?.transactionHash,
           amount: data.amount,
         }
       : null,

@@ -28,21 +28,13 @@ export default function DorisioModal({ creatorId, isOpen, onClose }: DorisioModa
     buildTransaction,
     submitTransaction,
     confirmTransaction,
-    loading: tipLoading,
     error: tipError,
-    step: tipStep,
     reset: resetTip,
   } = useCreateTip();
-  const {
-    wallets,
-    selectedWallet,
-    selectWallet,
-    generateNonce,
-    getChallenge,
-    verifyWallet,
-    loading: walletLoading,
-  } = useWallet();
-  const [step, setStep] = useState<'amount' | 'confirm' | 'signing' | 'pending' | 'success' | 'error'>('amount');
+  const { wallets, selectedWallet, loading: walletLoading } = useWallet();
+  const [step, setStep] = useState<
+    'amount' | 'confirm' | 'signing' | 'pending' | 'success' | 'error'
+  >('amount');
   const [transactionError, setTransactionError] = useState<string | null>(null);
 
   const {
@@ -127,10 +119,7 @@ export default function DorisioModal({ creatorId, isOpen, onClose }: DorisioModa
         {/* Header */}
         <div className="border-b px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-bold">Send a Tip</h2>
-          <button
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground text-xl"
-          >
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl">
             ✕
           </button>
         </div>
@@ -246,9 +235,7 @@ export default function DorisioModal({ creatorId, isOpen, onClose }: DorisioModa
             <div className="text-center space-y-4">
               <div className="text-4xl">⏳</div>
               <h3 className="text-lg font-semibold">Transaction Pending</h3>
-              <p className="text-muted-foreground">
-                Waiting for blockchain confirmation...
-              </p>
+              <p className="text-muted-foreground">Waiting for blockchain confirmation...</p>
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             </div>
           )}
@@ -257,9 +244,7 @@ export default function DorisioModal({ creatorId, isOpen, onClose }: DorisioModa
             <div className="text-center space-y-4">
               <div className="text-4xl">✨</div>
               <h3 className="text-lg font-semibold">Tip Sent!</h3>
-              <p className="text-muted-foreground">
-                Thank you for supporting this creator!
-              </p>
+              <p className="text-muted-foreground">Thank you for supporting this creator!</p>
               <p className="text-sm text-green-600">Transaction confirmed on Stellar</p>
             </div>
           )}

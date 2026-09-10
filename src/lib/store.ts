@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import type { UserResponse } from 'dorisio-sdk';
+import type { User } from '@/types';
 
 interface AuthStore {
   token: string | null;
-  user: UserResponse | null;
+  user: User | null;
   setToken: (token: string) => void;
-  setUser: (user: UserResponse) => void;
+  setUser: (user: User) => void;
   logout: () => void;
 }
 
@@ -13,6 +13,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
   token: null,
   user: null,
   setToken: (token: string) => set({ token }),
-  setUser: (user: UserResponse) => set({ user }),
+  setUser: (user: User) => set({ user }),
   logout: () => set({ token: null, user: null }),
 }));

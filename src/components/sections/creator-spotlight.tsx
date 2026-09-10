@@ -16,7 +16,6 @@ export function CreatorSpotlightSection(): JSX.Element {
   const sdk = useSDKClient();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchSpotlightCreators() {
@@ -31,11 +30,9 @@ export function CreatorSpotlightSection(): JSX.Element {
 
         const data = (result.data || result.creators || []) as Creator[];
         setCreators(data.slice(0, 4));
-        setError(null);
       } catch (err) {
         console.warn('Failed to fetch spotlight creators:', err);
         setCreators([]);
-        setError(null);
       } finally {
         setLoading(false);
       }
@@ -102,13 +99,13 @@ export function CreatorSpotlightSection(): JSX.Element {
                     {/* Stats */}
                     <div className="grid grid-cols-2 gap-2 py-3 border-t border-muted mb-4">
                       <div>
-                        <p className="font-bold text-primary">{formatCurrency(creator.totalEarnings)}</p>
+                        <p className="font-bold text-primary">
+                          {formatCurrency(creator.totalEarnings)}
+                        </p>
                         <p className="text-xs text-muted-foreground">Earnings</p>
                       </div>
                       <div>
-                        {creator.verified && (
-                          <p className="font-bold text-green-600">✓ Verified</p>
-                        )}
+                        {creator.verified && <p className="font-bold text-green-600">✓ Verified</p>}
                       </div>
                     </div>
 

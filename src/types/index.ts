@@ -30,6 +30,7 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  username?: string;
   role: 'fan' | 'creator' | 'admin';
   verified?: boolean;
   createdAt?: string;

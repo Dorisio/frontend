@@ -4,7 +4,6 @@
  */
 
 import { useCreatorBalance as sdkUseCreatorBalance } from 'dorisio-sdk/react';
-import { useEffect } from 'react';
 
 export interface CreatorBalance {
   totalEarnings: number;
