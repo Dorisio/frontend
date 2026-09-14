@@ -6,6 +6,14 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+} from '@/components/ui/modal';
 
 interface DorisioButtonProps {
   creatorId: string;
@@ -15,12 +23,12 @@ interface DorisioButtonProps {
 }
 
 export default function DorisioButton({
-  _creatorId,
+  creatorId,
   variant = 'default',
   size = 'md',
   className = '',
 }: DorisioButtonProps): JSX.Element {
-  const [_isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const sizeClasses = {
     sm: 'px-3 py-1 text-sm',
@@ -34,11 +42,49 @@ export default function DorisioButton({
   };
 
   return (
-    <button
-      onClick={() => setIsOpen(true)}
-      className={`rounded font-semibold transition ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
-    >
-      💰 Send a Tip
-    </button>
+    <>
+      <button
+        onClick={() => setIsOpen(true)}
+        className={`rounded font-semibold transition ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
+      >
+        💰 Send a Tip
+      </button>
+
+      <Modal open={isOpen} onOpenChange={setIsOpen}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Send a Tip</ModalTitle>
+            <ModalDescription>Support this creator with an instant USDC payment</ModalDescription>
+          </ModalHeader>
+          <div className="px-6 py-4">
+            <p className="text-sm text-muted-foreground mb-4">Creator ID: {creatorId}</p>
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Select amount:</p>
+              <div className="grid grid-cols-4 gap-2">
+                {[1, 5, 10, 25].map((amount) => (
+                  <button
+                    key={amount}
+                    className="py-2 px-3 border rounded font-semibold text-sm hover:bg-muted transition"
+                  >
+                    ${amount}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <ModalFooter>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="px-4 py-2 text-sm border rounded hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90">
+              Continue
+            </button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
