@@ -16,21 +16,18 @@ import {
   ModalTitle,
   ModalDescription,
   ModalFooter,
-  ModalClose,
 } from '@/components/ui/modal';
 import { Wallet, Trash2, Check } from 'lucide-react';
 
 export interface WalletManagerProps {
   onWalletSelect?: (walletId: string) => void;
-  showBalance?: boolean;
 }
 
-export function WalletManager({ onWalletSelect, showBalance = false }: WalletManagerProps) {
+export function WalletManager({ onWalletSelect }: WalletManagerProps): JSX.Element {
   const { wallets, selectedWallet, loading, error, selectWallet, disconnectWallet } = useWallet();
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleSelectWallet = (walletId: string) => {
+  const handleSelectWallet = (walletId: string): void => {
     const wallet = wallets.find((w) => w.id === walletId);
     if (wallet) {
       selectWallet(wallet);
@@ -38,11 +35,10 @@ export function WalletManager({ onWalletSelect, showBalance = false }: WalletMan
     }
   };
 
-  const handleDisconnect = async (walletId: string) => {
+  const handleDisconnect = async (walletId: string): Promise<void> => {
     setIsDeleting(true);
     try {
       await disconnectWallet(walletId);
-      setDeleteConfirmId(null);
     } finally {
       setIsDeleting(false);
     }
@@ -132,9 +128,7 @@ export function WalletManager({ onWalletSelect, showBalance = false }: WalletMan
                   </ModalDescription>
                 </ModalHeader>
                 <ModalFooter>
-                  <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>
-                    Cancel
-                  </Button>
+                  <Button variant="outline">Cancel</Button>
                   <Button
                     variant="destructive"
                     onClick={() => handleDisconnect(wallet.id)}

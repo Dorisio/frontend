@@ -14,7 +14,7 @@ interface CreatorLayoutProps {
 
 export async function generateMetadata(
   { params }: CreatorLayoutProps,
-  parent: ResolvingMetadata
+  _parent: ResolvingMetadata
 ): Promise<Metadata> {
   const username = params.username;
 

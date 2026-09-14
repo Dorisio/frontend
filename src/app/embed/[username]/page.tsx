@@ -11,9 +11,6 @@ import { useParams } from 'next/navigation';
 import { Creator } from '@/types';
 import { useDorisio } from 'dorisio-sdk/react';
 import { formatCurrency } from '@/utils/formatters';
-import { Heart, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import DorisioButton from '@/components/sections/dorisio-button';
 
 interface EmbedWidgetState {
@@ -22,7 +19,7 @@ interface EmbedWidgetState {
   error: string | null;
 }
 
-export default function EmbedTipWidget() {
+export default function EmbedTipWidget(): JSX.Element {
   const params = useParams();
   const username = params.username as string;
   const { client } = useDorisio();
@@ -38,7 +35,7 @@ export default function EmbedTipWidget() {
 
   // Fetch creator profile
   useEffect(() => {
-    async function fetchCreator() {
+    async function fetchCreator(): Promise<void> {
       try {
         const creator = await client.getCreatorProfile(username);
         setState({ creator: creator as Creator, loading: false, error: null });
@@ -69,7 +66,9 @@ export default function EmbedTipWidget() {
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5">
         <div className="text-center max-w-sm mx-auto px-4">
           <h1 className="text-lg font-bold mb-2">Creator Not Found</h1>
-          <p className="text-sm text-muted-foreground">{state.error || 'This creator does not exist.'}</p>
+          <p className="text-sm text-muted-foreground">
+            {state.error || 'This creator does not exist.'}
+          </p>
         </div>
       </div>
     );
@@ -124,15 +123,11 @@ export default function EmbedTipWidget() {
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div>
                 <p className="text-xs text-muted-foreground">Total Earned</p>
-                <p className="font-bold text-sm">
-                  {formatCurrency(state.creator.totalEarnings)}
-                </p>
+                <p className="font-bold text-sm">{formatCurrency(state.creator.totalEarnings)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Tips Received</p>
-                <p className="font-bold text-sm">
-                  {state.creator.totalEarnings > 0 ? '✓' : '-'}
-                </p>
+                <p className="font-bold text-sm">{state.creator.totalEarnings > 0 ? '✓' : '-'}</p>
               </div>
             </div>
           </div>

@@ -27,7 +27,14 @@ export function useRealtimeTips({
   pollingInterval = 5000, // Default 5 seconds
   enableWebSocket = false,
   onTipReceived,
-}: UseRealtimeTipsOptions) {
+}: UseRealtimeTipsOptions): {
+  tips: TipNotification[];
+  isConnected: boolean;
+  error: string | null;
+  unreadCount: number;
+  clearTips: () => void;
+  dismissTip: (tipId: string) => void;
+} {
   const queryClient = useQueryClient();
   const [tips, setTips] = useState<TipNotification[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -135,9 +142,7 @@ export function useRealtimeTips({
 
           // Mark as read after 3 seconds
           setTimeout(() => {
-            setTips((prev) =>
-              prev.map((t) => (t.id === tip.id ? { ...t, isNew: false } : t))
-            );
+            setTips((prev) => prev.map((t) => (t.id === tip.id ? { ...t, isNew: false } : t)));
           }, 3000);
         } catch (err) {
           console.error('Failed to parse websocket message:', err);

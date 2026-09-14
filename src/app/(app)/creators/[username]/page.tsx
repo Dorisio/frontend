@@ -20,7 +20,7 @@ interface CreatorPageState {
   error: string | null;
 }
 
-export default function CreatorProfilePage() {
+export default function CreatorProfilePage(): JSX.Element {
   const params = useParams();
   const username = params.username as string;
   const { client } = useDorisio();
@@ -36,13 +36,13 @@ export default function CreatorProfilePage() {
 
   // Fetch creator profile
   useEffect(() => {
-    async function fetchCreator() {
+    async function fetchCreator(): Promise<void> {
       try {
         const creator = await client.getCreatorProfile(username);
         setState({ creator: creator as Creator, loading: false, error: null });
       } catch (err) {
-        const error = err instanceof Error ? err.message : 'Failed to load creator profile';
-        setState({ creator: null, loading: false, error });
+        const errorMsg = err instanceof Error ? err.message : 'Failed to load creator profile';
+        setState({ creator: null, loading: false, error: errorMsg });
       }
     }
 
@@ -67,7 +67,9 @@ export default function CreatorProfilePage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Creator Not Found</h1>
-          <p className="text-muted-foreground mb-4">{state.error || 'This creator does not exist.'}</p>
+          <p className="text-muted-foreground mb-4">
+            {state.error || 'This creator does not exist.'}
+          </p>
           <a href="/creators" className="text-primary hover:underline">
             Browse all creators
           </a>
@@ -112,18 +114,20 @@ export default function CreatorProfilePage() {
 
               <p className="text-muted-foreground mb-4">@{state.creator.username}</p>
 
-              {state.creator.bio && (
-                <p className="text-lg mb-6 max-w-2xl">{state.creator.bio}</p>
-              )}
+              {state.creator.bio && <p className="text-lg mb-6 max-w-2xl">{state.creator.bio}</p>}
 
               <div className="flex gap-8 mb-6">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Earnings</p>
-                  <p className="text-2xl font-bold">{formatCurrency(state.creator.totalEarnings)}</p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(state.creator.totalEarnings)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Pending</p>
-                  <p className="text-2xl font-bold">{formatCurrency(state.creator.pendingBalance)}</p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(state.creator.pendingBalance)}
+                  </p>
                 </div>
               </div>
 
@@ -143,7 +147,9 @@ export default function CreatorProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="border rounded-lg p-6 bg-card">
                 <p className="text-sm text-muted-foreground mb-2">Total Earnings</p>
-                <p className="text-3xl font-bold">{formatCurrency(balance.balance.totalEarnings)}</p>
+                <p className="text-3xl font-bold">
+                  {formatCurrency(balance.balance.totalEarnings)}
+                </p>
               </div>
               <div className="border rounded-lg p-6 bg-card">
                 <p className="text-sm text-muted-foreground mb-2">Available Balance</p>
@@ -153,7 +159,9 @@ export default function CreatorProfilePage() {
               </div>
               <div className="border rounded-lg p-6 bg-card">
                 <p className="text-sm text-muted-foreground mb-2">Pending</p>
-                <p className="text-3xl font-bold">{formatCurrency(balance.balance.pendingBalance)}</p>
+                <p className="text-3xl font-bold">
+                  {formatCurrency(balance.balance.pendingBalance)}
+                </p>
               </div>
             </div>
           </section>
@@ -184,13 +192,15 @@ export default function CreatorProfilePage() {
                       </td>
                       <td className="px-6 py-4 text-sm">{formatDate(tx.createdAt)}</td>
                       <td className="px-6 py-4">
-                        <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${
-                          tx.status === 'confirmed'
-                            ? 'bg-green-100 text-green-800'
-                            : tx.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span
+                          className={`inline-block px-3 py-1 rounded text-sm font-medium ${
+                            tx.status === 'confirmed'
+                              ? 'bg-green-100 text-green-800'
+                              : tx.status === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                          }`}
+                        >
                           {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                         </span>
                       </td>
@@ -216,8 +226,7 @@ export default function CreatorProfilePage() {
                 <button
                   onClick={() => history.nextPage()}
                   disabled={
-                    history.page >= Math.ceil(history.total / history.pageSize) ||
-                    history.loading
+                    history.page >= Math.ceil(history.total / history.pageSize) || history.loading
                   }
                   className="px-4 py-2 border rounded disabled:opacity-50"
                 >

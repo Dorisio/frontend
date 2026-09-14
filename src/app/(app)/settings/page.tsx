@@ -27,8 +27,8 @@ interface SettingsStatus {
   message: string;
 }
 
-export default function SettingsPage() {
-  const router = useRouter();
+export default function SettingsPage(): JSX.Element {
+  const _router = useRouter();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<SettingsStatus>({ type: null, message: '' });
   const [settings, setSettings] = useState<Settings>({

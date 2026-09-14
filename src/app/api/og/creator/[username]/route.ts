@@ -9,15 +9,22 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-async function fetchCreatorData(username: string) {
+interface CreatorData {
+  displayName: string;
+  bio: string;
+  totalEarnings: number;
+  avatar: string | null;
+  verified: boolean;
+}
+
+async function fetchCreatorData(username: string): Promise<CreatorData | null> {
   try {
     // TODO: Replace with actual API call
     // const response = await fetch(
     //   `${process.env.NEXT_PUBLIC_API_URL}/creators/${username}`,
-    //   { next: { revalidate: 3600 } } // Cache for 1 hour
+    //   { next: { revalidate: 3600 } }
     // );
 
-    // Simulate API response
     return {
       displayName: username,
       bio: 'Creator on Dorisio',
@@ -25,16 +32,16 @@ async function fetchCreatorData(username: string) {
       avatar: null,
       verified: false,
     };
-  } catch (error) {
-    console.error('Failed to fetch creator data:', error);
+  } catch (err) {
+    console.error('Failed to fetch creator data:', err);
     return null;
   }
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { username: string } }
-) {
+): Promise<ImageResponse | NextResponse> {
   try {
     const username = decodeURIComponent(params.username);
     const creator = await fetchCreatorData(username);
@@ -50,181 +57,153 @@ export async function GET(
         })}`
       : 'Just started';
 
-    return new ImageResponse(
-      (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const imageContent: any = (
+      <div
+        style={{
+          display: 'flex' as const,
+          flexDirection: 'column' as const,
+          width: '100%',
+          height: '100%',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          padding: '60px',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          position: 'relative' as const,
+        }}
+      >
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
+            position: 'absolute' as const,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 0.1,
+            backgroundImage:
+              'radial-gradient(circle at 20% 50%, white 0%, transparent 50%), radial-gradient(circle at 80% 80%, white 0%, transparent 50%)',
+          }}
+        />
+
+        <div
+          style={{
+            display: 'flex' as const,
+            flexDirection: 'column' as const,
             height: '100%',
-            backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            padding: '60px',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            justifyContent: 'space-between',
+            position: 'relative' as const,
+            zIndex: 1,
           }}
         >
-          {/* Background pattern */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              opacity: 0.1,
-              backgroundImage:
-                'radial-gradient(circle at 20% 50%, white 0%, transparent 50%), radial-gradient(circle at 80% 80%, white 0%, transparent 50%)',
-            }}
-          />
-
-          {/* Content */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              justifyContent: 'space-between',
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            {/* Top section */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
-              {/* Avatar */}
-              {creator.avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={creator.avatar}
-                  alt={creator.displayName}
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '60px',
-                    objectFit: 'cover',
-                    border: '4px solid white',
-                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '60px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '48px',
-                    fontWeight: 'bold',
-                    color: 'white',
-                    border: '4px solid white',
-                  }}
-                >
-                  {creator.displayName.charAt(0).toUpperCase()}
-                </div>
-              )}
-
-              {/* Creator info */}
-              <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <h1
-                    style={{
-                      fontSize: '56px',
-                      fontWeight: 'bold',
-                      color: 'white',
-                      margin: 0,
-                    }}
-                  >
-                    {creator.displayName}
-                  </h1>
-                  {creator.verified && (
-                    <span
-                      style={{
-                        fontSize: '32px',
-                        color: '#00ff00',
-                      }}
-                    >
-                      ✓
-                    </span>
-                  )}
-                </div>
-                {creator.bio && (
-                  <p
-                    style={{
-                      fontSize: '24px',
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      margin: '12px 0 0 0',
-                    }}
-                  >
-                    {creator.bio}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Bottom section - Stats */}
+          <div style={{ display: 'flex' as const, alignItems: 'center', gap: '40px' }}>
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-end',
+                width: '120px',
+                height: '120px',
+                borderRadius: '60px',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                display: 'flex' as const,
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '48px',
+                fontWeight: 'bold',
+                color: 'white',
+                border: '4px solid white',
               }}
             >
-              <div>
-                <p
+              {creator.displayName.charAt(0).toUpperCase()}
+            </div>
+
+            <div style={{ display: 'flex' as const, flexDirection: 'column' as const, flex: 1 }}>
+              <div style={{ display: 'flex' as const, alignItems: 'center', gap: '12px' }}>
+                <h1
                   style={{
-                    fontSize: '20px',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    margin: '0 0 8px 0',
-                  }}
-                >
-                  Total Earnings
-                </p>
-                <p
-                  style={{
-                    fontSize: '48px',
+                    fontSize: '56px',
                     fontWeight: 'bold',
                     color: 'white',
                     margin: 0,
                   }}
                 >
-                  {earningsDisplay}
-                </p>
+                  {creator.displayName}
+                </h1>
+                {creator.verified && (
+                  <span style={{ fontSize: '32px', color: '#00ff00' }}>✓</span>
+                )}
               </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  fontSize: '24px',
-                  color: 'white',
-                  fontWeight: 'bold',
-                }}
-              >
-                <span>Tip on</span>
-                <span
+              {creator.bio && (
+                <p
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    padding: '8px 24px',
-                    borderRadius: '8px',
+                    fontSize: '24px',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    margin: '12px 0 0 0',
                   }}
                 >
-                  Dorisio
-                </span>
-              </div>
+                  {creator.bio}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex' as const,
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+            }}
+          >
+            <div>
+              <p
+                style={{
+                  fontSize: '20px',
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  margin: '0 0 8px 0',
+                }}
+              >
+                Total Earnings
+              </p>
+              <p
+                style={{
+                  fontSize: '48px',
+                  fontWeight: 'bold',
+                  color: 'white',
+                  margin: 0,
+                }}
+              >
+                {earningsDisplay}
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: 'flex' as const,
+                alignItems: 'center',
+                gap: '12px',
+                fontSize: '24px',
+                color: 'white',
+                fontWeight: 'bold',
+              }}
+            >
+              <span>Tip on</span>
+              <span
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  padding: '8px 24px',
+                  borderRadius: '8px',
+                }}
+              >
+                Dorisio
+              </span>
             </div>
           </div>
         </div>
-      ),
-      {
-        width: 1200,
-        height: 630,
-      }
+      </div>
     );
-  } catch (error) {
-    console.error('OG image generation error:', error);
+
+    return new ImageResponse(imageContent, {
+      width: 1200,
+      height: 630,
+    });
+  } catch (err) {
+    console.error('OG image generation error:', err);
     return NextResponse.json({ error: 'Failed to generate image' }, { status: 500 });
   }
 }

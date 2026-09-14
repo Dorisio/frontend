@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
 import { useCreateTip } from './use-create-tip';
 
 // Mock useMutation from react-query
 vi.mock('@tanstack/react-query', () => ({
-  useMutation: vi.fn((options) => ({
+  useMutation: vi.fn((_options) => ({
     mutate: vi.fn(async (data) => {
       return {
         id: 'tip-123',

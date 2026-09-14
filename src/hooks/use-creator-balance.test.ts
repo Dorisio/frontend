@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
 import { useCreatorBalance } from './use-creator-balance';
 
 // Mock useQuery from react-query

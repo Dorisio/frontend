@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
 import { useTransactionHistory } from './use-transaction-history';
 
 // Mock useQuery from react-query
