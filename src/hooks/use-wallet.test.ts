@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useWallet, WalletInfo } from './use-wallet';
+import { useWallet } from './use-wallet';
 
 // Mock the SDK hook
 vi.mock('dorisio-sdk/react', () => ({

@@ -57,11 +57,19 @@ export function useRealtimeTips({
         // const data = await response.json();
 
         // Simulate API response for now
-        const data = { tips: [] };
+        const data: {
+          tips: Array<{
+            id: string;
+            amount: number;
+            message?: string;
+            creatorName?: string;
+            createdAt: string;
+          }>;
+        } = { tips: [] };
 
         if (data.tips && data.tips.length > 0) {
           setError(null);
-          const newTips = data.tips.map((tip: any) => ({
+          const newTips = data.tips.map((tip) => ({
             id: tip.id,
             amount: tip.amount,
             message: tip.message,
@@ -108,21 +116,27 @@ export function useRealtimeTips({
       // const ws = new WebSocket(wsUrl);
 
       // For now, simulate websocket with polling
-      const ws = {
+      const ws: Partial<WebSocket> = {
         addEventListener: () => {},
         removeEventListener: () => {},
         send: () => {},
         close: () => {},
-      } as any;
+      };
 
-      ws.addEventListener('open', () => {
+      ws.addEventListener?.('open', () => {
         setIsConnected(true);
         setError(null);
       });
 
-      ws.addEventListener('message', (event: MessageEvent) => {
+      ws.addEventListener?.('message', (event: MessageEvent) => {
         try {
-          const data = JSON.parse(event.data);
+          const data = JSON.parse(event.data) as {
+            id: string;
+            amount: number;
+            message?: string;
+            creatorName?: string;
+            createdAt: string;
+          };
           const tip: TipNotification = {
             id: data.id,
             amount: data.amount,
@@ -149,16 +163,16 @@ export function useRealtimeTips({
         }
       });
 
-      ws.addEventListener('error', () => {
+      ws.addEventListener?.('error', () => {
         setError('WebSocket connection error');
         setIsConnected(false);
       });
 
-      ws.addEventListener('close', () => {
+      ws.addEventListener?.('close', () => {
         setIsConnected(false);
       });
 
-      webSocketRef.current = ws;
+      webSocketRef.current = ws as WebSocket;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to connect websocket');
     }

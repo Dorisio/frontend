@@ -17,7 +17,8 @@ declare module 'vitest' {
 
 // Expose renderHook globally for vitest globals mode
 if (typeof globalThis !== 'undefined') {
-  (globalThis as any).renderHook = rtlRenderHook;
+  const global = globalThis as typeof globalThis & { renderHook: typeof rtlRenderHook };
+  global.renderHook = rtlRenderHook;
 }
 
 // Cleanup after each test

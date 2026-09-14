@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useTransactionHistory } from './use-transaction-history';
+import { useTransactionHistory, Transaction } from './use-transaction-history';
 
 // Mock useQuery from react-query
 vi.mock('@tanstack/react-query', () => ({
@@ -114,9 +114,9 @@ describe('useTransactionHistory Hook', () => {
   it('handles transaction status variants', () => {
     const { result } = renderHook(() => useTransactionHistory('creator-123'));
 
-    const statuses = result.current.transactions.map((tx: any) => tx.status);
+    const statuses = result.current.transactions.map((tx: Transaction) => tx.status);
     expect(
-      statuses.every((status: any) => ['confirmed', 'pending', 'failed'].includes(status))
+      statuses.every((status: string) => ['confirmed', 'pending', 'failed'].includes(status))
     ).toBe(true);
   });
 

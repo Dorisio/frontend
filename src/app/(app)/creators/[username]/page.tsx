@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { Creator } from '@/types';
 import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
@@ -70,9 +71,9 @@ export default function CreatorProfilePage(): JSX.Element {
           <p className="text-muted-foreground mb-4">
             {state.error || 'This creator does not exist.'}
           </p>
-          <a href="/creators" className="text-primary hover:underline">
+          <Link href="/creators" className="text-primary hover:underline">
             Browse all creators
-          </a>
+          </Link>
         </div>
       </div>
     );

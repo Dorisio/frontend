@@ -6,14 +6,13 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
 import { useWallet } from '@/hooks/use-wallet';
 import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
-import { WalletManager } from '@/components/sections/wallet-manager';
 import Link from 'next/link';
 
 export default function CreatorDashboardPage() {
@@ -21,7 +20,6 @@ export default function CreatorDashboardPage() {
   const router = useRouter();
   const username = params.username as string;
   const user = useAuthStore((state) => state.user);
-  const [walletManagerOpen, setWalletManagerOpen] = useState(false);
 
   const { balance, loading: balanceLoading } = useCreatorBalance(username);
   const { transactions, total, page, pageSize, goToPage, setPageSize } =
@@ -226,8 +224,9 @@ export default function CreatorDashboardPage() {
                     </p>
                   </div>
                   <button
-                    onClick={() => setWalletManagerOpen(true)}
-                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded border border-red-200 transition text-sm font-medium"
+                    disabled
+                    className="px-4 py-2 text-gray-400 cursor-not-allowed rounded border border-gray-200 text-sm font-medium"
+                    title="Wallet disconnection coming soon"
                   >
                     Disconnect
                   </button>
@@ -238,8 +237,9 @@ export default function CreatorDashboardPage() {
 
           {/* Add New Wallet Button */}
           <button
-            onClick={() => setWalletManagerOpen(true)}
-            className="w-full px-4 py-3 mt-4 border-2 border-dashed rounded-lg hover:border-primary hover:bg-primary/5 transition font-medium text-primary"
+            disabled
+            className="w-full px-4 py-3 mt-4 border-2 border-dashed rounded-lg text-gray-400 cursor-not-allowed text-sm font-medium"
+            title="Add wallet functionality coming soon"
           >
             + Add New Wallet
           </button>

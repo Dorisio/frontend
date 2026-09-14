@@ -6,7 +6,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +27,6 @@ interface SettingsStatus {
 }
 
 export default function SettingsPage(): JSX.Element {
-  const _router = useRouter();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<SettingsStatus>({ type: null, message: '' });
   const [settings, setSettings] = useState<Settings>({
