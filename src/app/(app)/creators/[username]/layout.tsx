@@ -45,6 +45,9 @@ export async function generateMetadata(
     creator.bio ||
     `Support ${creator.displayName} on Dorisio. ${creator.displayName} has earned ${creator.totalEarnings} from tips.`;
 
+  // Dynamic OG image URL
+  const ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://dorisio.io'}/api/og/creator/${encodeURIComponent(username)}`;
+
   return {
     title,
     description,
@@ -54,25 +57,15 @@ export async function generateMetadata(
       type: 'profile',
       url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://dorisio.io'}/creators/${username}`,
       siteName: 'Dorisio',
-      images: creator.avatar
-        ? [
-            {
-              url: creator.avatar,
-              width: 400,
-              height: 400,
-              alt: creator.displayName,
-              type: 'image/jpeg',
-            },
-          ]
-        : [
-            {
-              url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://dorisio.io'}/og-image.png`,
-              width: 1200,
-              height: 630,
-              alt: 'Dorisio',
-              type: 'image/png',
-            },
-          ],
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: creator.displayName,
+          type: 'image/png',
+        },
+      ],
       profile: {
         firstName: creator.displayName?.split(' ')[0],
         lastName: creator.displayName?.split(' ').slice(1).join(' ') || undefined,
@@ -83,12 +76,13 @@ export async function generateMetadata(
       card: 'summary_large_image',
       title,
       description,
-      images: creator.avatar ? [creator.avatar] : undefined,
+      images: [ogImageUrl],
       creator: creator.twitterHandle ? `@${creator.twitterHandle}` : undefined,
     },
     other: {
       'og:type': 'profile',
       'og:profile:username': creator.username,
+      'og:image': ogImageUrl,
     },
   };
 }
