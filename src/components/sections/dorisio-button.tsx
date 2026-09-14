@@ -6,7 +6,6 @@
 'use client';
 
 import { useState } from 'react';
-import DorisioModal from './dorisio-modal';
 
 interface DorisioButtonProps {
   creatorId: string;
@@ -20,7 +19,7 @@ export default function DorisioButton({
   variant = 'default',
   size = 'md',
   className = '',
-}: DorisioButtonProps) {
+}: DorisioButtonProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
 
   const sizeClasses = {
@@ -35,19 +34,11 @@ export default function DorisioButton({
   };
 
   return (
-    <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className={`rounded font-semibold transition ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
-      >
-        💰 Send a Tip
-      </button>
-
-      <DorisioModal
-        creatorId={creatorId}
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-      />
-    </>
+    <button
+      onClick={() => setIsOpen(true)}
+      className={`rounded font-semibold transition ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
+    >
+      💰 Send a Tip
+    </button>
   );
 }
