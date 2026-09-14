@@ -15,12 +15,12 @@ interface DorisioButtonProps {
 }
 
 export default function DorisioButton({
-  creatorId,
+  _creatorId,
   variant = 'default',
   size = 'md',
   className = '',
 }: DorisioButtonProps): JSX.Element {
-  const [isOpen, setIsOpen] = useState(false);
+  const [_isOpen, setIsOpen] = useState(false);
 
   const sizeClasses = {
     sm: 'px-3 py-1 text-sm',

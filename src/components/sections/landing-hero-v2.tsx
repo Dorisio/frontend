@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ArrowRight, Check, Wallet } from 'lucide-react';
 
 export function LandingHeroV2(): JSX.Element {
@@ -43,7 +44,7 @@ export function LandingHeroV2(): JSX.Element {
           </p>
 
           <div className="flex items-center gap-3 mt-8">
-            <a href="/creators">
+            <Link href="/creators">
               <button
                 className="text-sm font-semibold px-7 py-3.5 rounded-full hover:opacity-90 transition-opacity"
                 type="button"
@@ -51,8 +52,8 @@ export function LandingHeroV2(): JSX.Element {
               >
                 Find a creator
               </button>
-            </a>
-            <a href="#how-it-works">
+            </Link>
+            <Link href="#how-it-works">
               <button
                 className="border text-sm font-semibold px-7 py-3.5 rounded-full flex items-center gap-2 hover:bg-muted transition-colors"
                 type="button"
@@ -81,7 +82,7 @@ export function LandingHeroV2(): JSX.Element {
                 </svg>
                 Watch how it works
               </button>
-            </a>
+            </Link>
           </div>
 
           <div className="flex items-center gap-6 mt-9">

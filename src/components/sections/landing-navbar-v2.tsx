@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Logo } from '@/components/logo';
 
 export function LandingNavbarV2(): JSX.Element {
@@ -7,12 +8,12 @@ export function LandingNavbarV2(): JSX.Element {
     <div className="w-full border-b" style={{ backgroundColor: '#ffffff', borderColor: '#e6ebf2' }}>
       <div className="max-w-[1200px] mx-auto px-8 py-5 flex items-center justify-between">
         <div className="flex items-center gap-10">
-          <a href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
             <Logo width={32} height={32} />
             <span className="font-headings text-xl font-bold " style={{ color: '#0b1220' }}>
               Dorisio
             </span>
-          </a>
+          </Link>
           <div className="flex items-center gap-7 text-sm font-medium" style={{ color: '#64748b' }}>
             <a
               href="#creators"
@@ -52,7 +53,7 @@ export function LandingNavbarV2(): JSX.Element {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <a href="/auth/signin">
+          <Link href="/auth/signin">
             <button
               className="text-sm font-medium px-4 py-2.5 hover:bg-muted rounded transition-colors"
               type="button"
@@ -60,8 +61,8 @@ export function LandingNavbarV2(): JSX.Element {
             >
               Log in
             </button>
-          </a>
-          <a href="/auth/signup">
+          </Link>
+          <Link href="/auth/signup">
             <button
               className="text-sm font-medium px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity"
               type="button"
@@ -69,8 +70,8 @@ export function LandingNavbarV2(): JSX.Element {
             >
               Claim your page
             </button>
-          </a>
-          <a href="/creators">
+          </Link>
+          <Link href="/creators">
             <button
               className="text-sm font-medium px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity"
               type="button"
@@ -78,7 +79,7 @@ export function LandingNavbarV2(): JSX.Element {
             >
               Send a tip
             </button>
-          </a>
+          </Link>
         </div>
       </div>
     </div>
