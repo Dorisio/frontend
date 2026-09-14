@@ -15,3 +15,14 @@ export { Label } from './label';
 
 export { Badge, badgeVariants } from './badge';
 export type { BadgeProps } from './badge';
+
+export {
+  Modal,
+  ModalTrigger,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalTitle,
+  ModalDescription,
+  ModalClose,
+} from './modal';
