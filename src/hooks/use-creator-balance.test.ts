@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook } from '@testing-library/react';
 import { useCreatorBalance } from './use-creator-balance';
 
 // Mock useQuery from react-query
@@ -58,13 +59,13 @@ describe('useCreatorBalance Hook', () => {
   it('provides loading state', () => {
     const { result } = renderHook(() => useCreatorBalance('creator-123'));
 
-    expect(typeof result.current.isLoading).toBe('boolean');
+    expect(typeof result.current.loading).toBe('boolean');
   });
 
   it('provides error state', () => {
     const { result } = renderHook(() => useCreatorBalance('creator-123'));
 
-    expect(result.current.error === null || result.current.error instanceof Error).toBe(true);
+    expect(result.current.error === null || typeof result.current.error === 'string').toBe(true);
   });
 
   it('provides refetch function', () => {

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook } from '@testing-library/react';
 import { useTransactionHistory } from './use-transaction-history';
 
 // Mock useQuery from react-query
@@ -93,7 +94,7 @@ describe('useTransactionHistory Hook', () => {
   it('provides error state', () => {
     const { result } = renderHook(() => useTransactionHistory('creator-123'));
 
-    expect(result.current.error === null || result.current.error instanceof Error).toBe(true);
+    expect(result.current.error === null || typeof result.current.error === 'string').toBe(true);
   });
 
   it('provides refetch function', () => {
@@ -113,10 +114,10 @@ describe('useTransactionHistory Hook', () => {
   it('handles transaction status variants', () => {
     const { result } = renderHook(() => useTransactionHistory('creator-123'));
 
-    const statuses = result.current.transactions.map((tx) => tx.status);
-    expect(statuses.every((status) => ['confirmed', 'pending', 'failed'].includes(status))).toBe(
-      true
-    );
+    const statuses = result.current.transactions.map((tx: any) => tx.status);
+    expect(
+      statuses.every((status: any) => ['confirmed', 'pending', 'failed'].includes(status))
+    ).toBe(true);
   });
 
   it('returns transactions in descending date order', () => {

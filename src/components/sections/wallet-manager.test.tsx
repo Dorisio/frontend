@@ -310,8 +310,9 @@ describe('WalletManager Component', () => {
       expect(screen.getByText('Main Wallet')).toBeInTheDocument();
     });
 
-    it('accepts showBalance prop', () => {
-      render(<WalletManager showBalance={true} />);
+    it('renders with valid props', () => {
+      const onWalletSelect = vi.fn();
+      render(<WalletManager onWalletSelect={onWalletSelect} />);
 
       expect(screen.getByText('Main Wallet')).toBeInTheDocument();
     });

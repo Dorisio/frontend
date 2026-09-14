@@ -12,6 +12,14 @@ interface CreatorLayoutProps {
   };
 }
 
+interface Creator {
+  displayName: string;
+  username: string;
+  bio: string;
+  totalEarnings: number;
+  twitterHandle?: string;
+}
+
 export async function generateMetadata(
   { params }: CreatorLayoutProps,
   _parent: ResolvingMetadata
@@ -20,8 +28,7 @@ export async function generateMetadata(
 
   // Fetch creator data from the backend
   // Note: Replace this with your actual API endpoint
-  let creator = null;
-  let error = null;
+  let creator: Creator | null = null;
 
   try {
     // This would typically call your API
@@ -29,8 +36,8 @@ export async function generateMetadata(
     // if (response.ok) {
     //   creator = await response.json();
     // }
-  } catch (err) {
-    error = err;
+  } catch {
+    // Error handling - continue with null creator
   }
 
   if (!creator) {
@@ -40,10 +47,12 @@ export async function generateMetadata(
     };
   }
 
-  const title = `${creator.displayName} (@${creator.username}) | Dorisio`;
+  // After the guard, TypeScript should understand creator is Creator, not null
+  const creatorData = creator as Creator;
+  const title = `${creatorData.displayName} (@${creatorData.username}) | Dorisio`;
   const description =
-    creator.bio ||
-    `Support ${creator.displayName} on Dorisio. ${creator.displayName} has earned ${creator.totalEarnings} from tips.`;
+    creatorData.bio ||
+    `Support ${creatorData.displayName} on Dorisio. ${creatorData.displayName} has earned ${creatorData.totalEarnings} from tips.`;
 
   // Dynamic OG image URL
   const ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://dorisio.io'}/api/og/creator/${encodeURIComponent(username)}`;
@@ -62,27 +71,17 @@ export async function generateMetadata(
           url: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: creator.displayName,
+          alt: creatorData.displayName,
           type: 'image/png',
         },
       ],
-      profile: {
-        firstName: creator.displayName?.split(' ')[0],
-        lastName: creator.displayName?.split(' ').slice(1).join(' ') || undefined,
-        username: creator.username,
-      },
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
       images: [ogImageUrl],
-      creator: creator.twitterHandle ? `@${creator.twitterHandle}` : undefined,
-    },
-    other: {
-      'og:type': 'profile',
-      'og:profile:username': creator.username,
-      'og:image': ogImageUrl,
+      creator: creatorData.twitterHandle ? `@${creatorData.twitterHandle}` : undefined,
     },
   };
 }

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook } from '@testing-library/react';
 import { useCreateTip } from './use-create-tip';
 
 // Mock useMutation from react-query
@@ -36,24 +37,30 @@ describe('useCreateTip Hook', () => {
     vi.clearAllMocks();
   });
 
-  it('provides mutate function', () => {
+  it('provides createTip function', () => {
     const { result } = renderHook(() => useCreateTip());
 
-    expect(typeof result.current.mutate).toBe('function');
+    expect(typeof result.current.createTip).toBe('function');
   });
 
-  it('provides mutation states', () => {
+  it('provides transaction functions', () => {
     const { result } = renderHook(() => useCreateTip());
 
-    expect(typeof result.current.isPending).toBe('boolean');
-    expect(typeof result.current.isSuccess).toBe('boolean');
-    expect(typeof result.current.isError).toBe('boolean');
+    expect(typeof result.current.buildTransaction).toBe('function');
+    expect(typeof result.current.submitTransaction).toBe('function');
+    expect(typeof result.current.confirmTransaction).toBe('function');
+  });
+
+  it('provides loading state', () => {
+    const { result } = renderHook(() => useCreateTip());
+
+    expect(typeof result.current.loading).toBe('boolean');
   });
 
   it('provides error state', () => {
     const { result } = renderHook(() => useCreateTip());
 
-    expect(result.current.error === null || result.current.error instanceof Error).toBe(true);
+    expect(result.current.error === null || typeof result.current.error === 'string').toBe(true);
   });
 
   it('provides reset function', () => {
@@ -62,9 +69,9 @@ describe('useCreateTip Hook', () => {
     expect(typeof result.current.reset).toBe('function');
   });
 
-  it('handles mutation data', () => {
+  it('provides tip data', () => {
     const { result } = renderHook(() => useCreateTip());
 
-    expect(result.current.data === null || typeof result.current.data === 'object').toBe(true);
+    expect(result.current.tip === null || typeof result.current.tip === 'object').toBe(true);
   });
 });

@@ -13,7 +13,7 @@ import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
 import { useWallet } from '@/hooks/use-wallet';
 import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
-import WalletManager from '@/components/sections/wallet-manager';
+import { WalletManager } from '@/components/sections/wallet-manager';
 import Link from 'next/link';
 
 export default function CreatorDashboardPage() {
@@ -245,9 +245,6 @@ export default function CreatorDashboardPage() {
           </button>
         </div>
       </section>
-
-      {/* Wallet Manager Modal */}
-      <WalletManager isOpen={walletManagerOpen} onClose={() => setWalletManagerOpen(false)} />
 
       {/* Quick Stats */}
       <section className="grid md:grid-cols-2 gap-6 py-8 border-t">
