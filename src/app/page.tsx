@@ -1,36 +1,30 @@
 /**
  * Home Page
- * Landing page for Dorisio
+ * Landing page for Dorisio - matches Untitled-1.css design
  */
 
-import { Navigation } from '@/components/layout/navigation';
+import { LandingNavbar } from '@/components/sections/landing-navbar';
+import { LandingHero } from '@/components/sections/landing-hero';
+import { LandingFeatures } from '@/components/sections/landing-features';
+import { LandingCTA } from '@/components/sections/landing-cta';
 import { Footer } from '@/components/layout/footer';
-import { HeroSection } from '@/components/sections/hero-section';
-import { FeaturesSection } from '@/components/sections/features-section';
-import { CreatorSpotlightSection } from '@/components/sections/creator-spotlight';
-import { FAQSection } from '@/components/sections/faq-section';
-import { CTASection } from '@/components/sections/cta-section';
 
 export default function Home(): JSX.Element {
   return (
-    <main className="flex min-h-screen flex-col bg-canvas">
-      <Navigation />
+    <main className="flex min-h-screen flex-col bg-background">
+      {/* Navigation */}
+      <LandingNavbar />
 
       {/* Hero Section */}
-      <HeroSection />
+      <LandingHero />
 
       {/* Features Section */}
-      <FeaturesSection />
-
-      {/* Creator Spotlight */}
-      <CreatorSpotlightSection />
-
-      {/* FAQ Section */}
-      <FAQSection />
+      <LandingFeatures />
 
       {/* CTA Section */}
-      <CTASection />
+      <LandingCTA />
 
+      {/* Footer */}
       <Footer />
     </main>
   );
