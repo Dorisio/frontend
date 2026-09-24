@@ -6,11 +6,12 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
+import { useTransactionFilter } from '@/hooks/use-transaction-filter';
 import { useWallet } from '@/hooks/use-wallet';
 import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications';
 import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
@@ -21,6 +22,14 @@ import {
 import Link from 'next/link';
 
 export default function CreatorDashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <CreatorDashboardPageContent />
+    </Suspense>
+  );
+}
+
+function CreatorDashboardPageContent() {
   const params = useParams();
   const router = useRouter();
   const username = params.username as string;
@@ -144,6 +153,14 @@ export default function CreatorDashboardPage() {
             <option value="50">50 per page</option>
           </select>
         </div>
+
+        <TransactionFilterBar
+          filters={filters}
+          onChange={setFilter}
+          onReset={resetFilters}
+          onExport={() => exportToCsv(`${username}-transactions`)}
+          resultCount={filteredTransactions.length}
+        />
 
         {/* Table */}
         {transactionsError && !transactionsLoading && (

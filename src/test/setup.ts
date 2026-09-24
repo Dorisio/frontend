@@ -6,14 +6,9 @@ import * as matchers from '@testing-library/jest-dom/matchers';
 // Extend vitest matchers with jest-dom matchers
 expect.extend(matchers);
 
-// Augment vitest's Assertion type to include jest-dom matchers
-declare module 'vitest' {
-  interface Assertion {
-    toBeInTheDocument(): this;
-    toHaveClass(className: string | RegExp): this;
-    toHaveAttribute(attr: string, value?: string | RegExp): this;
-  }
-}
+// The vitest `Assertion` type augmentation for these matchers lives in
+// src/test/globals.d.ts (via `@testing-library/jest-dom/vitest`), covering
+// the full jest-dom matcher set rather than a hand-picked subset here.
 
 // Expose renderHook globally for vitest globals mode
 if (typeof globalThis !== 'undefined') {
@@ -54,3 +49,20 @@ Object.defineProperty(window, 'IntersectionObserver', {
   configurable: true,
   value: IntersectionObserverMock,
 });
+
+// happy-dom reports a 0x0 layout size for every element (no real layout
+// engine), so recharts' `ResponsiveContainer` (used by the analytics
+// dashboard charts) never measures a usable size and renders nothing.
+// Give every element a stand-in, non-zero bounding rect so chart
+// components under test actually render their SVG content.
+HTMLElement.prototype.getBoundingClientRect = vi.fn(() => ({
+  width: 600,
+  height: 300,
+  top: 0,
+  left: 0,
+  bottom: 300,
+  right: 600,
+  x: 0,
+  y: 0,
+  toJSON: () => {},
+}));

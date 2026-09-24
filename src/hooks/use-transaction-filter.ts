@@ -1,0 +1,190 @@
+/**
+ * useTransactionFilter Hook
+ * Client-side filtering, sorting, and CSV export for a page of transactions.
+ *
+ * Note: the underlying SDK (dorisio-sdk) only supports server-side pagination
+ * for transaction history, not server-side filtering. This hook filters and
+ * sorts the currently-loaded page of transactions and syncs filter state to
+ * URL params so a filtered view is shareable.
+ */
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { Transaction } from './use-transaction-history';
+
+export type TransactionSortField = 'date' | 'amount';
+export type SortDirection = 'asc' | 'desc';
+export type TransactionStatusFilter = 'all' | 'pending' | 'confirmed' | 'failed';
+
+export interface TransactionFilterState {
+  dateFrom: string;
+  dateTo: string;
+  minAmount: string;
+  maxAmount: string;
+  status: TransactionStatusFilter;
+  sortField: TransactionSortField;
+  sortDirection: SortDirection;
+}
+
+const DEFAULT_FILTERS: TransactionFilterState = {
+  dateFrom: '',
+  dateTo: '',
+  minAmount: '',
+  maxAmount: '',
+  status: 'all',
+  sortField: 'date',
+  sortDirection: 'desc',
+};
+
+const DEBOUNCE_MS = 300;
+
+function filtersFromSearchParams(params: URLSearchParams): TransactionFilterState {
+  return {
+    dateFrom: params.get('dateFrom') || DEFAULT_FILTERS.dateFrom,
+    dateTo: params.get('dateTo') || DEFAULT_FILTERS.dateTo,
+    minAmount: params.get('minAmount') || DEFAULT_FILTERS.minAmount,
+    maxAmount: params.get('maxAmount') || DEFAULT_FILTERS.maxAmount,
+    status: (params.get('status') as TransactionStatusFilter) || DEFAULT_FILTERS.status,
+    sortField: (params.get('sortField') as TransactionSortField) || DEFAULT_FILTERS.sortField,
+    sortDirection:
+      (params.get('sortDirection') as SortDirection) || DEFAULT_FILTERS.sortDirection,
+  };
+}
+
+export function applyTransactionFilters(
+  transactions: Transaction[],
+  filters: TransactionFilterState
+): Transaction[] {
+  let result = transactions;
+
+  if (filters.dateFrom) {
+    const from = new Date(filters.dateFrom).getTime();
+    result = result.filter((t) => new Date(t.createdAt).getTime() >= from);
+  }
+
+  if (filters.dateTo) {
+    const to = new Date(filters.dateTo).getTime();
+    result = result.filter((t) => new Date(t.createdAt).getTime() <= to);
+  }
+
+  if (filters.minAmount !== '') {
+    const min = parseFloat(filters.minAmount);
+    if (!Number.isNaN(min)) result = result.filter((t) => t.amount >= min);
+  }
+
+  if (filters.maxAmount !== '') {
+    const max = parseFloat(filters.maxAmount);
+    if (!Number.isNaN(max)) result = result.filter((t) => t.amount <= max);
+  }
+
+  if (filters.status !== 'all') {
+    result = result.filter((t) => t.status === filters.status);
+  }
+
+  const sorted = [...result].sort((a, b) => {
+    const direction = filters.sortDirection === 'asc' ? 1 : -1;
+    if (filters.sortField === 'amount') {
+      return (a.amount - b.amount) * direction;
+    }
+    return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * direction;
+  });
+
+  return sorted;
+}
+
+export function transactionsToCsv(transactions: Transaction[]): string {
+  const headers = ['Date', 'Amount', 'From', 'Status', 'Transaction Hash'];
+  const rows = transactions.map((t) => [
+    t.createdAt,
+    t.amount.toString(),
+    t.senderUsername || t.senderId || '',
+    t.status,
+    t.transactionHash || '',
+  ]);
+
+  const escapeCsvField = (field: string): string => {
+    if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+      return `"${field.replace(/"/g, '""')}"`;
+    }
+    return field;
+  };
+
+  return [headers, ...rows]
+    .map((row) => row.map(escapeCsvField).join(','))
+    .join('\n');
+}
+
+export function downloadCsv(csvContent: string, filename: string): void {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export function useTransactionFilter(transactions: Transaction[]): {
+  filters: TransactionFilterState;
+  setFilter: <K extends keyof TransactionFilterState>(
+    key: K,
+    value: TransactionFilterState[K]
+  ) => void;
+  resetFilters: () => void;
+  filteredTransactions: Transaction[];
+  exportToCsv: (filenamePrefix?: string) => void;
+} {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [filters, setFilters] = useState<TransactionFilterState>(() =>
+    filtersFromSearchParams(searchParams)
+  );
+
+  // Debounce URL updates so rapid filter changes don't spam history/navigation.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        const isDefault = value === DEFAULT_FILTERS[key as keyof TransactionFilterState];
+        if (value && !isDefault) {
+          params.set(key, value);
+        }
+      });
+      const query = params.toString();
+      router.replace(query ? `?${query}` : '?', { scroll: false });
+    }, DEBOUNCE_MS);
+
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
+  const setFilter = useCallback(
+    <K extends keyof TransactionFilterState>(key: K, value: TransactionFilterState[K]) => {
+      setFilters((prev) => ({ ...prev, [key]: value }));
+    },
+    []
+  );
+
+  const resetFilters = useCallback(() => {
+    setFilters(DEFAULT_FILTERS);
+  }, []);
+
+  const filteredTransactions = useMemo(
+    () => applyTransactionFilters(transactions, filters),
+    [transactions, filters]
+  );
+
+  const exportToCsv = useCallback(
+    (filenamePrefix = 'transactions') => {
+      const csv = transactionsToCsv(filteredTransactions);
+      const date = new Date().toISOString().slice(0, 10);
+      downloadCsv(csv, `${filenamePrefix}-${date}.csv`);
+    },
+    [filteredTransactions]
+  );
+
+  return { filters, setFilter, resetFilters, filteredTransactions, exportToCsv };
+}

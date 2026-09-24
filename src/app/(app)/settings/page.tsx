@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle } from 'lucide-react';
+import { useWallet } from '@/hooks/use-wallet';
 
 interface Settings {
   displayName: string;
@@ -29,6 +30,7 @@ interface SettingsStatus {
 export default function SettingsPage(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<SettingsStatus>({ type: null, message: '' });
+  const { wallets, preferredWallet, setDefaultWalletId } = useWallet();
   const [settings, setSettings] = useState<Settings>({
     displayName: '',
     email: '',
@@ -171,6 +173,37 @@ export default function SettingsPage(): JSX.Element {
               {loading ? 'Saving...' : 'Save Profile Settings'}
             </Button>
           </form>
+        </Card>
+
+        {/* Default Wallet Settings */}
+        <Card className="p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">Default Wallet</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Choose which wallet is auto-selected when you tip a creator for the first time.
+          </p>
+          {wallets.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Connect a wallet to set a default.</p>
+          ) : (
+            <div className="space-y-2" role="radiogroup" aria-label="Default wallet">
+              {wallets.map((wallet) => (
+                <label
+                  key={wallet.id}
+                  className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-muted"
+                >
+                  <input
+                    type="radio"
+                    name="defaultWallet"
+                    checked={preferredWallet?.id === wallet.id}
+                    onChange={() => setDefaultWalletId(wallet.id)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">
+                    {wallet.name || `Wallet ${wallet.publicKey.slice(0, 8)}...`}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
         </Card>
 
         {/* Notification Settings */}
