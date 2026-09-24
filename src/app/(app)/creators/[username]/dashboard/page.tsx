@@ -181,6 +181,7 @@ function CreatorDashboardPageContent() {
                   <th className="px-4 py-3 text-left font-semibold">Date</th>
                   <th className="px-4 py-3 text-left font-semibold">Amount</th>
                   <th className="px-4 py-3 text-left font-semibold">From</th>
+                  <th className="px-4 py-3 text-left font-semibold">Message</th>
                   <th className="px-4 py-3 text-left font-semibold">Status</th>
                   <th className="px-4 py-3 text-left font-semibold">Tx ID</th>
                 </tr>
@@ -188,7 +189,7 @@ function CreatorDashboardPageContent() {
               <tbody>
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                       No transactions yet
                     </td>
                   </tr>
@@ -199,6 +200,13 @@ function CreatorDashboardPageContent() {
                       <td className="px-4 py-3 font-semibold">{formatCurrency(tx.amount)}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground truncate">
                         {tx.senderUsername || `${(tx.senderId || '').slice(0, 8)}...`}
+                      </td>
+                      <td className="px-4 py-3 text-sm max-w-xs truncate">
+                        {tx.message ? (
+                          <span title={tx.message}>{tx.message}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span
