@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Providers } from './providers';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { THEME_STORAGE_KEY } from '@/components/theme-provider';
 import './globals.css';
 
@@ -31,7 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
         <script dangerouslySetInnerHTML={{ __html: noFlashScript }} />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <ErrorBoundary>
+          <Providers>{children}</Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );
