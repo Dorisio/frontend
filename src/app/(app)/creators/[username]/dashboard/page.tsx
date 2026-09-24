@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
 import { useTransactionFilter } from '@/hooks/use-transaction-filter';
+import { TransactionFilterBar } from '@/components/sections/transaction-filter-bar';
 import { useWallet } from '@/hooks/use-wallet';
 import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications';
 import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
@@ -45,7 +46,9 @@ function CreatorDashboardPageContent() {
     setPageSize,
     loading: transactionsLoading,
     error: transactionsError,
-  } = useTransactionHistory(username);
+  } = useTransactionHistory(username, 1, 20);
+  const { filters, setFilter, resetFilters, filteredTransactions, exportToCsv } =
+    useTransactionFilter(transactions);
   const {
     wallets,
     loading: walletLoading,
@@ -145,12 +148,15 @@ function CreatorDashboardPageContent() {
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Transaction History</h2>
           <select
+            aria-label="Transactions per page"
+            value={pageSize}
             onChange={(e) => setPageSize(parseInt(e.target.value))}
             className="px-3 py-1 border rounded text-sm"
           >
             <option value="10">10 per page</option>
-            <option value="25">25 per page</option>
+            <option value="20">20 per page</option>
             <option value="50">50 per page</option>
+            <option value="100">100 per page</option>
           </select>
         </div>
 
@@ -186,14 +192,16 @@ function CreatorDashboardPageContent() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.length === 0 ? (
+                {filteredTransactions.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                      No transactions yet
+                      {transactions.length === 0
+                        ? 'No transactions yet'
+                        : 'No transactions match the current filters'}
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((tx) => (
+                  filteredTransactions.map((tx) => (
                     <tr key={tx.id} className="border-b hover:bg-muted/30 transition">
                       <td className="px-4 py-3">{formatDate(tx.createdAt)}</td>
                       <td className="px-4 py-3 font-semibold">{formatCurrency(tx.amount)}</td>
