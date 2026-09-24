@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { updateSDKToken } from '@/lib/sdk-client';
 
 interface User {
   id: string;
@@ -19,11 +20,16 @@ interface AuthStore {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  // True once the persisted state has been read back from storage.
+  // Consumers should avoid rendering auth-dependent UI until this is true,
+  // otherwise they'll briefly see a "logged out" state on page load/refresh.
+  hasHydrated: boolean;
 
   // Actions
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   setLoading: (loading: boolean) => void;
+  setHasHydrated: (hasHydrated: boolean) => void;
   logout: () => void;
   login: (user: User, token: string) => void;
 }
@@ -35,10 +41,12 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
       isAuthenticated: false,
       isLoading: false,
+      hasHydrated: false,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setToken: (token) => set({ token }),
       setLoading: (loading) => set({ isLoading: loading }),
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
 
       login: (user, token) =>
         set({
@@ -62,6 +70,15 @@ export const useAuthStore = create<AuthStore>()(
         token: state.token,
         user: state.user,
       }),
+      // Runs once the persisted state has been read back from localStorage.
+      // We use this to (a) sync the SDK client singleton with the restored
+      // token so it doesn't boot up unauthenticated, and (b) flip
+      // `hasHydrated` so top-level providers can gate rendering until the
+      // real auth state is known, avoiding a flash of "logged out" state.
+      onRehydrateStorage: () => (state) => {
+        updateSDKToken(state?.token ?? null);
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

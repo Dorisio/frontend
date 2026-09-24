@@ -1,5 +1,11 @@
 import { RenderHookResult, RenderOptions } from '@testing-library/react';
 import '@testing-library/jest-dom';
+// Augments vitest's `Assertion`/`AsymmetricMatchersContaining` interfaces with
+// the full jest-dom matcher set (toBeInTheDocument, toHaveClass,
+// toHaveAttribute, toBeDisabled, toHaveTextContent, etc.) via jest-dom's own
+// officially published vitest type augmentation, rather than hand-listing a
+// partial subset here.
+import '@testing-library/jest-dom/vitest';
 import { MockedFunction, Assertion } from 'vitest';
 
 declare global {
@@ -19,14 +25,6 @@ declare global {
     render: () => TResult,
     options?: RenderOptions
   ): RenderHookResult<TResult, undefined>;
-
-  // Jest-DOM matchers
-  interface Matchers<R = void> {
-    toBeInTheDocument(): R;
-    toHaveClass(className: string): R;
-    toHaveAttribute(attr: string, value?: string): R;
-    [key: string]: (...args: unknown[]) => R;
-  }
 }
 
 export {};

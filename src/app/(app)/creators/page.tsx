@@ -5,82 +5,26 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSDKClient } from '@/lib/sdk-client';
-import { Creator } from '@/types';
+import { Suspense } from 'react';
+import { useCreatorSearch } from '@/hooks/use-creator-search';
 import { formatCurrency } from '@/utils/formatters';
+import { CreatorSearchBar } from '@/components/sections/creator-search-bar';
 import DorisioButton from '@/components/sections/dorisio-button';
 import Link from 'next/link';
 
-interface DiscoveryState {
-  creators: Creator[];
-  filteredCreators: Creator[];
-  loading: boolean;
-  error: string | null;
-  searchQuery: string;
-  filterVerified: boolean;
+export default function CreatorDiscoveryPage() {
+  return (
+    <Suspense fallback={null}>
+      <CreatorDiscoveryPageContent />
+    </Suspense>
+  );
 }
 
-export default function CreatorDiscoveryPage() {
-  const sdk = useSDKClient();
-  const [state, setState] = useState<DiscoveryState>({
-    creators: [],
-    filteredCreators: [],
-    loading: true,
-    error: null,
-    searchQuery: '',
-    filterVerified: false,
-  });
+function CreatorDiscoveryPageContent() {
+  const { filters, setFilter, resetFilters, creators, total, pageSize, isLoading, error } =
+    useCreatorSearch();
 
-  // Fetch creators
-  useEffect(() => {
-    async function fetchCreators() {
-      try {
-        const result = await sdk.listCreators({
-          page: 1,
-          pageSize: 50,
-          isPublic: true,
-        });
-
-        const creators = (result.data || result.creators || []) as Creator[];
-        setState((s) => ({
-          ...s,
-          creators,
-          filteredCreators: creators,
-          loading: false,
-          error: null,
-        }));
-      } catch (err) {
-        const error = err instanceof Error ? err.message : 'Failed to load creators';
-        setState((s) => ({ ...s, error, loading: false }));
-      }
-    }
-
-    fetchCreators();
-  }, [sdk]);
-
-  // Handle search and filtering
-  useEffect(() => {
-    let filtered = state.creators;
-
-    // Search filter
-    if (state.searchQuery) {
-      const query = state.searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (c) =>
-          c.username.toLowerCase().includes(query) ||
-          c.displayName.toLowerCase().includes(query) ||
-          (c.bio && c.bio.toLowerCase().includes(query))
-      );
-    }
-
-    // Verified filter
-    if (state.filterVerified) {
-      filtered = filtered.filter((c) => c.verified);
-    }
-
-    setState((s) => ({ ...s, filteredCreators: filtered }));
-  }, [state.searchQuery, state.filterVerified, state.creators]);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <main className="min-h-screen bg-background">
@@ -94,38 +38,15 @@ export default function CreatorDiscoveryPage() {
 
       {/* Search and Filters */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex gap-4 mb-8">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search creators..."
-              value={state.searchQuery}
-              onChange={(e) =>
-                setState((s) => ({ ...s, searchQuery: e.target.value }))
-              }
-              className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <label className="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-muted transition">
-            <input
-              type="checkbox"
-              checked={state.filterVerified}
-              onChange={(e) =>
-                setState((s) => ({ ...s, filterVerified: e.target.checked }))
-              }
-              className="w-4 h-4"
-            />
-            <span className="text-sm">Verified only</span>
-          </label>
-        </div>
+        <CreatorSearchBar filters={filters} onChange={setFilter} onReset={resetFilters} />
 
         {/* Results Count */}
         <p className="text-muted-foreground mb-6">
-          Found {state.filteredCreators.length} creator{state.filteredCreators.length !== 1 ? 's' : ''}
+          Found {creators.length} creator{creators.length !== 1 ? 's' : ''}
         </p>
 
         {/* Loading State */}
-        {state.loading && (
+        {isLoading && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -135,16 +56,16 @@ export default function CreatorDiscoveryPage() {
         )}
 
         {/* Error State */}
-        {state.error && (
+        {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg">
-            <p className="font-medium">{state.error}</p>
+            <p className="font-medium">{error.message || 'Failed to load creators'}</p>
           </div>
         )}
 
         {/* Creators Grid */}
-        {!state.loading && state.filteredCreators.length > 0 && (
+        {!isLoading && !error && creators.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {state.filteredCreators.map((creator) => (
+            {creators.map((creator) => (
               <Link key={creator.id} href={`/creators/${creator.username}`}>
                 <div className="border rounded-lg overflow-hidden hover:shadow-lg transition h-full bg-card">
                   {/* Card Header */}
@@ -173,9 +94,7 @@ export default function CreatorDiscoveryPage() {
                     <div className="mb-2">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-bold text-lg">{creator.displayName}</h3>
-                        {creator.verified && (
-                          <span className="text-green-600">✓</span>
-                        )}
+                        {creator.verified && <span className="text-green-600">✓</span>}
                       </div>
                       <p className="text-sm text-muted-foreground">@{creator.username}</p>
                     </div>
@@ -207,14 +126,34 @@ export default function CreatorDiscoveryPage() {
           </div>
         )}
 
+        {/* Pagination */}
+        {!isLoading && !error && creators.length > 0 && totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <button
+              onClick={() => setFilter('page', Math.max(1, filters.page - 1))}
+              disabled={filters.page === 1}
+              className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-muted transition"
+            >
+              ← Prev
+            </button>
+            <span className="text-sm text-muted-foreground px-2">
+              Page {filters.page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setFilter('page', Math.min(totalPages, filters.page + 1))}
+              disabled={filters.page >= totalPages}
+              className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-muted transition"
+            >
+              Next →
+            </button>
+          </div>
+        )}
+
         {/* No Results */}
-        {!state.loading && state.filteredCreators.length === 0 && !state.error && (
+        {!isLoading && !error && creators.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">No creators found</p>
-            <button
-              onClick={() => setState((s) => ({ ...s, searchQuery: '', filterVerified: false }))}
-              className="text-primary hover:underline"
-            >
+            <button onClick={resetFilters} className="text-primary hover:underline">
               Clear filters
             </button>
           </div>
