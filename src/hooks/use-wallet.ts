@@ -4,7 +4,7 @@
  * automatic retry for transient errors, and user-facing toast notifications.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useWallet as sdkUseWallet } from 'dorisio-sdk/react';
 import { useWalletPreferenceStore } from '@/stores/wallet-preference-store';
 
@@ -155,25 +155,58 @@ export function useWallet() {
     selectWallet: sdkSelectWallet,
     unlinkWallet,
     renameWallet: sdkRenameWallet,
-    getBalance: sdkGetBalance,
+    getBalance,
     reset,
   } = sdkUseWallet();
 
-  const { error: toastError, success: toastSuccess } = useNotification();
+  const [optimistic, setOptimistic] = useState<Record<string, OptimisticEntry>>({});
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+  const [actionError, setActionError] = useState<{ walletId: string; message: string } | null>(
+    null
+  );
 
-  // Map SDK wallets to frontend format
-  const wallets: WalletInfo[] = sdkWallets.map((w: SDKWallet) => ({
-    id: w.id,
-    publicKey: w.publicKey,
-    name: w.name || undefined,
-    verified: w.verified || false,
-  }));
+  const clearOptimistic = useCallback((walletId: string) => {
+    setOptimistic((prev) => {
+      if (!(walletId in prev)) return prev;
+      const next = { ...prev };
+      delete next[walletId];
+      return next;
+    });
+  }, []);
+
+  const setPending = useCallback((walletId: string, isPending: boolean) => {
+    setPendingIds((prev) => {
+      const next = new Set(prev);
+      if (isPending) {
+        next.add(walletId);
+      } else {
+        next.delete(walletId);
+      }
+      return next;
+    });
+  }, []);
+
+  // Map SDK wallets to frontend format, applying any optimistic overlay and
+  // filtering out wallets optimistically disconnected but not yet
+  // confirmed removed by the SDK's own list.
+  const wallets: WalletInfo[] = useMemo(
+    () =>
+      sdkWallets
+        .filter((w: SDKWallet) => !optimistic[w.id]?.disconnected)
+        .map((w: SDKWallet) => ({
+          id: w.id,
+          publicKey: w.publicKey,
+          name: optimistic[w.id]?.name ?? w.name ?? undefined,
+          verified: w.verified || false,
+        })),
+    [sdkWallets, optimistic]
+  );
 
   const selectedWallet = sdkSelectedWallet
     ? {
         id: sdkSelectedWallet.id,
         publicKey: sdkSelectedWallet.publicKey,
-        name: sdkSelectedWallet.name,
+        name: optimistic[sdkSelectedWallet.id]?.name ?? sdkSelectedWallet.name,
         verified: sdkSelectedWallet.verified || false,
       }
     : null;
@@ -185,79 +218,67 @@ export function useWallet() {
     }
   };
 
-  /** Disconnect (unlink) a wallet. Retries on transient errors. */
-  const disconnectWallet = useCallback(
-    async (walletId: string): Promise<void> => {
-      try {
-        await withRetry(() => unlinkWallet(walletId));
-        toastSuccess('Wallet disconnected successfully.', 'Wallet Removed');
-      } catch (err) {
-        const message = mapWalletError(err);
-        console.error('[useWallet] disconnectWallet failed:', err);
-        toastError(message, 'Disconnect Failed');
-        throw new Error(message);
-      }
+  /**
+   * Optimistically hides the wallet immediately, then confirms with the
+   * server. On failure, the wallet reappears (rollback) and `actionError`
+   * is set so the caller can offer a retry.
+   */
+  const disconnectWallet = async (walletId: string) => {
+    setActionError(null);
+    setOptimistic((prev) => ({ ...prev, [walletId]: { ...prev[walletId], disconnected: true } }));
+    setPending(walletId, true);
+    try {
+      await unlinkWallet(walletId);
+      // Success: leave the optimistic "disconnected" entry in place until
+      // the SDK's own wallet list catches up on its next fetch; clearing it
+      // early would briefly resurrect the wallet if listWallets() hasn't
+      // re-run yet.
+    } catch (err) {
+      clearOptimistic(walletId);
+      setActionError({
+        walletId,
+        message: err instanceof Error ? err.message : 'Failed to disconnect wallet',
+      });
+      throw err;
+    } finally {
+      setPending(walletId, false);
+    }
+  };
+
+  /**
+   * Optimistically renames the wallet immediately, then confirms with the
+   * server. On failure, the name rolls back to whatever the SDK last
+   * reported and `actionError` is set so the caller can offer a retry.
+   */
+  const renameWallet = async (walletId: string, name: string) => {
+    setActionError(null);
+    setOptimistic((prev) => ({ ...prev, [walletId]: { ...prev[walletId], name } }));
+    setPending(walletId, true);
+    try {
+      await sdkRenameWallet(walletId, name);
+      clearOptimistic(walletId);
+    } catch (err) {
+      clearOptimistic(walletId);
+      setActionError({
+        walletId,
+        message: err instanceof Error ? err.message : 'Failed to rename wallet',
+      });
+      throw err;
+    } finally {
+      setPending(walletId, false);
+    }
+  };
+
+  const isPending = useCallback((walletId: string) => pendingIds.has(walletId), [pendingIds]);
+
+  const retryAction = useCallback(
+    (walletId: string, name?: string) => {
+      setActionError(null);
+      return name !== undefined ? renameWallet(walletId, name) : disconnectWallet(walletId);
     },
-    [unlinkWallet, toastSuccess, toastError]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- disconnectWallet/renameWallet are stable per render; re-declaring them as deps would recreate retryAction on every optimistic-state change it itself causes.
+    []
   );
-
-  /** Rename a wallet. Retries on transient errors. */
-  const renameWallet = useCallback(
-    async (walletId: string, name: string): Promise<void> => {
-      try {
-        await withRetry(() => sdkRenameWallet(walletId, name));
-        toastSuccess('Wallet renamed successfully.', 'Wallet Updated');
-      } catch (err) {
-        const message = mapWalletError(err);
-        console.error('[useWallet] renameWallet failed:', err);
-        toastError(message, 'Rename Failed');
-        throw new Error(message);
-      }
-    },
-    [sdkRenameWallet, toastSuccess, toastError]
-  );
-
-  /** Verify a wallet via signed challenge. Retries on transient errors. */
-  const verifyWallet = useCallback(
-    async (...args: Parameters<typeof sdkVerifyWallet>): Promise<ReturnType<typeof sdkVerifyWallet>> => {
-      try {
-        const result = await withRetry(() => sdkVerifyWallet(...args));
-        toastSuccess('Wallet verified successfully!', 'Wallet Verified');
-        return result;
-      } catch (err) {
-        const message = mapWalletError(err);
-        console.error('[useWallet] verifyWallet failed:', err);
-        toastError(message, 'Verification Failed');
-        throw new Error(message);
-      }
-    },
-    [sdkVerifyWallet, toastSuccess, toastError]
-  );
-
-  /** Get wallet balance. Retries on transient errors. */
-  const getBalance = useCallback(
-    async (...args: Parameters<typeof sdkGetBalance>): Promise<ReturnType<typeof sdkGetBalance>> => {
-      try {
-        return await withRetry(() => sdkGetBalance(...args));
-      } catch (err) {
-        const message = mapWalletError(err);
-        console.error('[useWallet] getBalance failed:', err);
-        toastError(message, 'Balance Unavailable');
-        throw new Error(message);
-      }
-    },
-    [sdkGetBalance, toastError]
-  );
-
-  const defaultWalletId = useWalletPreferenceStore((s) => s.defaultWalletId);
-  const setDefaultWalletId = useWalletPreferenceStore((s) => s.setDefaultWalletId);
-  const getPreferredWalletId = useWalletPreferenceStore((s) => s.getPreferredWalletId);
-  const setLastUsedWallet = useWalletPreferenceStore((s) => s.setLastUsedWallet);
-
-  // The wallet the user has explicitly set as their default (dashboard setting).
-  const preferredWallet = defaultWalletId
-    ? (wallets.find((w) => w.id === defaultWalletId) ?? null)
-    : null;
 
   return {
     wallets,
@@ -274,8 +295,9 @@ export function useWallet() {
     renameWallet,
     getBalance,
     reset,
-    setDefaultWalletId,
-    getPreferredWalletId,
-    setLastUsedWallet,
+    isPending,
+    actionError,
+    clearActionError: () => setActionError(null),
+    retryAction,
   };
 }

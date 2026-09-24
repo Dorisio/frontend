@@ -13,8 +13,12 @@ import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
 import { useTransactionFilter } from '@/hooks/use-transaction-filter';
 import { useWallet } from '@/hooks/use-wallet';
-import { TransactionFilterBar } from '@/components/sections/transaction-filter-bar';
+import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications';
 import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
+import {
+  EarningsCardSkeleton,
+  TransactionTableSkeleton,
+} from '@/components/shared/creator-skeletons';
 import Link from 'next/link';
 
 export default function CreatorDashboardPage() {
@@ -31,12 +35,27 @@ function CreatorDashboardPageContent() {
   const username = params.username as string;
   const user = useAuthStore((state) => state.user);
 
-  const { balance, loading: balanceLoading } = useCreatorBalance(username);
-  const { transactions, total, page, pageSize, goToPage, setPageSize } =
-    useTransactionHistory(username);
-  const { filters, setFilter, resetFilters, filteredTransactions, exportToCsv } =
-    useTransactionFilter(transactions);
-  const { wallets, loading: walletLoading } = useWallet();
+  const { balance, loading: balanceLoading, error: balanceError } = useCreatorBalance(username);
+  const {
+    transactions,
+    total,
+    page,
+    pageSize,
+    goToPage,
+    setPageSize,
+    loading: transactionsLoading,
+    error: transactionsError,
+  } = useTransactionHistory(username);
+  const {
+    wallets,
+    loading: walletLoading,
+    disconnectWallet,
+    isPending,
+    actionError,
+    clearActionError,
+    retryAction,
+  } = useWallet();
+  const { isConnected: liveConnected } = useRealtimeNotifications(username);
 
   // Check if user is viewing their own dashboard
   useEffect(() => {
@@ -60,40 +79,66 @@ function CreatorDashboardPageContent() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       {/* Header */}
-      <div className="border-b pb-6">
-        <h1 className="text-3xl font-bold mb-2">Creator Dashboard</h1>
-        <p className="text-muted-foreground">Manage earnings, transactions, and wallet</p>
+      <div className="border-b pb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Creator Dashboard</h1>
+          <p className="text-muted-foreground">Manage earnings, transactions, and wallet</p>
+        </div>
+        <span
+          className={`shrink-0 text-xs font-medium mt-1 ${
+            liveConnected ? 'text-green-600' : 'text-muted-foreground'
+          }`}
+          title={
+            liveConnected
+              ? 'Connected: new tips update this page live'
+              : 'Not connected: refresh to see new tips'
+          }
+        >
+          {liveConnected ? '● Live' : '● Offline'}
+        </span>
       </div>
 
       {/* Earnings Overview Cards */}
-      <section className="grid md:grid-cols-3 gap-6">
-        {/* Total Earnings */}
-        <div className="bg-background border rounded-lg p-6 space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Total Earnings</h3>
-          <p className="text-3xl font-bold">
-            {balanceLoading ? '...' : formatCurrency(balance?.totalEarnings || 0)}
-          </p>
-          <p className="text-xs text-green-600">All-time earnings</p>
+      {balanceError && !balanceLoading && (
+        <div
+          className="p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-red-700"
+          role="alert"
+        >
+          Unable to load earnings: {balanceError}
         </div>
+      )}
+      {balanceLoading ? (
+        <section className="grid md:grid-cols-3 gap-6">
+          <EarningsCardSkeleton />
+          <EarningsCardSkeleton />
+          <EarningsCardSkeleton />
+        </section>
+      ) : (
+        <section className="grid md:grid-cols-3 gap-6 animate-fade-in">
+          {/* Total Earnings */}
+          <div className="bg-background border rounded-lg p-6 space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Total Earnings</h3>
+            <p className="text-3xl font-bold">{formatCurrency(balance?.totalEarnings || 0)}</p>
+            <p className="text-xs text-green-600">All-time earnings</p>
+          </div>
 
-        {/* Available Balance */}
-        <div className="bg-background border rounded-lg p-6 space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Available Balance</h3>
-          <p className="text-3xl font-bold">
-            {balanceLoading ? '...' : formatCurrency(balance?.availableBalance || 0)}
-          </p>
-          <p className="text-xs text-muted-foreground">Ready to withdraw</p>
-        </div>
+          {/* Available Balance */}
+          <div className="bg-background border rounded-lg p-6 space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Available Balance</h3>
+            <p className="text-3xl font-bold">
+              {formatCurrency(balance?.availableBalance || 0)}
+            </p>
+            <p className="text-xs text-muted-foreground">Ready to withdraw</p>
+          </div>
 
-        {/* Pending Balance */}
-        <div className="bg-background border rounded-lg p-6 space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Pending Balance</h3>
-          <p className="text-3xl font-bold">
-            {balanceLoading ? '...' : formatCurrency(balance?.pendingBalance || 0)}
-          </p>
-          <p className="text-xs text-yellow-600">Confirming on blockchain</p>
-        </div>
-      </section>
+          {/* Pending Balance */}
+          <div className="bg-background border rounded-lg p-6 space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Pending Balance</h3>
+            <p className="text-3xl font-bold">{formatCurrency(balance?.pendingBalance || 0)}</p>
+            <p className="text-xs text-yellow-600">Confirming on blockchain</p>
+          </div>
+        </section>
+      )}
 
       {/* Transaction History */}
       <section className="space-y-4">
@@ -118,66 +163,74 @@ function CreatorDashboardPageContent() {
         />
 
         {/* Table */}
-        <div className="border rounded-lg overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/50">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">Date</th>
-                <th className="px-4 py-3 text-left font-semibold">Amount</th>
-                <th className="px-4 py-3 text-left font-semibold">From</th>
-                <th className="px-4 py-3 text-left font-semibold">Status</th>
-                <th className="px-4 py-3 text-left font-semibold">Tx ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.length === 0 ? (
+        {transactionsError && !transactionsLoading && (
+          <div
+            className="p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-red-700"
+            role="alert"
+          >
+            Unable to load transaction history: {transactionsError}
+          </div>
+        )}
+        {transactionsLoading && transactions.length === 0 ? (
+          <TransactionTableSkeleton />
+        ) : (
+          <div className="border rounded-lg overflow-x-auto animate-fade-in">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/50">
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    {balanceLoading
-                      ? 'Loading transactions...'
-                      : transactions.length === 0
-                        ? 'No transactions yet'
-                        : 'No transactions match the current filters'}
-                  </td>
+                  <th className="px-4 py-3 text-left font-semibold">Date</th>
+                  <th className="px-4 py-3 text-left font-semibold">Amount</th>
+                  <th className="px-4 py-3 text-left font-semibold">From</th>
+                  <th className="px-4 py-3 text-left font-semibold">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold">Tx ID</th>
                 </tr>
-              ) : (
-                filteredTransactions.map((tx) => (
-                  <tr key={tx.id} className="border-b hover:bg-muted/30 transition">
-                    <td className="px-4 py-3">{formatDate(tx.createdAt)}</td>
-                    <td className="px-4 py-3 font-semibold">{formatCurrency(tx.amount)}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground truncate">
-                      {tx.senderUsername || `${(tx.senderId || '').slice(0, 8)}...`}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                          tx.status
-                        )}`}
-                      >
-                        {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground truncate">
-                      {tx.transactionHash ? (
-                        <a
-                          href={`https://stellar.expert/explorer/testnet/tx/${tx.transactionHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:text-primary"
-                          title={tx.transactionHash}
-                        >
-                          {tx.transactionHash.slice(0, 8)}...
-                        </a>
-                      ) : (
-                        '-'
-                      )}
+              </thead>
+              <tbody>
+                {transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                      No transactions yet
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  transactions.map((tx) => (
+                    <tr key={tx.id} className="border-b hover:bg-muted/30 transition">
+                      <td className="px-4 py-3">{formatDate(tx.createdAt)}</td>
+                      <td className="px-4 py-3 font-semibold">{formatCurrency(tx.amount)}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground truncate">
+                        {tx.senderUsername || `${(tx.senderId || '').slice(0, 8)}...`}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+                            tx.status
+                          )}`}
+                        >
+                          {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground truncate">
+                        {tx.transactionHash ? (
+                          <a
+                            href={`https://stellar.expert/explorer/testnet/tx/${tx.transactionHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-primary"
+                            title={tx.transactionHash}
+                          >
+                            {tx.transactionHash.slice(0, 8)}...
+                          </a>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Pagination */}
         {total > pageSize && transactions.length > 0 && (
@@ -230,6 +283,27 @@ function CreatorDashboardPageContent() {
         <div className="border rounded-lg p-6 space-y-4">
           <h3 className="font-semibold">Connected Wallets</h3>
 
+          {actionError && (
+            <div className="flex items-center justify-between gap-4 p-3 border border-red-200 bg-red-50 rounded text-sm text-red-700">
+              <span>{actionError.message}</span>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => retryAction(actionError.walletId)}
+                  className="px-3 py-1 rounded border border-red-300 hover:bg-red-100 transition font-medium"
+                >
+                  Retry
+                </button>
+                <button
+                  onClick={clearActionError}
+                  className="px-3 py-1 text-red-500 hover:text-red-700 transition"
+                  aria-label="Dismiss error"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
           {walletLoading ? (
             <p className="text-muted-foreground">Loading wallets...</p>
           ) : wallets.length === 0 ? (
@@ -239,7 +313,9 @@ function CreatorDashboardPageContent() {
               {wallets.map((wallet) => (
                 <div
                   key={wallet.id}
-                  className="flex items-center justify-between p-4 border rounded bg-muted/30"
+                  className={`flex items-center justify-between p-4 border rounded bg-muted/30 transition-opacity ${
+                    isPending(wallet.id) ? 'opacity-50' : 'opacity-100'
+                  }`}
                 >
                   <div className="flex-1 space-y-1">
                     <p className="font-medium">{wallet.name || 'Unnamed Wallet'}</p>
@@ -248,11 +324,17 @@ function CreatorDashboardPageContent() {
                     </p>
                   </div>
                   <button
-                    disabled
-                    className="px-4 py-2 text-gray-400 cursor-not-allowed rounded border border-gray-200 text-sm font-medium"
-                    title="Wallet disconnection coming soon"
+                    onClick={() => {
+                      void disconnectWallet(wallet.id).catch(() => {
+                        // Rollback and actionError are handled by useWallet;
+                        // this catch only stops the rejection from
+                        // surfacing as an unhandled promise rejection.
+                      });
+                    }}
+                    disabled={isPending(wallet.id)}
+                    className="px-4 py-2 text-red-600 hover:bg-red-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded border border-red-200 disabled:border-gray-200 text-sm font-medium transition"
                   >
-                    Disconnect
+                    {isPending(wallet.id) ? 'Disconnecting...' : 'Disconnect'}
                   </button>
                 </div>
               ))}

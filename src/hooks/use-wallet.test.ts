@@ -1,47 +1,17 @@
-import { describe, it, expect, vi, beforeEach, type MockedFunction } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useWallet, mapWalletError } from './use-wallet';
-import { useWallet as sdkUseWalletImpl } from 'dorisio-sdk/react';
+import { useWallet as sdkUseWallet } from 'dorisio-sdk/react';
+import { useWallet } from './use-wallet';
 
-// Cast to mocked function so .mockReturnValue is available
-const sdkUseWallet = sdkUseWalletImpl as MockedFunction<typeof sdkUseWalletImpl>;
-
-// ---------------------------------------------------------------------------
-// Mocks — factories must NOT reference top-level variables (vi.mock is hoisted)
-// ---------------------------------------------------------------------------
-
-const mockToastError = vi.fn();
-const mockToastSuccess = vi.fn();
-
-vi.mock('@/components/notification-provider', () => ({
-  useNotification: (): {
-    error: ReturnType<typeof vi.fn>;
-    success: ReturnType<typeof vi.fn>;
-    notify: ReturnType<typeof vi.fn>;
-    info: ReturnType<typeof vi.fn>;
-    warning: ReturnType<typeof vi.fn>;
-  } => ({
-    error: mockToastError,
-    success: mockToastSuccess,
-    notify: vi.fn(),
-    info: vi.fn(),
-    warning: vi.fn(),
-  }),
-}));
-
-// All SDK mock functions are declared at module scope so they can be
-// reconfigured per-test. The vi.mock factory accesses them via closure
-// rather than referencing the const before hoisting.
-const mockUnlinkWallet = vi.fn();
-const mockRenameWallet = vi.fn();
-const mockVerifyWallet = vi.fn();
-const mockGetBalance = vi.fn();
-const mockListWallets = vi.fn();
-const mockSelectWallet = vi.fn();
-const mockGenerateNonce = vi.fn();
-const mockGetChallenge = vi.fn();
-const mockReset = vi.fn();
-
+// Mock the SDK hook. `sdkUseWallet` below is the mocked import itself
+// (Vitest hoists this factory above the import statements, so it cannot
+// reference a top-level helper declared after it; the default return
+// value is inlined here instead), so
+// `vi.mocked(sdkUseWallet).mockImplementation(...)` reconfigures it
+// per-test without the `require()` + `vi.mocked(require(...))` pattern
+// used elsewhere in this file, which does not intercept calls in this
+// project's Vite/Vitest ESM setup (the mock factory's export is a frozen
+// module-namespace binding under `require()`, not a mutable reference).
 vi.mock('dorisio-sdk/react', () => ({
   useWallet: vi.fn(),
 }));
@@ -161,6 +131,42 @@ describe('mapWalletError', () => {
 // useWallet hook tests
 // ---------------------------------------------------------------------------
 
+// A test earlier in the file may call `.mockImplementation(...)` to return
+// a different wallets/loading/error shape. `vi.clearAllMocks()` alone only
+// clears call history, not a swapped-in implementation, so a later test
+// would otherwise silently inherit whatever the previous test configured.
+// Restoring this default before every test keeps each test's SDK response
+// independent of run order.
+function defaultSdkWalletResult() {
+  return {
+    wallets: [
+      {
+        id: '1',
+        publicKey: 'test-key-1',
+        name: 'My Wallet',
+        verified: true,
+      },
+    ],
+    selectedWallet: {
+      id: '1',
+      publicKey: 'test-key-1',
+      name: 'My Wallet',
+      verified: true,
+    },
+    loading: false,
+    error: null,
+    generateNonce: vi.fn(),
+    getChallenge: vi.fn(),
+    verifyWallet: vi.fn(),
+    listWallets: vi.fn(),
+    selectWallet: vi.fn(),
+    unlinkWallet: vi.fn(),
+    renameWallet: vi.fn(),
+    getBalance: vi.fn(),
+    reset: vi.fn(),
+  };
+}
+
 describe('useWallet Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -188,18 +194,42 @@ describe('useWallet Hook', () => {
   });
 
   it('handles loading state', () => {
-    vi.mocked(sdkUseWallet).mockReturnValue(
-      buildSDKReturn({ loading: true })
-    );
+    vi.mocked(sdkUseWallet).mockImplementation(() => ({
+      wallets: [],
+      selectedWallet: null,
+      loading: true,
+      error: null,
+      generateNonce: vi.fn(),
+      getChallenge: vi.fn(),
+      verifyWallet: vi.fn(),
+      listWallets: vi.fn(),
+      selectWallet: vi.fn(),
+      unlinkWallet: vi.fn(),
+      renameWallet: vi.fn(),
+      getBalance: vi.fn(),
+      reset: vi.fn(),
+    }));
 
     const { result } = renderHook(() => useWallet());
     expect(result.current.loading).toBe(true);
   });
 
-  it('handles error state from SDK', () => {
-    vi.mocked(sdkUseWallet).mockReturnValue(
-      buildSDKReturn({ error: 'Failed to load wallets' })
-    );
+  it('handles error state', () => {
+    vi.mocked(sdkUseWallet).mockImplementation(() => ({
+      wallets: [],
+      selectedWallet: null,
+      loading: false,
+      error: 'Failed to load wallets',
+      generateNonce: vi.fn(),
+      getChallenge: vi.fn(),
+      verifyWallet: vi.fn(),
+      listWallets: vi.fn(),
+      selectWallet: vi.fn(),
+      unlinkWallet: vi.fn(),
+      renameWallet: vi.fn(),
+      getBalance: vi.fn(),
+      reset: vi.fn(),
+    }));
 
     const { result } = renderHook(() => useWallet());
     expect(result.current.error).toBe('Failed to load wallets');
@@ -346,12 +376,29 @@ describe('useWallet Hook', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // renameWallet
-  // -------------------------------------------------------------------------
-  describe('renameWallet', () => {
-    it('calls SDK renameWallet and shows success toast', async () => {
-      mockRenameWallet.mockResolvedValue(undefined);
+  it('handles wallet with no name', () => {
+    vi.mocked(sdkUseWallet).mockImplementation(() => ({
+      wallets: [
+        {
+          id: '2',
+          publicKey: 'test-key-2',
+          name: null,
+          verified: false,
+        },
+      ],
+      selectedWallet: null,
+      loading: false,
+      error: null,
+      generateNonce: vi.fn(),
+      getChallenge: vi.fn(),
+      verifyWallet: vi.fn(),
+      listWallets: vi.fn(),
+      selectWallet: vi.fn(),
+      unlinkWallet: vi.fn(),
+      renameWallet: vi.fn(),
+      getBalance: vi.fn(),
+      reset: vi.fn(),
+    }));
 
       const { result } = renderHook(() => useWallet());
       await act(() => result.current.renameWallet('1', 'New Name'));
@@ -479,6 +526,191 @@ describe('useWallet Hook', () => {
       await act(() => result.current.getBalance('wallet-id'));
 
       expect(mockGetBalance).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('optimistic wallet operations (#6)', () => {
+    it('disconnectWallet removes the wallet from the list immediately, before the SDK call resolves', async () => {
+      let resolveUnlink!: () => void;
+      const unlinkWallet = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveUnlink = resolve;
+          })
+      );
+      vi.mocked(sdkUseWallet).mockImplementation(() => ({
+        ...defaultSdkWalletResult(),
+        unlinkWallet,
+      }));
+
+      const { result } = renderHook(() => useWallet());
+      expect(result.current.wallets).toHaveLength(1);
+
+      let disconnectPromise!: Promise<void>;
+      act(() => {
+        disconnectPromise = result.current.disconnectWallet('1');
+      });
+
+      // Optimistic: the wallet is gone from the list synchronously, well
+      // before the mocked SDK call has resolved.
+      expect(result.current.wallets).toHaveLength(0);
+      expect(result.current.isPending('1')).toBe(true);
+
+      resolveUnlink();
+      await act(async () => {
+        await disconnectPromise;
+      });
+
+      expect(result.current.isPending('1')).toBe(false);
+      expect(unlinkWallet).toHaveBeenCalledWith('1');
+    });
+
+    it('rolls back and surfaces a retryable error when disconnectWallet fails', async () => {
+      const unlinkWallet = vi.fn().mockRejectedValue(new Error('network down'));
+      vi.mocked(sdkUseWallet).mockImplementation(() => ({
+        ...defaultSdkWalletResult(),
+        unlinkWallet,
+      }));
+
+      const { result } = renderHook(() => useWallet());
+
+      await act(async () => {
+        await expect(result.current.disconnectWallet('1')).rejects.toThrow('network down');
+      });
+
+      // Rollback: the wallet is back in the list, no longer pending, and
+      // the failure is surfaced with enough context to retry.
+      expect(result.current.wallets).toHaveLength(1);
+      expect(result.current.isPending('1')).toBe(false);
+      expect(result.current.actionError).toEqual({ walletId: '1', message: 'network down' });
+    });
+
+    it('renameWallet shows the new name immediately, before the SDK call resolves', async () => {
+      let resolveRename!: () => void;
+      const renameWallet = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveRename = resolve;
+          })
+      );
+      vi.mocked(sdkUseWallet).mockImplementation(() => ({
+        ...defaultSdkWalletResult(),
+        renameWallet,
+      }));
+
+      const { result } = renderHook(() => useWallet());
+
+      let renamePromise!: Promise<void>;
+      act(() => {
+        renamePromise = result.current.renameWallet('1', 'Renamed Wallet');
+      });
+
+      expect(result.current.wallets[0].name).toBe('Renamed Wallet');
+      expect(result.current.isPending('1')).toBe(true);
+
+      resolveRename();
+      await act(async () => {
+        await renamePromise;
+      });
+
+      expect(result.current.isPending('1')).toBe(false);
+      expect(renameWallet).toHaveBeenCalledWith('1', 'Renamed Wallet');
+    });
+
+    it('rolls back to the previous name and surfaces a retryable error when renameWallet fails', async () => {
+      const renameWallet = vi.fn().mockRejectedValue(new Error('name already taken'));
+      vi.mocked(sdkUseWallet).mockImplementation(() => ({
+        ...defaultSdkWalletResult(),
+        renameWallet,
+      }));
+
+      const { result } = renderHook(() => useWallet());
+
+      await act(async () => {
+        await expect(result.current.renameWallet('1', 'Renamed Wallet')).rejects.toThrow(
+          'name already taken'
+        );
+      });
+
+      expect(result.current.wallets[0].name).toBe('My Wallet');
+      expect(result.current.isPending('1')).toBe(false);
+      expect(result.current.actionError).toEqual({
+        walletId: '1',
+        message: 'name already taken',
+      });
+    });
+
+    it('isPending prevents double-submission: stays true for the duration of the in-flight call', async () => {
+      let resolveUnlink!: () => void;
+      const unlinkWallet = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveUnlink = resolve;
+          })
+      );
+      vi.mocked(sdkUseWallet).mockImplementation(() => ({
+        ...defaultSdkWalletResult(),
+        unlinkWallet,
+      }));
+
+      const { result } = renderHook(() => useWallet());
+      expect(result.current.isPending('1')).toBe(false);
+
+      let disconnectPromise!: Promise<void>;
+      act(() => {
+        disconnectPromise = result.current.disconnectWallet('1');
+      });
+      expect(result.current.isPending('1')).toBe(true);
+
+      resolveUnlink();
+      await act(async () => {
+        await disconnectPromise;
+      });
+      expect(result.current.isPending('1')).toBe(false);
+    });
+
+    it('retryAction re-runs the failed disconnect and clears the previous error on success', async () => {
+      const unlinkWallet = vi.fn().mockRejectedValueOnce(new Error('timeout')).mockResolvedValueOnce(undefined);
+      vi.mocked(sdkUseWallet).mockImplementation(() => ({
+        ...defaultSdkWalletResult(),
+        unlinkWallet,
+      }));
+
+      const { result } = renderHook(() => useWallet());
+
+      await act(async () => {
+        await expect(result.current.disconnectWallet('1')).rejects.toThrow('timeout');
+      });
+      expect(result.current.actionError?.message).toBe('timeout');
+
+      await act(async () => {
+        await result.current.retryAction('1');
+      });
+
+      expect(result.current.actionError).toBeNull();
+      expect(unlinkWallet).toHaveBeenCalledTimes(2);
+    });
+
+    it('clearActionError resets actionError without retrying', async () => {
+      const unlinkWallet = vi.fn().mockRejectedValue(new Error('offline'));
+      vi.mocked(sdkUseWallet).mockImplementation(() => ({
+        ...defaultSdkWalletResult(),
+        unlinkWallet,
+      }));
+
+      const { result } = renderHook(() => useWallet());
+
+      await act(async () => {
+        await expect(result.current.disconnectWallet('1')).rejects.toThrow('offline');
+      });
+      expect(result.current.actionError).not.toBeNull();
+
+      act(() => {
+        result.current.clearActionError();
+      });
+
+      expect(result.current.actionError).toBeNull();
+      expect(unlinkWallet).toHaveBeenCalledTimes(1);
     });
   });
 });
