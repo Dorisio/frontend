@@ -12,6 +12,17 @@ declare module 'vitest' {
     toBeInTheDocument(): this;
     toHaveClass(className: string | RegExp): this;
     toHaveAttribute(attr: string, value?: string | RegExp): this;
+    toBeDisabled(): this;
+    toBeEnabled(): this;
+    toBeVisible(): this;
+    toBeChecked(): this;
+    toHaveValue(value?: string | string[] | number): this;
+    toHaveTextContent(text: string | RegExp): this;
+    toHaveFocus(): this;
+    toBeRequired(): this;
+    toBeInvalid(): this;
+    toBeValid(): this;
+    toBeEmptyDOMElement(): this;
   }
 }
 
