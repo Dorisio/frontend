@@ -23,7 +23,9 @@ import CreatorDashboardPage from '../page';
 const replace = vi.fn();
 vi.mock('next/navigation', () => ({
   useParams: () => ({ username: 'testcreator' }),
-  useRouter: () => ({ replace }),
+  useRouter: () => ({ replace, push: vi.fn() }),
+  // useTransactionFilter syncs filter state to URL search params.
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 // useRealtimeNotifications (#11) needs a QueryClientProvider ancestor
@@ -358,8 +360,41 @@ describe('CreatorDashboardPage data loading (#7)', () => {
 
       render(<CreatorDashboardPage />);
 
-      await user.selectOptions(screen.getByRole('combobox'), '25');
-      expect(setPageSize).toHaveBeenCalledWith(25);
+      await user.selectOptions(screen.getByLabelText('Transactions per page'), '50');
+      expect(setPageSize).toHaveBeenCalledWith(50);
+    });
+  });
+
+  describe('transaction filtering and export (#25)', () => {
+    it('filters the rendered rows when a status filter is applied', async () => {
+      const user = userEvent.setup();
+      vi.mocked(sdkUseTransactionHistory).mockImplementation(() =>
+        transactionHistoryResult({ transactions: REALISTIC_TRANSACTIONS, total: 2 })
+      );
+
+      render(<CreatorDashboardPage />);
+
+      expect(screen.getByText('fan_alice')).toBeInTheDocument();
+
+      await user.selectOptions(screen.getByLabelText('Status'), 'pending');
+
+      // Only the pending transaction remains; the confirmed one is filtered out.
+      expect(screen.queryByText('fan_alice')).not.toBeInTheDocument();
+      expect(screen.getByText('$5.00')).toBeInTheDocument();
+      expect(screen.getByText(/Export CSV \(1\)/)).toBeInTheDocument();
+    });
+
+    it('shows a no-match message when filters exclude every transaction', async () => {
+      const user = userEvent.setup();
+      vi.mocked(sdkUseTransactionHistory).mockImplementation(() =>
+        transactionHistoryResult({ transactions: REALISTIC_TRANSACTIONS, total: 2 })
+      );
+
+      render(<CreatorDashboardPage />);
+
+      await user.type(screen.getByLabelText('Min amount'), '999');
+
+      expect(screen.getByText('No transactions match the current filters')).toBeInTheDocument();
     });
   });
 
