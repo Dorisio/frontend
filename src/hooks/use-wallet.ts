@@ -4,6 +4,7 @@
  */
 
 import { useWallet as sdkUseWallet } from 'dorisio-sdk/react';
+import { useWalletPreferenceStore } from '@/stores/wallet-preference-store';
 
 export interface WalletInfo {
   id: string;
@@ -69,9 +70,20 @@ export function useWallet() {
     await unlinkWallet(walletId);
   };
 
+  const defaultWalletId = useWalletPreferenceStore((s) => s.defaultWalletId);
+  const setDefaultWalletId = useWalletPreferenceStore((s) => s.setDefaultWalletId);
+  const getPreferredWalletId = useWalletPreferenceStore((s) => s.getPreferredWalletId);
+  const setLastUsedWallet = useWalletPreferenceStore((s) => s.setLastUsedWallet);
+
+  // The wallet the user has explicitly set as their default (dashboard setting).
+  const preferredWallet = defaultWalletId
+    ? (wallets.find((w) => w.id === defaultWalletId) ?? null)
+    : null;
+
   return {
     wallets,
     selectedWallet,
+    preferredWallet,
     loading,
     error,
     fetchWallets: listWallets,
@@ -83,5 +95,8 @@ export function useWallet() {
     renameWallet,
     getBalance,
     reset,
+    setDefaultWalletId,
+    getPreferredWalletId,
+    setLastUsedWallet,
   };
 }

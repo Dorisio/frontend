@@ -6,16 +6,26 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
+import { useTransactionFilter } from '@/hooks/use-transaction-filter';
 import { useWallet } from '@/hooks/use-wallet';
+import { TransactionFilterBar } from '@/components/sections/transaction-filter-bar';
 import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
 import Link from 'next/link';
 
 export default function CreatorDashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <CreatorDashboardPageContent />
+    </Suspense>
+  );
+}
+
+function CreatorDashboardPageContent() {
   const params = useParams();
   const router = useRouter();
   const username = params.username as string;
@@ -24,6 +34,8 @@ export default function CreatorDashboardPage() {
   const { balance, loading: balanceLoading } = useCreatorBalance(username);
   const { transactions, total, page, pageSize, goToPage, setPageSize } =
     useTransactionHistory(username);
+  const { filters, setFilter, resetFilters, filteredTransactions, exportToCsv } =
+    useTransactionFilter(transactions);
   const { wallets, loading: walletLoading } = useWallet();
 
   // Check if user is viewing their own dashboard
@@ -97,6 +109,14 @@ export default function CreatorDashboardPage() {
           </select>
         </div>
 
+        <TransactionFilterBar
+          filters={filters}
+          onChange={setFilter}
+          onReset={resetFilters}
+          onExport={() => exportToCsv(`${username}-transactions`)}
+          resultCount={filteredTransactions.length}
+        />
+
         {/* Table */}
         <div className="border rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
@@ -110,14 +130,18 @@ export default function CreatorDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {transactions.length === 0 ? (
+              {filteredTransactions.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    {balanceLoading ? 'Loading transactions...' : 'No transactions yet'}
+                    {balanceLoading
+                      ? 'Loading transactions...'
+                      : transactions.length === 0
+                        ? 'No transactions yet'
+                        : 'No transactions match the current filters'}
                   </td>
                 </tr>
               ) : (
-                transactions.map((tx) => (
+                filteredTransactions.map((tx) => (
                   <tr key={tx.id} className="border-b hover:bg-muted/30 transition">
                     <td className="px-4 py-3">{formatDate(tx.createdAt)}</td>
                     <td className="px-4 py-3 font-semibold">{formatCurrency(tx.amount)}</td>

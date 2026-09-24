@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function Navigation(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
@@ -67,6 +68,7 @@ export function Navigation(): JSX.Element {
 
         {/* Auth Buttons */}
         <div className="hidden md:flex gap-3 items-center">
+          <ThemeToggle />
           {isAuthenticated ? (
             <>
               <Link href="/dashboard">
@@ -91,14 +93,17 @@ export function Navigation(): JSX.Element {
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          onClick={toggleMenu}
-          className="md:hidden p-2 rounded-lg transition-smooth"
-          style={{ color: 'var(--body)' }}
-          aria-label="Toggle menu"
-        >
-          {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="md:hidden flex items-center gap-1">
+          <ThemeToggle />
+          <button
+            onClick={toggleMenu}
+            className="p-2 rounded-lg transition-smooth"
+            style={{ color: 'var(--body)' }}
+            aria-label="Toggle menu"
+          >
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
