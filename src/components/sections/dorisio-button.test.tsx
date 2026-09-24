@@ -69,8 +69,7 @@ describe('DorisioButton (Send Tip flow)', () => {
 
     await user.click(screen.getByRole('button', { name: /send a tip/i }));
 
-    const continueButton = screen.getByRole('button', { name: 'Continue' });
-    expect(continueButton).toHaveAttribute('disabled');
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
   });
 
   it('calls createTip with the selected creator and amount', async () => {
