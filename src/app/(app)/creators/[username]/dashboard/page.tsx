@@ -13,6 +13,10 @@ import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
 import { useWallet } from '@/hooks/use-wallet';
 import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
+import {
+  EarningsCardSkeleton,
+  TransactionTableSkeleton,
+} from '@/components/shared/creator-skeletons';
 import Link from 'next/link';
 
 export default function CreatorDashboardPage() {
@@ -22,8 +26,15 @@ export default function CreatorDashboardPage() {
   const user = useAuthStore((state) => state.user);
 
   const { balance, loading: balanceLoading } = useCreatorBalance(username);
-  const { transactions, total, page, pageSize, goToPage, setPageSize } =
-    useTransactionHistory(username);
+  const {
+    transactions,
+    total,
+    page,
+    pageSize,
+    goToPage,
+    setPageSize,
+    loading: transactionsLoading,
+  } = useTransactionHistory(username);
   const {
     wallets,
     loading: walletLoading,
@@ -62,34 +73,38 @@ export default function CreatorDashboardPage() {
       </div>
 
       {/* Earnings Overview Cards */}
-      <section className="grid md:grid-cols-3 gap-6">
-        {/* Total Earnings */}
-        <div className="bg-background border rounded-lg p-6 space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Total Earnings</h3>
-          <p className="text-3xl font-bold">
-            {balanceLoading ? '...' : formatCurrency(balance?.totalEarnings || 0)}
-          </p>
-          <p className="text-xs text-green-600">All-time earnings</p>
-        </div>
+      {balanceLoading ? (
+        <section className="grid md:grid-cols-3 gap-6">
+          <EarningsCardSkeleton />
+          <EarningsCardSkeleton />
+          <EarningsCardSkeleton />
+        </section>
+      ) : (
+        <section className="grid md:grid-cols-3 gap-6 animate-fade-in">
+          {/* Total Earnings */}
+          <div className="bg-background border rounded-lg p-6 space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Total Earnings</h3>
+            <p className="text-3xl font-bold">{formatCurrency(balance?.totalEarnings || 0)}</p>
+            <p className="text-xs text-green-600">All-time earnings</p>
+          </div>
 
-        {/* Available Balance */}
-        <div className="bg-background border rounded-lg p-6 space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Available Balance</h3>
-          <p className="text-3xl font-bold">
-            {balanceLoading ? '...' : formatCurrency(balance?.availableBalance || 0)}
-          </p>
-          <p className="text-xs text-muted-foreground">Ready to withdraw</p>
-        </div>
+          {/* Available Balance */}
+          <div className="bg-background border rounded-lg p-6 space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Available Balance</h3>
+            <p className="text-3xl font-bold">
+              {formatCurrency(balance?.availableBalance || 0)}
+            </p>
+            <p className="text-xs text-muted-foreground">Ready to withdraw</p>
+          </div>
 
-        {/* Pending Balance */}
-        <div className="bg-background border rounded-lg p-6 space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Pending Balance</h3>
-          <p className="text-3xl font-bold">
-            {balanceLoading ? '...' : formatCurrency(balance?.pendingBalance || 0)}
-          </p>
-          <p className="text-xs text-yellow-600">Confirming on blockchain</p>
-        </div>
-      </section>
+          {/* Pending Balance */}
+          <div className="bg-background border rounded-lg p-6 space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Pending Balance</h3>
+            <p className="text-3xl font-bold">{formatCurrency(balance?.pendingBalance || 0)}</p>
+            <p className="text-xs text-yellow-600">Confirming on blockchain</p>
+          </div>
+        </section>
+      )}
 
       {/* Transaction History */}
       <section className="space-y-4">
@@ -106,62 +121,66 @@ export default function CreatorDashboardPage() {
         </div>
 
         {/* Table */}
-        <div className="border rounded-lg overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/50">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">Date</th>
-                <th className="px-4 py-3 text-left font-semibold">Amount</th>
-                <th className="px-4 py-3 text-left font-semibold">From</th>
-                <th className="px-4 py-3 text-left font-semibold">Status</th>
-                <th className="px-4 py-3 text-left font-semibold">Tx ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.length === 0 ? (
+        {transactionsLoading && transactions.length === 0 ? (
+          <TransactionTableSkeleton />
+        ) : (
+          <div className="border rounded-lg overflow-x-auto animate-fade-in">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/50">
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    {balanceLoading ? 'Loading transactions...' : 'No transactions yet'}
-                  </td>
+                  <th className="px-4 py-3 text-left font-semibold">Date</th>
+                  <th className="px-4 py-3 text-left font-semibold">Amount</th>
+                  <th className="px-4 py-3 text-left font-semibold">From</th>
+                  <th className="px-4 py-3 text-left font-semibold">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold">Tx ID</th>
                 </tr>
-              ) : (
-                transactions.map((tx) => (
-                  <tr key={tx.id} className="border-b hover:bg-muted/30 transition">
-                    <td className="px-4 py-3">{formatDate(tx.createdAt)}</td>
-                    <td className="px-4 py-3 font-semibold">{formatCurrency(tx.amount)}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground truncate">
-                      {tx.senderUsername || `${(tx.senderId || '').slice(0, 8)}...`}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                          tx.status
-                        )}`}
-                      >
-                        {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground truncate">
-                      {tx.transactionHash ? (
-                        <a
-                          href={`https://stellar.expert/explorer/testnet/tx/${tx.transactionHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:text-primary"
-                          title={tx.transactionHash}
-                        >
-                          {tx.transactionHash.slice(0, 8)}...
-                        </a>
-                      ) : (
-                        '-'
-                      )}
+              </thead>
+              <tbody>
+                {transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                      No transactions yet
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  transactions.map((tx) => (
+                    <tr key={tx.id} className="border-b hover:bg-muted/30 transition">
+                      <td className="px-4 py-3">{formatDate(tx.createdAt)}</td>
+                      <td className="px-4 py-3 font-semibold">{formatCurrency(tx.amount)}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground truncate">
+                        {tx.senderUsername || `${(tx.senderId || '').slice(0, 8)}...`}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+                            tx.status
+                          )}`}
+                        >
+                          {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground truncate">
+                        {tx.transactionHash ? (
+                          <a
+                            href={`https://stellar.expert/explorer/testnet/tx/${tx.transactionHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-primary"
+                            title={tx.transactionHash}
+                          >
+                            {tx.transactionHash.slice(0, 8)}...
+                          </a>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Pagination */}
         {total > pageSize && transactions.length > 0 && (

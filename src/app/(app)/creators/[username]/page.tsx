@@ -14,6 +14,12 @@ import { useTransactionHistory } from '@/hooks/use-transaction-history';
 import { useDorisio } from 'dorisio-sdk/react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import DorisioButton from '@/components/sections/dorisio-button';
+import { Skeleton } from '@/components/shared/skeleton';
+import {
+  EarningsCardSkeleton,
+  ProfileHeaderSkeleton,
+  TransactionTableSkeleton,
+} from '@/components/shared/creator-skeletons';
 
 interface CreatorPageState {
   creator: Creator | null;
@@ -54,12 +60,23 @@ export default function CreatorProfilePage(): JSX.Element {
 
   if (state.loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading creator profile...</p>
+      <main className="min-h-screen bg-background">
+        <ProfileHeaderSkeleton />
+        <div className="max-w-4xl mx-auto px-4 py-12 space-y-12">
+          <section>
+            <Skeleton className="h-6 w-48 mb-6" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <EarningsCardSkeleton />
+              <EarningsCardSkeleton />
+              <EarningsCardSkeleton />
+            </div>
+          </section>
+          <section>
+            <Skeleton className="h-6 w-32 mb-6" />
+            <TransactionTableSkeleton />
+          </section>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -80,7 +97,7 @@ export default function CreatorProfilePage(): JSX.Element {
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background animate-fade-in">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b">
         <div className="max-w-4xl mx-auto px-4 py-12">
