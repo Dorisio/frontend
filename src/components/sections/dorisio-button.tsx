@@ -17,6 +17,8 @@ import {
 import { useCreateTip } from '@/hooks/use-create-tip';
 import { useNotification } from '@/components/notification-provider';
 import { dedupedRequest } from '@/lib/request-deduplicator';
+import { EmojiPicker } from '@/components/shared/emoji-picker';
+import { useWallet } from '@/hooks/use-wallet';
 
 interface DorisioButtonProps {
   creatorId: string;
@@ -36,6 +38,10 @@ export default function DorisioButton({
   const [isOpen, setIsOpen] = useState(false);
   const { wallets, getPreferredWalletId, setLastUsedWallet } = useWallet();
   const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [message, setMessage] = useState('');
+  const { createTip, loading } = useCreateTip();
+  const { success: notifySuccess, error: notifyError } = useNotification();
 
   useEffect(() => {
     if (isOpen && !selectedWalletId && wallets.length > 0) {
@@ -66,6 +72,7 @@ export default function DorisioButton({
     setIsOpen(open);
     if (!open) {
       setSelectedAmount(null);
+      setMessage('');
     }
   }
 
@@ -79,12 +86,20 @@ export default function DorisioButton({
     const dedupeKey = `create-tip:${creatorId}:${selectedAmount}`;
 
     try {
-      await dedupedRequest(() => createTip({ creatorId, amount: selectedAmount }), dedupeKey);
-      success(`Tip of $${selectedAmount} sent!`, 'Thank you');
+      await dedupedRequest(
+        () =>
+          createTip({
+            creatorId,
+            amount: selectedAmount,
+            message: message.trim() || undefined,
+          }),
+        dedupeKey
+      );
+      notifySuccess(`Tip of $${selectedAmount} sent!`, 'Thank you');
       handleClose(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to send tip';
-      notifyError(message, 'Tip failed');
+      const errMessage = err instanceof Error ? err.message : 'Failed to send tip';
+      notifyError(errMessage, 'Tip failed');
     }
   }
 
@@ -103,9 +118,9 @@ export default function DorisioButton({
             <ModalTitle>Send a Tip</ModalTitle>
             <ModalDescription>Support this creator with an instant USDC payment</ModalDescription>
           </ModalHeader>
-          <div className="px-6 py-4">
-            <p className="text-sm text-muted-foreground mb-4">Creator ID: {creatorId}</p>
-            <div className="space-y-3 mb-4">
+          <div className="px-6 py-4 space-y-4">
+            <p className="text-sm text-muted-foreground">Creator ID: {creatorId}</p>
+            <div className="space-y-3">
               <p className="text-sm font-medium">Tip from:</p>
               <WalletSelector value={selectedWalletId} onChange={setSelectedWalletId} />
             </div>
@@ -127,6 +142,33 @@ export default function DorisioButton({
                     ${amount}
                   </button>
                 ))}
+              </div>
+            </div>
+            <div className="space-y-3">
+              <label className="text-sm font-medium flex items-center justify-between">
+                <span>Optional message (max 255 chars)</span>
+                <EmojiPicker
+                  onEmojiSelect={(emoji) =>
+                    setMessage((prev) => {
+                      const newMsg = prev + emoji;
+                      return newMsg.length > 255 ? prev : newMsg;
+                    })
+                  }
+                />
+              </label>
+              <textarea
+                value={message}
+                onChange={(e) => {
+                  const newMsg = e.target.value.slice(0, 255);
+                  setMessage(newMsg);
+                }}
+                placeholder="Share why you're supporting this creator..."
+                className="input-dark resize-none"
+                rows={3}
+                maxLength={255}
+              />
+              <div className="text-xs text-muted-foreground text-right">
+                {message.length}/255
               </div>
             </div>
           </div>
