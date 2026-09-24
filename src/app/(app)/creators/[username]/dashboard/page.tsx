@@ -25,7 +25,7 @@ export default function CreatorDashboardPage() {
   const username = params.username as string;
   const user = useAuthStore((state) => state.user);
 
-  const { balance, loading: balanceLoading } = useCreatorBalance(username);
+  const { balance, loading: balanceLoading, error: balanceError } = useCreatorBalance(username);
   const {
     transactions,
     total,
@@ -34,6 +34,7 @@ export default function CreatorDashboardPage() {
     goToPage,
     setPageSize,
     loading: transactionsLoading,
+    error: transactionsError,
   } = useTransactionHistory(username);
   const {
     wallets,
@@ -73,6 +74,14 @@ export default function CreatorDashboardPage() {
       </div>
 
       {/* Earnings Overview Cards */}
+      {balanceError && !balanceLoading && (
+        <div
+          className="p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-red-700"
+          role="alert"
+        >
+          Unable to load earnings: {balanceError}
+        </div>
+      )}
       {balanceLoading ? (
         <section className="grid md:grid-cols-3 gap-6">
           <EarningsCardSkeleton />
@@ -121,6 +130,14 @@ export default function CreatorDashboardPage() {
         </div>
 
         {/* Table */}
+        {transactionsError && !transactionsLoading && (
+          <div
+            className="p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-red-700"
+            role="alert"
+          >
+            Unable to load transaction history: {transactionsError}
+          </div>
+        )}
         {transactionsLoading && transactions.length === 0 ? (
           <TransactionTableSkeleton />
         ) : (
