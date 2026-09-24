@@ -31,6 +31,7 @@ export function TopTippersTable({ data }: TopTippersTableProps): JSX.Element {
             <th className="px-4 py-3 text-left font-semibold">Total Tipped</th>
             <th className="px-4 py-3 text-left font-semibold">Tips</th>
             <th className="px-4 py-3 text-left font-semibold">Last Tip</th>
+            <th className="px-4 py-3 text-left font-semibold">Latest Message</th>
           </tr>
         </thead>
         <tbody>
@@ -41,6 +42,9 @@ export function TopTippersTable({ data }: TopTippersTableProps): JSX.Element {
               <td className="px-4 py-3 font-semibold">{formatCurrency(tipper.totalAmount)}</td>
               <td className="px-4 py-3">{tipper.tipCount}</td>
               <td className="px-4 py-3 text-muted-foreground">{formatDate(tipper.lastTipAt)}</td>
+              <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate">
+                {tipper.latestMessage ? tipper.latestMessage : '—'}
+              </td>
             </tr>
           ))}
         </tbody>
