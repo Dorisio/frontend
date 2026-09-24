@@ -24,7 +24,15 @@ export default function CreatorDashboardPage() {
   const { balance, loading: balanceLoading } = useCreatorBalance(username);
   const { transactions, total, page, pageSize, goToPage, setPageSize } =
     useTransactionHistory(username);
-  const { wallets, loading: walletLoading } = useWallet();
+  const {
+    wallets,
+    loading: walletLoading,
+    disconnectWallet,
+    isPending,
+    actionError,
+    clearActionError,
+    retryAction,
+  } = useWallet();
 
   // Check if user is viewing their own dashboard
   useEffect(() => {
@@ -206,6 +214,27 @@ export default function CreatorDashboardPage() {
         <div className="border rounded-lg p-6 space-y-4">
           <h3 className="font-semibold">Connected Wallets</h3>
 
+          {actionError && (
+            <div className="flex items-center justify-between gap-4 p-3 border border-red-200 bg-red-50 rounded text-sm text-red-700">
+              <span>{actionError.message}</span>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => retryAction(actionError.walletId)}
+                  className="px-3 py-1 rounded border border-red-300 hover:bg-red-100 transition font-medium"
+                >
+                  Retry
+                </button>
+                <button
+                  onClick={clearActionError}
+                  className="px-3 py-1 text-red-500 hover:text-red-700 transition"
+                  aria-label="Dismiss error"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
           {walletLoading ? (
             <p className="text-muted-foreground">Loading wallets...</p>
           ) : wallets.length === 0 ? (
@@ -215,7 +244,9 @@ export default function CreatorDashboardPage() {
               {wallets.map((wallet) => (
                 <div
                   key={wallet.id}
-                  className="flex items-center justify-between p-4 border rounded bg-muted/30"
+                  className={`flex items-center justify-between p-4 border rounded bg-muted/30 transition-opacity ${
+                    isPending(wallet.id) ? 'opacity-50' : 'opacity-100'
+                  }`}
                 >
                   <div className="flex-1 space-y-1">
                     <p className="font-medium">{wallet.name || 'Unnamed Wallet'}</p>
@@ -224,11 +255,17 @@ export default function CreatorDashboardPage() {
                     </p>
                   </div>
                   <button
-                    disabled
-                    className="px-4 py-2 text-gray-400 cursor-not-allowed rounded border border-gray-200 text-sm font-medium"
-                    title="Wallet disconnection coming soon"
+                    onClick={() => {
+                      void disconnectWallet(wallet.id).catch(() => {
+                        // Rollback and actionError are handled by useWallet;
+                        // this catch only stops the rejection from
+                        // surfacing as an unhandled promise rejection.
+                      });
+                    }}
+                    disabled={isPending(wallet.id)}
+                    className="px-4 py-2 text-red-600 hover:bg-red-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded border border-red-200 disabled:border-gray-200 text-sm font-medium transition"
                   >
-                    Disconnect
+                    {isPending(wallet.id) ? 'Disconnecting...' : 'Disconnect'}
                   </button>
                 </div>
               ))}
