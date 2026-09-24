@@ -58,3 +58,53 @@ export interface PageState {
   loading: boolean;
   error: string | null;
 }
+
+/**
+ * Creator analytics
+ *
+ * The `dorisio-sdk` package has no analytics endpoint (only per-transaction
+ * history and a plain earnings summary), so this shape is served by a Next.js
+ * API route (`/api/creators/[username]/analytics`) under this app rather than
+ * the SDK. See `src/app/api/creators/[username]/analytics/route.ts`.
+ */
+export type AnalyticsDateRangePreset = '30d' | '90d' | 'ytd';
+
+/** A single day's earnings, for the earnings trend line chart. */
+export interface EarningsTrendPoint {
+  /** ISO date string (YYYY-MM-DD). */
+  date: string;
+  amount: number;
+}
+
+/** A tip source/category's share of total tips, for the breakdown pie chart. */
+export interface TipSourceBreakdownEntry {
+  source: string;
+  amount: number;
+  count: number;
+}
+
+/** A single top tipper row, for the top tippers table. */
+export interface TopTipper {
+  id: string;
+  name: string;
+  totalAmount: number;
+  tipCount: number;
+  lastTipAt: string;
+}
+
+export interface CreatorAnalyticsSummary {
+  totalEarnings: number;
+  earningsThisMonth: number;
+  earningsThisWeek: number;
+  totalTips: number;
+}
+
+export interface CreatorAnalytics {
+  range: AnalyticsDateRangePreset;
+  startDate: string;
+  endDate: string;
+  summary: CreatorAnalyticsSummary;
+  earningsTrend: EarningsTrendPoint[];
+  sourceBreakdown: TipSourceBreakdownEntry[];
+  topTippers: TopTipper[];
+}
