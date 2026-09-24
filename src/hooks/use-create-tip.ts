@@ -3,7 +3,10 @@
  * Wrapper around SDK's useCreateTip hook with frontend-specific types
  */
 
-import { useCreateTip as sdkUseCreateTip } from 'dorisio-sdk/react';
+import {
+  useCreateTip as sdkUseCreateTip,
+  type SDKTipResult,
+} from 'dorisio-sdk/react';
 
 export interface CreateTipPayload {
   creatorId: string;
@@ -11,22 +14,43 @@ export interface CreateTipPayload {
   message?: string;
 }
 
-export type TipStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'failed'
-  | 'creating'
-  | 'building'
-  | 'submitting'
-  | 'confirming'
-  | 'success'
-  | 'error';
+export const TIP_STATUSES = [
+  'pending',
+  'confirmed',
+  'failed',
+  'creating',
+  'building',
+  'submitting',
+  'confirming',
+  'success',
+  'error',
+] as const;
+
+export type TipStatus = (typeof TIP_STATUSES)[number];
 
 export interface TipResponse {
-  id: string;
+  id?: string;
   status: TipStatus;
   transactionHash?: string;
   amount?: number;
+}
+
+function isTipStatus(value: string | null | undefined): value is TipStatus {
+  return typeof value === 'string' && (TIP_STATUSES as readonly string[]).includes(value);
+}
+
+function toTipStatus(...values: Array<string | null | undefined>): TipStatus {
+  for (const value of values) {
+    if (isTipStatus(value)) {
+      return value;
+    }
+  }
+  return 'pending';
+}
+
+function toTransactionHash(result: SDKTipResult | null | undefined): string | undefined {
+  const hash = result?.transactionHash;
+  return typeof hash === 'string' ? hash : undefined;
 }
 
 export function useCreateTip() {
@@ -49,12 +73,10 @@ export function useCreateTip() {
       message: payload.message,
     });
 
-    const resultWithHash = result as unknown as { transactionHash?: string };
-
     return {
-      id: result?.id || '',
-      status: ((result?.status || step) as unknown as TipStatus) || 'pending',
-      transactionHash: resultWithHash?.transactionHash,
+      id: result?.id,
+      status: toTipStatus(result?.status, step),
+      transactionHash: toTransactionHash(result),
       amount: result?.amount,
     };
   };
@@ -64,10 +86,10 @@ export function useCreateTip() {
     error,
     tip: data
       ? {
-          id: data.id || '',
-          status: (step as unknown as TipStatus) || 'pending',
-          transactionHash: (data as unknown as { transactionHash?: string })?.transactionHash,
-          amount: data.amount,
+          id: data?.id,
+          status: toTipStatus(data?.status, step),
+          transactionHash: toTransactionHash(data),
+          amount: data?.amount,
         }
       : null,
     createTip,

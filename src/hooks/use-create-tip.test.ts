@@ -1,40 +1,44 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useCreateTip } from './use-create-tip';
+import type { SDKTipResult, UseCreateTipReturn } from 'dorisio-sdk/react';
 
-// Mock useMutation from react-query
-vi.mock('@tanstack/react-query', () => ({
-  useMutation: vi.fn((_options) => ({
-    mutate: vi.fn(async (data) => {
-      return {
-        id: 'tip-123',
-        amount: data.amount,
-        creatorId: data.creatorId,
-        status: 'success',
-      };
-    }),
-    mutateAsync: vi.fn(),
-    isPending: false,
-    isSuccess: false,
-    isError: false,
-    error: null,
-    data: null,
-    reset: vi.fn(),
-  })),
+const { mockSdkUseCreateTip, mockSdkCreateTip } = vi.hoisted(() => ({
+  mockSdkUseCreateTip: vi.fn(),
+  mockSdkCreateTip: vi.fn(),
 }));
 
-// Mock the Dorisio SDK
 vi.mock('dorisio-sdk/react', () => ({
-  useDorisio: vi.fn(() => ({
-    client: {
-      createTip: vi.fn(),
-    },
-  })),
+  useCreateTip: mockSdkUseCreateTip,
 }));
+
+const defaultResult: SDKTipResult = {
+  id: 'tip-123',
+  amount: 25,
+  status: 'success',
+  transactionHash: 'tx-hash-123',
+};
+
+function sdkReturn(overrides: Partial<UseCreateTipReturn> = {}): UseCreateTipReturn {
+  return {
+    createTip: mockSdkCreateTip,
+    buildTransaction: vi.fn(async () => undefined),
+    submitTransaction: vi.fn(async () => undefined),
+    confirmTransaction: vi.fn(async () => undefined),
+    data: null,
+    loading: false,
+    error: null,
+    step: null,
+    reset: vi.fn(),
+    ...overrides,
+  };
+}
 
 describe('useCreateTip Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSdkCreateTip.mockResolvedValue(defaultResult);
+    mockSdkUseCreateTip.mockReturnValue(sdkReturn());
   });
 
   it('provides createTip function', () => {
@@ -69,9 +73,71 @@ describe('useCreateTip Hook', () => {
     expect(typeof result.current.reset).toBe('function');
   });
 
-  it('provides tip data', () => {
+  it('maps the SDK result into a TipResponse when creating a tip', async () => {
     const { result } = renderHook(() => useCreateTip());
 
-    expect(result.current.tip === null || typeof result.current.tip === 'object').toBe(true);
+    const response = await result.current.createTip({
+      creatorId: 'creator-1',
+      amount: 25,
+      message: 'Great work',
+    });
+
+    expect(mockSdkCreateTip).toHaveBeenCalledWith({
+      creatorId: 'creator-1',
+      amount: 25,
+      message: 'Great work',
+    });
+    expect(response).toEqual({
+      id: 'tip-123',
+      amount: 25,
+      status: 'success',
+      transactionHash: 'tx-hash-123',
+    });
+  });
+
+  it('falls back to the SDK step when the result has no status', async () => {
+    mockSdkCreateTip.mockResolvedValue({ id: 'tip-1', amount: 10 });
+    mockSdkUseCreateTip.mockReturnValue(sdkReturn({ step: 'submitting' }));
+
+    const { result } = renderHook(() => useCreateTip());
+
+    const response = await result.current.createTip({ creatorId: 'c', amount: 10 });
+
+    expect(response.status).toBe('submitting');
+  });
+
+  it('defaults to pending when neither result nor step provides a status', async () => {
+    mockSdkCreateTip.mockResolvedValue({});
+
+    const { result } = renderHook(() => useCreateTip());
+
+    const response = await result.current.createTip({ creatorId: 'c', amount: 10 });
+
+    expect(response.status).toBe('pending');
+    expect(response.transactionHash).toBeUndefined();
+  });
+
+  it('exposes tip data mapped from the SDK', () => {
+    mockSdkUseCreateTip.mockReturnValue(
+      sdkReturn({
+        data: { id: 'tip-9', amount: 50, status: 'confirmed', transactionHash: 'tx-9' },
+        step: 'submitting',
+      })
+    );
+
+    const { result } = renderHook(() => useCreateTip());
+
+    expect(result.current.tip).toEqual({
+      id: 'tip-9',
+      amount: 50,
+      status: 'confirmed',
+      transactionHash: 'tx-9',
+    });
+  });
+
+  it('returns null tip when SDK data is null', () => {
+    const { result } = renderHook(() => useCreateTip());
+
+    expect(result.current.tip).toBeNull();
   });
 });
