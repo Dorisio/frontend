@@ -141,7 +141,12 @@ function buildTopTippers(
 }
 
 function buildAnalytics(username: string, range: AnalyticsDateRangePreset): CreatorAnalytics {
-  const now = new Date();
+  // Anchored to the start of the current UTC day (not the live clock) so that
+  // two calls within the same day produce byte-identical output, this is a
+  // deterministic mock data source and must be stable across immediate
+  // successive requests for the same username+range.
+  const today = new Date();
+  const now = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
   const days = rangeToDays(range, now);
   const startDate = new Date(now);
   startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
