@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
 import { useWallet } from '@/hooks/use-wallet';
+import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications';
 import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
 import {
   EarningsCardSkeleton,
@@ -45,6 +46,7 @@ export default function CreatorDashboardPage() {
     clearActionError,
     retryAction,
   } = useWallet();
+  const { isConnected: liveConnected } = useRealtimeNotifications(username);
 
   // Check if user is viewing their own dashboard
   useEffect(() => {
@@ -68,9 +70,23 @@ export default function CreatorDashboardPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       {/* Header */}
-      <div className="border-b pb-6">
-        <h1 className="text-3xl font-bold mb-2">Creator Dashboard</h1>
-        <p className="text-muted-foreground">Manage earnings, transactions, and wallet</p>
+      <div className="border-b pb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Creator Dashboard</h1>
+          <p className="text-muted-foreground">Manage earnings, transactions, and wallet</p>
+        </div>
+        <span
+          className={`shrink-0 text-xs font-medium mt-1 ${
+            liveConnected ? 'text-green-600' : 'text-muted-foreground'
+          }`}
+          title={
+            liveConnected
+              ? 'Connected: new tips update this page live'
+              : 'Not connected: refresh to see new tips'
+          }
+        >
+          {liveConnected ? '● Live' : '● Offline'}
+        </span>
       </div>
 
       {/* Earnings Overview Cards */}

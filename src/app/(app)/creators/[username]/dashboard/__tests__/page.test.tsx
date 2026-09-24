@@ -26,6 +26,14 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace }),
 }));
 
+// useRealtimeNotifications (#11) needs a QueryClientProvider ancestor
+// (useQueryClient) that these tests don't set up, since they're focused
+// on data loading, not the live-connection indicator; its own behavior is
+// covered exhaustively by use-realtime-notifications.test.tsx.
+vi.mock('@/hooks/use-realtime-notifications', () => ({
+  useRealtimeNotifications: vi.fn(() => ({ notifications: [], isConnected: false, error: null })),
+}));
+
 function balanceResult(overrides: Partial<ReturnType<typeof sdkUseCreatorBalance>> = {}) {
   return {
     balance: null,
@@ -352,6 +360,34 @@ describe('CreatorDashboardPage data loading (#7)', () => {
 
       await user.selectOptions(screen.getByRole('combobox'), '25');
       expect(setPageSize).toHaveBeenCalledWith(25);
+    });
+  });
+
+  describe('realtime connection indicator (#11)', () => {
+    it('shows Offline when useRealtimeNotifications reports not connected', async () => {
+      const { useRealtimeNotifications } = await import('@/hooks/use-realtime-notifications');
+      vi.mocked(useRealtimeNotifications).mockReturnValue({
+        notifications: [],
+        isConnected: false,
+        error: null,
+      });
+
+      render(<CreatorDashboardPage />);
+
+      expect(screen.getByText('● Offline')).toBeInTheDocument();
+    });
+
+    it('shows Live when useRealtimeNotifications reports connected', async () => {
+      const { useRealtimeNotifications } = await import('@/hooks/use-realtime-notifications');
+      vi.mocked(useRealtimeNotifications).mockReturnValue({
+        notifications: [],
+        isConnected: true,
+        error: null,
+      });
+
+      render(<CreatorDashboardPage />);
+
+      expect(screen.getByText('● Live')).toBeInTheDocument();
     });
   });
 });
