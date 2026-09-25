@@ -8,6 +8,7 @@ const baseFilters: TransactionFilterState = {
   dateTo: '',
   minAmount: '',
   maxAmount: '',
+  messageKeyword: '',
   status: 'all',
   sortField: 'date',
   sortDirection: 'desc',
@@ -20,6 +21,7 @@ const transactions: Transaction[] = [
     status: 'confirmed',
     createdAt: '2026-01-01T00:00:00Z',
     senderUsername: 'alice',
+    message: 'Amazing tutorial',
   },
   {
     id: '2',
@@ -94,6 +96,11 @@ describe('applyTransactionFilters', () => {
     expect(result.map((t) => t.id)).toEqual(['2', '3', '1']);
   });
 
+  it('filters by message keyword', () => {
+    const result = applyTransactionFilters(transactions, { ...baseFilters, messageKeyword: 'tutorial' });
+    expect(result.map((t) => t.id)).toEqual(['1']);
+  });
+
   it('combines multiple filters together', () => {
     const result = applyTransactionFilters(transactions, {
       ...baseFilters,
@@ -121,7 +128,7 @@ describe('transactionsToCsv', () => {
   it('produces a header row followed by one row per transaction', () => {
     const csv = transactionsToCsv(transactions);
     const lines = csv.split('\n');
-    expect(lines[0]).toBe('Date,Amount,From,Status,Transaction Hash');
+    expect(lines[0]).toBe('Date,Amount,From,Message,Status,Transaction Hash');
     expect(lines).toHaveLength(4);
   });
 
@@ -153,6 +160,6 @@ describe('transactionsToCsv', () => {
 
   it('returns just the header row for an empty transaction list', () => {
     const csv = transactionsToCsv([]);
-    expect(csv).toBe('Date,Amount,From,Status,Transaction Hash');
+    expect(csv).toBe('Date,Amount,From,Message,Status,Transaction Hash');
   });
 });

@@ -23,7 +23,12 @@ import type {
   TopTipper,
 } from '@/types';
 
-const VALID_RANGES: AnalyticsDateRangePreset[] = ['30d', '90d', 'ytd'];
+const VALID_RANGES: AnalyticsDateRangePreset[] = ['30d', '90d', 'ytd', 'custom'];
+
+function daysBetweenInclusive(startDate: Date, endDate: Date): number {
+  const diffMs = endDate.getTime() - startDate.getTime();
+  return Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1);
+}
 
 function rangeToDays(range: AnalyticsDateRangePreset, now: Date): number {
   switch (range) {
@@ -33,9 +38,10 @@ function rangeToDays(range: AnalyticsDateRangePreset, now: Date): number {
       return 90;
     case 'ytd': {
       const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
-      const diffMs = now.getTime() - startOfYear.getTime();
-      return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1);
+      return daysBetweenInclusive(startOfYear, now);
     }
+    case 'custom':
+      return 30;
     default:
       return 30;
   }
@@ -64,10 +70,12 @@ function toISODate(date: Date): string {
 function buildEarningsTrend(
   username: string,
   range: AnalyticsDateRangePreset,
-  now: Date
+  now: Date,
+  dayCount?: number,
+  seedSuffix = range
 ): EarningsTrendPoint[] {
-  const days = rangeToDays(range, now);
-  const random = seededRandom(`${username}:${range}:trend`);
+  const days = dayCount ?? rangeToDays(range, now);
+  const random = seededRandom(`${username}:${seedSuffix}:trend`);
   const points: EarningsTrendPoint[] = [];
 
   for (let i = days - 1; i >= 0; i--) {
@@ -87,7 +95,7 @@ const TIP_SOURCES = ['Profile page', 'Embed widget', 'Shared link', 'Social medi
 
 function buildSourceBreakdown(
   username: string,
-  range: AnalyticsDateRangePreset,
+  range: string,
   earningsTrend: EarningsTrendPoint[]
 ): TipSourceBreakdownEntry[] {
   const random = seededRandom(`${username}:${range}:sources`);
@@ -118,7 +126,7 @@ const TIPPER_NAMES = [
 
 function buildTopTippers(
   username: string,
-  range: AnalyticsDateRangePreset,
+  range: string,
   now: Date
 ): TopTipper[] {
   const random = seededRandom(`${username}:${range}:tippers`);
@@ -140,20 +148,46 @@ function buildTopTippers(
   }).sort((a, b) => b.totalAmount - a.totalAmount);
 }
 
-function buildAnalytics(username: string, range: AnalyticsDateRangePreset): CreatorAnalytics {
+function parseISODateParam(value: string | null): Date | null {
+  if (!value) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return null;
+
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function buildAnalytics(
+  username: string,
+  range: AnalyticsDateRangePreset,
+  customStartDate?: Date | null,
+  customEndDate?: Date | null
+): CreatorAnalytics {
   // Anchored to the start of the current UTC day (not the live clock) so that
   // two calls within the same day produce byte-identical output, this is a
   // deterministic mock data source and must be stable across immediate
   // successive requests for the same username+range.
   const today = new Date();
   const now = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-  const days = rangeToDays(range, now);
-  const startDate = new Date(now);
-  startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
+  let endDate = range === 'custom' && customEndDate ? new Date(customEndDate) : now;
+  let startDate =
+    range === 'custom' && customStartDate ? new Date(customStartDate) : new Date(endDate);
+  if (range === 'custom' && startDate.getTime() > endDate.getTime()) {
+    [startDate, endDate] = [endDate, startDate];
+  }
+  const days =
+    range === 'custom' && customStartDate
+      ? daysBetweenInclusive(startDate, endDate)
+      : rangeToDays(range, now);
+  if (!(range === 'custom' && customStartDate)) {
+    startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
+  }
 
-  const earningsTrend = buildEarningsTrend(username, range, now);
-  const sourceBreakdown = buildSourceBreakdown(username, range, earningsTrend);
-  const topTippers = buildTopTippers(username, range, now);
+  const analyticsSeed =
+    range === 'custom' ? `custom:${toISODate(startDate)}:${toISODate(endDate)}` : range;
+  const earningsTrend = buildEarningsTrend(username, range, endDate, days, analyticsSeed);
+  const sourceBreakdown = buildSourceBreakdown(username, analyticsSeed, earningsTrend);
+  const topTippers = buildTopTippers(username, analyticsSeed, endDate);
 
   const totalEarnings = Math.round(earningsTrend.reduce((sum, p) => sum + p.amount, 0) * 100) / 100;
   const last7 = earningsTrend.slice(-7);
@@ -165,7 +199,7 @@ function buildAnalytics(username: string, range: AnalyticsDateRangePreset): Crea
   return {
     range,
     startDate: toISODate(startDate),
-    endDate: toISODate(now),
+    endDate: toISODate(endDate),
     summary: {
       totalEarnings,
       earningsThisMonth,
@@ -195,7 +229,9 @@ export async function GET(
       ? (rangeParam as AnalyticsDateRangePreset)
       : '30d';
 
-    const analytics = buildAnalytics(username, range);
+    const startDate = parseISODateParam(request.nextUrl.searchParams.get('startDate'));
+    const endDate = parseISODateParam(request.nextUrl.searchParams.get('endDate'));
+    const analytics = buildAnalytics(username, range, startDate, endDate);
 
     return NextResponse.json(analytics);
   } catch (err) {
