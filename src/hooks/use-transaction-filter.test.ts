@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { applyTransactionFilters, transactionsToCsv } from './use-transaction-filter';
 import type { Transaction } from './use-transaction-history';
 import type { TransactionFilterState } from './use-transaction-filter';

@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { updateSDKToken } from '@/lib/sdk-client';
+import type { CreatorVerificationStatus } from '@/types';
 
 interface User {
   id: string;
@@ -13,6 +14,11 @@ interface User {
   name?: string;
   username?: string;
   role: 'fan' | 'creator' | 'admin';
+  verified?: boolean;
+  verificationStatus?: CreatorVerificationStatus;
+  verifiedAt?: string;
+  verificationType?: string;
+  verificationReason?: string;
 }
 
 interface AuthStore {

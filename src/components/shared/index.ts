@@ -16,3 +16,8 @@ export type { SkeletonProps, SkeletonTextProps, SkeletonGridProps } from './skel
 
 export { EmptyState } from './empty-state';
 export type { EmptyStateProps } from './empty-state';
+
+export {
+  CreatorVerificationBadge,
+  type CreatorVerificationBadgeProps,
+} from './creator-verification-badge';

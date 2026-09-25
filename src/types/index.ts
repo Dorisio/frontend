@@ -6,6 +6,8 @@
 // Re-export SDK types for convenience
 export type { CreateTipRequest, TipRequest } from 'dorisio-sdk';
 
+export type CreatorVerificationStatus = 'pending' | 'verified' | 'rejected' | 'unverified';
+
 /**
  * Creator profile (extended from SDK)
  */
@@ -17,6 +19,10 @@ export interface Creator {
   bio?: string;
   avatar?: string;
   verified: boolean;
+  verificationStatus?: CreatorVerificationStatus;
+  verifiedAt?: string;
+  verificationType?: string;
+  verificationReason?: string;
   isPublic: boolean;
   totalEarnings: number;
   pendingBalance: number;

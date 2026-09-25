@@ -36,28 +36,30 @@ vi.mock('@/hooks/use-realtime-notifications', () => ({
   useRealtimeNotifications: vi.fn(() => ({ notifications: [], isConnected: false, error: null })),
 }));
 
-function balanceResult(overrides: Partial<ReturnType<typeof sdkUseCreatorBalance>> = {}) {
+function balanceResult(
+  overrides: Partial<ReturnType<typeof sdkUseCreatorBalance>> = {}
+): ReturnType<typeof sdkUseCreatorBalance> {
   return {
-    balance: null,
+    balance: undefined,
     loading: false,
-    error: null,
+    error: undefined,
     fetchBalance: vi.fn(),
     refetch: vi.fn(),
     reset: vi.fn(),
     ...overrides,
-  };
+  } as unknown as ReturnType<typeof sdkUseCreatorBalance>;
 }
 
 function transactionHistoryResult(
   overrides: Partial<ReturnType<typeof sdkUseTransactionHistory>> = {}
-) {
+): ReturnType<typeof sdkUseTransactionHistory> {
   return {
     transactions: [],
     total: 0,
     page: 1,
     pageSize: 10,
     loading: false,
-    error: null,
+    error: undefined,
     fetchHistory: vi.fn(),
     goToPage: vi.fn(),
     nextPage: vi.fn(),
@@ -66,15 +68,18 @@ function transactionHistoryResult(
     refetch: vi.fn(),
     reset: vi.fn(),
     ...overrides,
-  };
+  } as unknown as ReturnType<typeof sdkUseTransactionHistory>;
 }
 
-function walletResult(overrides: Partial<ReturnType<typeof sdkUseWallet>> = {}) {
+function walletResult(
+  overrides: Partial<ReturnType<typeof sdkUseWallet>> = {}
+): ReturnType<typeof sdkUseWallet> {
   return {
     wallets: [],
-    selectedWallet: null,
+    selectedWallet: undefined,
     loading: false,
-    error: null,
+    error: undefined,
+    challengeStep: 'idle',
     generateNonce: vi.fn(),
     getChallenge: vi.fn(),
     verifyWallet: vi.fn(),
@@ -85,7 +90,7 @@ function walletResult(overrides: Partial<ReturnType<typeof sdkUseWallet>> = {}) 
     getBalance: vi.fn(),
     reset: vi.fn(),
     ...overrides,
-  };
+  } as unknown as ReturnType<typeof sdkUseWallet>;
 }
 
 vi.mock('dorisio-sdk/react', () => ({
@@ -129,7 +134,7 @@ vi.mock('dorisio-sdk/react', () => ({
   })),
 }));
 
-const REALISTIC_TRANSACTIONS = [
+const REALISTIC_TRANSACTIONS = ([
   {
     id: 'tx-1',
     senderUsername: 'fan_alice',
@@ -145,7 +150,7 @@ const REALISTIC_TRANSACTIONS = [
     status: 'pending' as const,
     createdAt: '2026-08-02T09:30:00.000Z',
   },
-];
+] as unknown as ReturnType<typeof sdkUseTransactionHistory>['transactions']);
 
 describe('CreatorDashboardPage data loading (#7)', () => {
   beforeEach(() => {
@@ -228,7 +233,7 @@ describe('CreatorDashboardPage data loading (#7)', () => {
     it('renders earnings figures once the balance loads', () => {
       vi.mocked(sdkUseCreatorBalance).mockImplementation(() =>
         balanceResult({
-          balance: { totalEarnings: 1000, pendingBalance: 200, availableBalance: 800 },
+          balance: { totalEarnings: 1000, pendingBalance: 200 },
         })
       );
 
@@ -248,8 +253,8 @@ describe('CreatorDashboardPage data loading (#7)', () => {
 
       expect(screen.getByText('fan_alice')).toBeInTheDocument();
       expect(screen.getByText('$25.00')).toBeInTheDocument();
-      expect(screen.getByText('Confirmed')).toBeInTheDocument();
-      expect(screen.getByText('Pending')).toBeInTheDocument();
+      expect(screen.getAllByText('Confirmed')).toHaveLength(2);
+      expect(screen.getAllByText('Pending')).toHaveLength(2);
       // Anonymous sender falls back to a truncated id, per the page's own logic
       expect(screen.getByText('anon-sen...')).toBeInTheDocument();
     });
@@ -258,7 +263,14 @@ describe('CreatorDashboardPage data loading (#7)', () => {
       vi.mocked(sdkUseWallet).mockImplementation(() =>
         walletResult({
           wallets: [
-            { id: 'w1', publicKey: 'GABC...XYZ', name: 'Main Wallet', verified: true },
+            {
+              id: 'w1',
+              userId: 'u1',
+              publicKey: 'GABC...XYZ',
+              name: 'Main Wallet',
+              verified: true,
+              createdAt: '2026-08-01T12:00:00.000Z',
+            },
           ],
         })
       );
@@ -266,6 +278,31 @@ describe('CreatorDashboardPage data loading (#7)', () => {
       render(<CreatorDashboardPage />);
 
       expect(screen.getByText('Main Wallet')).toBeInTheDocument();
+    });
+  });
+
+  describe('verification status', () => {
+    it('shows the creator verification state and details', () => {
+      useAuthStore.setState({
+        user: {
+          id: 'u1',
+          email: 'creator@example.com',
+          username: 'testcreator',
+          role: 'creator',
+          verified: true,
+          verificationStatus: 'verified',
+          verificationType: 'identity',
+        },
+        token: 'token',
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      render(<CreatorDashboardPage />);
+
+      expect(screen.getByRole('status', { name: 'Verified status' })).toBeInTheDocument();
+      expect(screen.getByText('Type:')).toBeInTheDocument();
+      expect(screen.getByText('identity')).toBeInTheDocument();
     });
   });
 

@@ -11,6 +11,7 @@ import { useParams } from 'next/navigation';
 import { Creator } from '@/types';
 import { useDorisio } from 'dorisio-sdk/react';
 import { formatCurrency } from '@/utils/formatters';
+import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
 import DorisioButton from '@/components/sections/dorisio-button';
 
 interface EmbedWidgetState {
@@ -94,10 +95,20 @@ export default function EmbedTipWidget(): JSX.Element {
                   </span>
                 </div>
               )}
-              <div className="min-w-0">
-                <p className="font-semibold text-sm truncate">{state.creator.displayName}</p>
-                <p className="text-xs text-muted-foreground">@{state.creator.username}</p>
-              </div>
+               <div className="min-w-0">
+                 <div className="flex items-center gap-2 min-w-0">
+                   <p className="font-semibold text-sm truncate">{state.creator.displayName}</p>
+                   <CreatorVerificationBadge
+                     verified={state.creator.verified}
+                     status={state.creator.verificationStatus}
+                     verifiedAt={state.creator.verifiedAt}
+                     verificationType={state.creator.verificationType}
+                     verificationReason={state.creator.verificationReason}
+                     compact
+                   />
+                 </div>
+                 <p className="text-xs text-muted-foreground">@{state.creator.username}</p>
+               </div>
             </div>
             <a
               href={`https://dorisio.io/creators/${state.creator.username}`}

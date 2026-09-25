@@ -29,6 +29,14 @@ vi.mock('@tanstack/react-query', () => ({
 
 // Mock the Dorisio SDK
 vi.mock('dorisio-sdk/react', () => ({
+  useCreatorBalance: vi.fn((creatorId?: string) => ({
+    balance: creatorId ? { totalEarnings: 1000, pendingBalance: 500 } : undefined,
+    loading: false,
+    error: undefined,
+    fetchBalance: vi.fn(),
+    refetch: vi.fn(),
+    reset: vi.fn(),
+  })),
   useDorisio: vi.fn(() => ({
     client: {
       getCreatorBalance: vi.fn(),
@@ -65,7 +73,9 @@ describe('useCreatorBalance Hook', () => {
   it('provides error state', () => {
     const { result } = renderHook(() => useCreatorBalance('creator-123'));
 
-    expect(result.current.error === null || typeof result.current.error === 'string').toBe(true);
+    expect(result.current.error === undefined || typeof result.current.error === 'string').toBe(
+      true
+    );
   });
 
   it('provides refetch function', () => {

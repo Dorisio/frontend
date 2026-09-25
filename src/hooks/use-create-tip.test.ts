@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useCreateTip } from './use-create-tip';
-import type { SDKTipResult, UseCreateTipReturn } from 'dorisio-sdk/react';
+import type { Transaction } from 'dorisio-sdk';
+import type { UseCreateTipActions, UseCreateTipState } from 'dorisio-sdk/react';
 
 const { mockSdkUseCreateTip, mockSdkCreateTip } = vi.hoisted(() => ({
   mockSdkUseCreateTip: vi.fn(),
@@ -12,26 +13,37 @@ vi.mock('dorisio-sdk/react', () => ({
   useCreateTip: mockSdkUseCreateTip,
 }));
 
-const defaultResult: SDKTipResult = {
-  id: 'tip-123',
-  amount: 25,
-  status: 'success',
-  transactionHash: 'tx-hash-123',
-};
+type SDKCreateTipResult = UseCreateTipState & UseCreateTipActions;
 
-function sdkReturn(overrides: Partial<UseCreateTipReturn> = {}): UseCreateTipReturn {
+function makeTransaction(overrides: Partial<Transaction> = {}): Transaction {
   return {
-    createTip: mockSdkCreateTip,
-    buildTransaction: vi.fn(async () => undefined),
-    submitTransaction: vi.fn(async () => undefined),
-    confirmTransaction: vi.fn(async () => undefined),
-    data: null,
-    loading: false,
-    error: null,
-    step: null,
-    reset: vi.fn(),
+    id: 'tip-123',
+    fromUserId: 'user-1',
+    creatorId: 'creator-1',
+    amount: 25,
+    message: null,
+    status: 'confirmed',
+    stellarTxHash: 'tx-hash-123',
+    createdAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
   };
+}
+
+const defaultResult = makeTransaction();
+
+function sdkReturn(overrides: Partial<SDKCreateTipResult> = {}): SDKCreateTipResult {
+  return {
+    createTip: mockSdkCreateTip,
+    buildTransaction: vi.fn(),
+    submitTransaction: vi.fn(),
+    confirmTransaction: vi.fn(),
+    data: undefined,
+    loading: false,
+    error: undefined,
+    step: 'idle',
+    reset: vi.fn(),
+    ...overrides,
+  } as unknown as SDKCreateTipResult;
 }
 
 describe('useCreateTip Hook', () => {
@@ -64,7 +76,7 @@ describe('useCreateTip Hook', () => {
   it('provides error state', () => {
     const { result } = renderHook(() => useCreateTip());
 
-    expect(result.current.error === null || typeof result.current.error === 'string').toBe(true);
+    expect(result.current.error === undefined || typeof result.current.error === 'string').toBe(true);
   });
 
   it('provides reset function', () => {
@@ -90,7 +102,7 @@ describe('useCreateTip Hook', () => {
     expect(response).toEqual({
       id: 'tip-123',
       amount: 25,
-      status: 'success',
+      status: 'confirmed',
       transactionHash: 'tx-hash-123',
     });
   });
@@ -107,7 +119,7 @@ describe('useCreateTip Hook', () => {
   });
 
   it('defaults to pending when neither result nor step provides a status', async () => {
-    mockSdkCreateTip.mockResolvedValue({});
+    mockSdkCreateTip.mockResolvedValue({} as Transaction);
 
     const { result } = renderHook(() => useCreateTip());
 
@@ -120,7 +132,12 @@ describe('useCreateTip Hook', () => {
   it('exposes tip data mapped from the SDK', () => {
     mockSdkUseCreateTip.mockReturnValue(
       sdkReturn({
-        data: { id: 'tip-9', amount: 50, status: 'confirmed', transactionHash: 'tx-9' },
+        data: makeTransaction({
+          id: 'tip-9',
+          amount: 50,
+          status: 'confirmed',
+          stellarTxHash: 'tx-9',
+        }),
         step: 'submitting',
       })
     );

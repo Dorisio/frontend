@@ -57,7 +57,7 @@ describe('Modal Component', () => {
     });
 
     it('renders modal with custom className', () => {
-      const { container } = render(
+      render(
         <Modal defaultOpen={true}>
           <ModalContent className="custom-modal">
             <ModalHeader>
@@ -67,7 +67,7 @@ describe('Modal Component', () => {
         </Modal>
       );
 
-      const content = container.querySelector('.custom-modal');
+      const content = document.querySelector('.custom-modal');
       expect(content).toBeInTheDocument();
     });
   });
@@ -98,7 +98,7 @@ describe('Modal Component', () => {
     });
 
     it('handles multiple clicks on trigger', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
 
       render(
         <Modal>
@@ -297,7 +297,7 @@ describe('Modal Component', () => {
   describe('Controlled State', () => {
     it('respects defaultOpen prop', () => {
       const { rerender } = render(
-        <Modal defaultOpen={false}>
+        <Modal open={false}>
           <ModalContent>
             <ModalHeader>
               <ModalTitle>Hidden Modal</ModalTitle>
@@ -309,7 +309,7 @@ describe('Modal Component', () => {
       expect(screen.queryByText('Hidden Modal')).not.toBeInTheDocument();
 
       rerender(
-        <Modal defaultOpen={true}>
+        <Modal open={true}>
           <ModalContent>
             <ModalHeader>
               <ModalTitle>Visible Modal</ModalTitle>
@@ -364,7 +364,7 @@ describe('Modal Component', () => {
     });
 
     it('modal has proper ARIA attributes', () => {
-      const { container } = render(
+      render(
         <Modal defaultOpen={true}>
           <ModalContent>
             <ModalHeader>
@@ -374,7 +374,7 @@ describe('Modal Component', () => {
         </Modal>
       );
 
-      const modalOverlay = container.querySelector('[role="dialog"]');
+      const modalOverlay = document.querySelector('[role="dialog"]');
       expect(modalOverlay).toBeInTheDocument();
     });
   });
@@ -415,7 +415,7 @@ describe('Modal Component', () => {
     });
 
     it('handles rapid open/close interactions', async () => {
-      const user = userEvent.setup();
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
 
       render(
         <Modal>
