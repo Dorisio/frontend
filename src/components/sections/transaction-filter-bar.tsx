@@ -87,6 +87,23 @@ export function TransactionFilterBar({
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-52 flex-1">
+          <label
+            htmlFor="filter-message-keyword"
+            className="text-xs font-medium text-muted-foreground"
+          >
+            Message search
+          </label>
+          <input
+            id="filter-message-keyword"
+            type="search"
+            value={filters.messageKeyword}
+            onChange={(e) => onChange('messageKeyword', e.target.value)}
+            placeholder="Search message or tipper"
+            className="block w-full mt-1 px-2 py-1.5 border rounded text-sm"
+          />
+        </div>
+
         <div>
           <label htmlFor="filter-status" className="text-xs font-medium text-muted-foreground">
             Status

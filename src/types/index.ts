@@ -73,7 +73,7 @@ export interface PageState {
  * API route (`/api/creators/[username]/analytics`) under this app rather than
  * the SDK. See `src/app/api/creators/[username]/analytics/route.ts`.
  */
-export type AnalyticsDateRangePreset = '30d' | '90d' | 'ytd';
+export type AnalyticsDateRangePreset = '30d' | '90d' | 'ytd' | 'custom';
 
 /** A single day's earnings, for the earnings trend line chart. */
 export interface EarningsTrendPoint {

@@ -21,6 +21,7 @@ export interface TransactionFilterState {
   dateTo: string;
   minAmount: string;
   maxAmount: string;
+  messageKeyword: string;
   status: TransactionStatusFilter;
   sortField: TransactionSortField;
   sortDirection: SortDirection;
@@ -31,6 +32,7 @@ const DEFAULT_FILTERS: TransactionFilterState = {
   dateTo: '',
   minAmount: '',
   maxAmount: '',
+  messageKeyword: '',
   status: 'all',
   sortField: 'date',
   sortDirection: 'desc',
@@ -44,6 +46,7 @@ function filtersFromSearchParams(params: URLSearchParams): TransactionFilterStat
     dateTo: params.get('dateTo') || DEFAULT_FILTERS.dateTo,
     minAmount: params.get('minAmount') || DEFAULT_FILTERS.minAmount,
     maxAmount: params.get('maxAmount') || DEFAULT_FILTERS.maxAmount,
+    messageKeyword: params.get('messageKeyword') || DEFAULT_FILTERS.messageKeyword,
     status: (params.get('status') as TransactionStatusFilter) || DEFAULT_FILTERS.status,
     sortField: (params.get('sortField') as TransactionSortField) || DEFAULT_FILTERS.sortField,
     sortDirection:
@@ -81,6 +84,15 @@ export function applyTransactionFilters(
     result = result.filter((t) => t.status === filters.status);
   }
 
+  if (filters.messageKeyword.trim()) {
+    const keyword = filters.messageKeyword.trim().toLowerCase();
+    result = result.filter((t) => {
+      const message = t.message?.toLowerCase() || '';
+      const sender = (t.senderUsername || t.senderId || '').toLowerCase();
+      return message.includes(keyword) || sender.includes(keyword);
+    });
+  }
+
   const sorted = [...result].sort((a, b) => {
     const direction = filters.sortDirection === 'asc' ? 1 : -1;
     if (filters.sortField === 'amount') {
@@ -93,11 +105,12 @@ export function applyTransactionFilters(
 }
 
 export function transactionsToCsv(transactions: Transaction[]): string {
-  const headers = ['Date', 'Amount', 'From', 'Status', 'Transaction Hash'];
+  const headers = ['Date', 'Amount', 'From', 'Message', 'Status', 'Transaction Hash'];
   const rows = transactions.map((t) => [
     t.createdAt,
     t.amount.toString(),
     t.senderUsername || t.senderId || '',
+    t.message || '',
     t.status,
     t.transactionHash || '',
   ]);

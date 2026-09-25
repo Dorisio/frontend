@@ -9,6 +9,7 @@ const baseFilters: TransactionFilterState = {
   dateTo: '',
   minAmount: '',
   maxAmount: '',
+  messageKeyword: '',
   status: 'all',
   sortField: 'date',
   sortDirection: 'desc',
@@ -30,6 +31,7 @@ describe('TransactionFilterBar', () => {
     expect(screen.getByLabelText('To')).toBeInTheDocument();
     expect(screen.getByLabelText('Min amount')).toBeInTheDocument();
     expect(screen.getByLabelText('Max amount')).toBeInTheDocument();
+    expect(screen.getByLabelText('Message search')).toBeInTheDocument();
     expect(screen.getByLabelText('Status')).toBeInTheDocument();
     expect(screen.getByLabelText('Sort by')).toBeInTheDocument();
     expect(screen.getByLabelText('Order')).toBeInTheDocument();
