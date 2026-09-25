@@ -36,7 +36,7 @@ export interface TipResponse {
 }
 
 function isTipStatus(value: string | null | undefined): value is TipStatus {
-  return typeof value === 'string' && (TIP_STATUSES as readonly string[]).includes(value);
+  return typeof value === 'string' && TIP_STATUSES.some((status) => status === value);
 }
 
 function toTipStatus(...values: Array<string | null | undefined>): TipStatus {
