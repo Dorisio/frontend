@@ -68,7 +68,11 @@ function buildHookReturn(overrides: Record<string, unknown> = {}) {
       verified: true,
     },
     loading: false,
-    error: null,
+    error: undefined,
+    preferredWallet: null,
+    setDefaultWalletId: vi.fn(),
+    getPreferredWalletId: vi.fn(),
+    setLastUsedWallet: vi.fn(),
     selectWallet: mockSelectWallet,
     disconnectWallet: mockDisconnectWallet,
     fetchWallets: vi.fn(),
@@ -78,6 +82,10 @@ function buildHookReturn(overrides: Record<string, unknown> = {}) {
     renameWallet: vi.fn(),
     getBalance: vi.fn(),
     reset: vi.fn(),
+    isPending: vi.fn(() => false),
+    actionError: null,
+    clearActionError: vi.fn(),
+    retryAction: vi.fn(),
     ...overrides,
   };
 }
@@ -138,7 +146,7 @@ describe('WalletManager Component', () => {
   describe('Loading and Error States', () => {
     it('shows loading state when wallets are loading', () => {
       vi.mocked(useWallet).mockReturnValue(
-        buildHookReturn({ wallets: [], loading: true, error: null })
+        buildHookReturn({ wallets: [], loading: true, error: undefined })
       );
 
       render(<WalletManager />);
@@ -148,7 +156,7 @@ describe('WalletManager Component', () => {
 
     it('loading state has accessible role', () => {
       vi.mocked(useWallet).mockReturnValue(
-        buildHookReturn({ wallets: [], loading: true, error: null })
+        buildHookReturn({ wallets: [], loading: true, error: undefined })
       );
 
       render(<WalletManager />);
@@ -179,7 +187,7 @@ describe('WalletManager Component', () => {
 
     it('shows empty state when no wallets are connected', () => {
       vi.mocked(useWallet).mockReturnValue(
-        buildHookReturn({ wallets: [], selectedWallet: null, loading: false, error: null })
+        buildHookReturn({ wallets: [], selectedWallet: null, loading: false, error: undefined })
       );
 
       render(<WalletManager />);

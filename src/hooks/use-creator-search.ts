@@ -75,6 +75,10 @@ function sortCreators(creators: Creator[], sort: CreatorSortOption): Creator[] {
 function applyClientFilters(creators: Creator[], filters: CreatorSearchFilters): Creator[] {
   let result = creators;
 
+  if (filters.verifiedOnly) {
+    result = result.filter((creator) => creator.verified);
+  }
+
   if (filters.search) {
     const query = filters.search.toLowerCase();
     result = result.filter(
@@ -153,7 +157,7 @@ export function useCreatorSearch(): {
   });
 
   const rawCreators: Creator[] = useMemo(
-    () => (data?.data || data?.creators || []) as Creator[],
+    () => (data?.creators || []) as Creator[],
     [data]
   );
 

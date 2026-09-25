@@ -9,6 +9,7 @@ import { Suspense } from 'react';
 import { useCreatorSearch } from '@/hooks/use-creator-search';
 import { formatCurrency } from '@/utils/formatters';
 import { CreatorSearchBar } from '@/components/sections/creator-search-bar';
+import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
 import DorisioButton from '@/components/sections/dorisio-button';
 import Link from 'next/link';
 
@@ -92,9 +93,18 @@ function CreatorDiscoveryPageContent() {
 
                     {/* Name and Verification */}
                     <div className="mb-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-lg">{creator.displayName}</h3>
-                        {creator.verified && <span className="text-green-600">✓</span>}
+                      <div className="flex flex-wrap items-center gap-2 mb-1 min-w-0">
+                        <h3 className="font-bold text-lg min-w-0 break-words">
+                          {creator.displayName}
+                        </h3>
+                        <CreatorVerificationBadge
+                          verified={creator.verified}
+                          status={creator.verificationStatus}
+                          verifiedAt={creator.verifiedAt}
+                          verificationType={creator.verificationType}
+                          verificationReason={creator.verificationReason}
+                          compact
+                        />
                       </div>
                       <p className="text-sm text-muted-foreground">@{creator.username}</p>
                     </div>

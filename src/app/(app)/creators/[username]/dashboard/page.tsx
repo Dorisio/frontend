@@ -20,6 +20,7 @@ import {
   EarningsCardSkeleton,
   TransactionTableSkeleton,
 } from '@/components/shared/creator-skeletons';
+import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
 import Link from 'next/link';
 
 export default function CreatorDashboardPage() {
@@ -100,6 +101,28 @@ function CreatorDashboardPageContent() {
           {liveConnected ? '● Live' : '● Offline'}
         </span>
       </div>
+
+      <section aria-labelledby="creator-verification-heading" className="border rounded-lg p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 id="creator-verification-heading" className="font-semibold">
+              Creator verification
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Your verification status is shown to supporters on your public profile.
+            </p>
+          </div>
+          <CreatorVerificationBadge
+            verified={Boolean(user.verified)}
+            status={user.verificationStatus ?? (user.verified ? 'verified' : 'unverified')}
+            verifiedAt={user.verifiedAt}
+            verificationType={user.verificationType}
+            verificationReason={user.verificationReason}
+            showDetails
+            showUnverified
+          />
+        </div>
+      </section>
 
       {/* Earnings Overview Cards */}
       {balanceError && !balanceLoading && (

@@ -1,7 +1,6 @@
 /**
  * useWallet Hook
- * Wrapper around SDK's useWallet hook with comprehensive error handling,
- * automatic retry for transient errors, and user-facing toast notifications.
+ * Wrapper around the SDK wallet hook with optimistic wallet updates.
  */
 
 import { useCallback, useMemo, useState } from 'react';
@@ -27,44 +26,7 @@ interface SDKWallet {
   verified?: boolean;
 }
 
-// ---------------------------------------------------------------------------
-// Error classification helpers
-// ---------------------------------------------------------------------------
-
-/** SDK error codes considered transient (safe to retry automatically). */
-const TRANSIENT_ERROR_CODES = new Set([
-  'NETWORK_ERROR',
-  'TIMEOUT',
-  'REQUEST_TIMEOUT',
-  'SERVICE_UNAVAILABLE',
-  'RATE_LIMITED',
-  'ECONNRESET',
-  'ECONNREFUSED',
-  'ENOTFOUND',
-]);
-
-/**
- * Returns true when the thrown value represents a transient error that is
- * safe to retry without user involvement.
- */
-function isTransientError(err: unknown): boolean {
-  if (err instanceof Error) {
-    const code = (err as Error & { code?: string }).code?.toUpperCase() ?? '';
-    if (TRANSIENT_ERROR_CODES.has(code)) return true;
-
-    const message = err.message.toUpperCase();
-    // Common transient message substrings
-    return (
-      message.includes('NETWORK') ||
-      message.includes('TIMEOUT') ||
-      message.includes('ECONNRESET') ||
-      message.includes('SERVICE_UNAVAILABLE') ||
-      message.includes('503') ||
-      message.includes('429')
-    );
-  }
-  return false;
-}
+type OptimisticEntry = { disconnected?: true; name?: string };
 
 /** Maps SDK / network error codes/messages to user-friendly strings. */
 export function mapWalletError(err: unknown): string {
@@ -109,32 +71,6 @@ export function mapWalletError(err: unknown): string {
     return 'Wallet verification failed: the signature is invalid. Please try again.';
 
   return err.message || 'An unexpected error occurred. Please try again.';
-}
-
-// ---------------------------------------------------------------------------
-// Retry helper
-// ---------------------------------------------------------------------------
-
-const RETRY_DELAYS_MS = [500, 1500, 3000] as const;
-
-/**
- * Calls `fn` and retries up to `maxRetries` times when the error is transient.
- * Each retry waits for an increasing delay.
- */
-async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
-  let attempt = 0;
-  while (true) {
-    try {
-      return await fn();
-    } catch (err) {
-      attempt++;
-      if (attempt >= maxRetries || !isTransientError(err)) {
-        throw err;
-      }
-      const delay = RETRY_DELAYS_MS[Math.min(attempt - 1, RETRY_DELAYS_MS.length - 1)];
-      await new Promise<void>((resolve) => setTimeout(resolve, delay));
-    }
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -209,6 +145,14 @@ export function useWallet() {
         name: optimistic[sdkSelectedWallet.id]?.name ?? sdkSelectedWallet.name,
         verified: sdkSelectedWallet.verified || false,
       }
+    : null;
+
+  const defaultWalletId = useWalletPreferenceStore((state) => state.defaultWalletId);
+  const setDefaultWalletId = useWalletPreferenceStore((state) => state.setDefaultWalletId);
+  const getPreferredWalletId = useWalletPreferenceStore((state) => state.getPreferredWalletId);
+  const setLastUsedWallet = useWalletPreferenceStore((state) => state.setLastUsedWallet);
+  const preferredWallet = defaultWalletId
+    ? (wallets.find((wallet) => wallet.id === defaultWalletId) ?? null)
     : null;
 
   const selectWallet = (wallet: WalletInfo): void => {
@@ -289,12 +233,15 @@ export function useWallet() {
     fetchWallets: listWallets,
     generateNonce,
     getChallenge,
-    verifyWallet,
+    verifyWallet: sdkVerifyWallet,
     selectWallet,
     disconnectWallet,
     renameWallet,
     getBalance,
     reset,
+    setDefaultWalletId,
+    getPreferredWalletId,
+    setLastUsedWallet,
     isPending,
     actionError,
     clearActionError: () => setActionError(null),

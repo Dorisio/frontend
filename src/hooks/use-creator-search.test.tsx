@@ -106,6 +106,21 @@ describe('useCreatorSearch', () => {
     );
   });
 
+  it('filters by verified status when the API returns unfiltered results', async () => {
+    const listCreators = vi.fn().mockResolvedValue({ creators, total: 3, page: 1, pageSize: 20 });
+    vi.mocked(useSDKClient).mockReturnValue({
+      listCreators,
+    } as unknown as ReturnType<typeof useSDKClient>);
+
+    const { result } = renderHook(() => useCreatorSearch(), { wrapper });
+    await waitFor(() => expect(result.current.creators).toHaveLength(3));
+
+    result.current.setFilter('verifiedOnly', true);
+
+    await waitFor(() => expect(result.current.creators.map((creator) => creator.id)).toEqual(['1']));
+    expect(listCreators).toHaveBeenLastCalledWith({ page: 1, pageSize: 20, verified: true });
+  });
+
   it('resets page to 1 when a non-page filter changes', async () => {
     vi.mocked(useSDKClient).mockReturnValue({
       listCreators: vi.fn().mockResolvedValue({ creators, total: 3, page: 1, pageSize: 20 }),

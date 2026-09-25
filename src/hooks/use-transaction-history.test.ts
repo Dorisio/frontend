@@ -44,6 +44,36 @@ vi.mock('@tanstack/react-query', () => ({
 
 // Mock the Dorisio SDK
 vi.mock('dorisio-sdk/react', () => ({
+  useTransactionHistory: vi.fn((options?: { page?: number; pageSize?: number }) => ({
+    transactions: [
+      {
+        id: 'tx-1',
+        amount: 50,
+        createdAt: '2024-01-16T00:00:00.000Z',
+        status: 'confirmed',
+        message: 'Great content!',
+      },
+      {
+        id: 'tx-2',
+        amount: 100,
+        createdAt: '2024-01-15T00:00:00.000Z',
+        status: 'confirmed',
+        message: null,
+      },
+    ],
+    total: 2,
+    page: options?.page ?? 1,
+    pageSize: options?.pageSize ?? 10,
+    loading: false,
+    error: undefined,
+    fetchHistory: vi.fn(),
+    goToPage: vi.fn(),
+    nextPage: vi.fn(),
+    prevPage: vi.fn(),
+    setPageSize: vi.fn(),
+    refetch: vi.fn(),
+    reset: vi.fn(),
+  })),
   useDorisio: vi.fn(() => ({
     client: {
       getTransactionHistory: vi.fn(),
@@ -94,7 +124,9 @@ describe('useTransactionHistory Hook', () => {
   it('provides error state', () => {
     const { result } = renderHook(() => useTransactionHistory('creator-123'));
 
-    expect(result.current.error === null || typeof result.current.error === 'string').toBe(true);
+    expect(result.current.error === undefined || typeof result.current.error === 'string').toBe(
+      true
+    );
   });
 
   it('provides refetch function', () => {
@@ -108,7 +140,7 @@ describe('useTransactionHistory Hook', () => {
 
     const txWithoutMessage = result.current.transactions.find((tx) => !tx.message);
     expect(txWithoutMessage).toBeDefined();
-    expect(txWithoutMessage?.message).toBeNull();
+    expect(txWithoutMessage?.message).toBeUndefined();
   });
 
   it('handles transaction status variants', () => {
