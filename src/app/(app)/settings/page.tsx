@@ -12,6 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useWallet } from '@/hooks/use-wallet';
+import { CreatorBioEditor } from '@/components/sections/creator-bio';
+import { SubscriptionSettings } from '@/components/sections/subscription-settings';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface Settings {
   displayName: string;
@@ -31,6 +34,7 @@ export default function SettingsPage(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<SettingsStatus>({ type: null, message: '' });
   const { wallets, preferredWallet, setDefaultWalletId } = useWallet();
+  const user = useAuthStore((state) => state.user);
   const [settings, setSettings] = useState<Settings>({
     displayName: '',
     email: '',
@@ -141,16 +145,13 @@ export default function SettingsPage(): JSX.Element {
 
             <div>
               <Label htmlFor="bio">Bio</Label>
-              <textarea
-                id="bio"
-                name="bio"
+              <CreatorBioEditor
                 value={settings.bio}
-                onChange={handleInputChange}
-                placeholder="Tell us about yourself"
-                className="mt-2 w-full px-3 py-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                rows={4}
+                onChange={(bio) => {
+                  setSettings((prev) => ({ ...prev, bio }));
+                  setStatus({ type: null, message: '' });
+                }}
               />
-              <p className="text-xs text-muted-foreground mt-1">Max 500 characters</p>
             </div>
 
             <div>
@@ -174,6 +175,8 @@ export default function SettingsPage(): JSX.Element {
             </Button>
           </form>
         </Card>
+
+        {user?.username && <SubscriptionSettings creatorId={user.username} />}
 
         {/* Default Wallet Settings */}
         <Card className="p-6 mb-6">

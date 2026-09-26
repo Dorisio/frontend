@@ -21,6 +21,10 @@ import {
   TransactionTableSkeleton,
 } from '@/components/shared/creator-skeletons';
 import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
+import { CreatorBio } from '@/components/sections/creator-bio';
+import { SubscriptionTiers } from '@/components/sections/subscription-tiers';
+import { SubscriberOnlyContent } from '@/components/sections/subscriber-only-content';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface CreatorPageState {
   creator: Creator | null;
@@ -32,6 +36,7 @@ export default function CreatorProfilePage(): JSX.Element {
   const params = useParams();
   const username = params.username as string;
   const { client } = useDorisio();
+  const user = useAuthStore((state) => state.user);
 
   const [state, setState] = useState<CreatorPageState>({
     creator: null,
@@ -138,7 +143,7 @@ export default function CreatorProfilePage(): JSX.Element {
 
               <p className="text-muted-foreground mb-4">@{state.creator.username}</p>
 
-              {state.creator.bio && <p className="text-lg mb-6 max-w-2xl">{state.creator.bio}</p>}
+              {state.creator.bio && <CreatorBio value={state.creator.bio} className="mb-6 max-w-2xl text-lg" />}
 
               <div className="flex gap-8 mb-6">
                 <div>
@@ -157,6 +162,7 @@ export default function CreatorProfilePage(): JSX.Element {
 
               {/* Tip Button */}
               <DorisioButton creatorId={state.creator.id} />
+              <SubscriptionTiers creatorId={state.creator.id} subscriberId={user?.id} />
             </div>
           </div>
         </div>
@@ -164,6 +170,12 @@ export default function CreatorProfilePage(): JSX.Element {
 
       {/* Content Section */}
       <div className="max-w-4xl mx-auto px-4 py-12">
+        <SubscriberOnlyContent creatorId={state.creator.id} subscriberId={user?.id}>
+          <div className="rounded-lg border bg-card p-6">
+            <h2 className="font-semibold">Welcome, member</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Thanks for supporting this creator.</p>
+          </div>
+        </SubscriberOnlyContent>
         {/* Earnings Overview */}
         {balance.balance && (
           <section className="mb-12">
