@@ -6,6 +6,7 @@
 
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -13,13 +14,27 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useCreatorAnalytics } from '@/hooks/use-creator-analytics';
 import { AnalyticsSummaryCards } from '@/components/sections/analytics-summary-cards';
 import { AnalyticsDateRangePicker } from '@/components/sections/analytics-date-range-picker';
-import { EarningsTrendChart } from '@/components/sections/earnings-trend-chart';
-import { TipSourceBreakdown } from '@/components/sections/tip-source-breakdown';
 import { TopTippersTable } from '@/components/sections/top-tippers-table';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { downloadAnalyticsCsv } from '@/lib/csv-export';
 import type { AnalyticsDateRangePreset } from '@/types';
+
+const ChartLoading = (): JSX.Element => (
+  <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+    Loading chart...
+  </div>
+);
+
+const EarningsTrendChart = dynamic(
+  () => import('@/components/sections/earnings-trend-chart').then((module) => module.EarningsTrendChart),
+  { ssr: false, loading: ChartLoading }
+);
+
+const TipSourceBreakdown = dynamic(
+  () => import('@/components/sections/tip-source-breakdown').then((module) => module.TipSourceBreakdown),
+  { ssr: false, loading: ChartLoading }
+);
 
 export default function CreatorAnalyticsPage(): JSX.Element {
   const params = useParams();
