@@ -78,6 +78,23 @@ describe('applyTransactionFilters', () => {
     expect(result.map((t) => t.id)).toEqual(['3']);
   });
 
+  it('includes transactions later on the selected end date', () => {
+    const result = applyTransactionFilters(
+      [
+        ...transactions,
+        {
+          id: '4',
+          amount: 15,
+          status: 'confirmed',
+          createdAt: '2026-01-12T20:00:00Z',
+        },
+      ],
+      { ...baseFilters, dateFrom: '2026-01-12', dateTo: '2026-01-12' }
+    );
+
+    expect(result.map((t) => t.id)).toEqual(['4']);
+  });
+
   it('sorts by amount ascending', () => {
     const result = applyTransactionFilters(transactions, {
       ...baseFilters,
@@ -97,7 +114,10 @@ describe('applyTransactionFilters', () => {
   });
 
   it('filters by message keyword', () => {
-    const result = applyTransactionFilters(transactions, { ...baseFilters, messageKeyword: 'tutorial' });
+    const result = applyTransactionFilters(transactions, {
+      ...baseFilters,
+      messageKeyword: 'tutorial',
+    });
     expect(result.map((t) => t.id)).toEqual(['1']);
   });
 
