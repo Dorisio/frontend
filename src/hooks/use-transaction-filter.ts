@@ -49,8 +49,7 @@ function filtersFromSearchParams(params: URLSearchParams): TransactionFilterStat
     messageKeyword: params.get('messageKeyword') || DEFAULT_FILTERS.messageKeyword,
     status: (params.get('status') as TransactionStatusFilter) || DEFAULT_FILTERS.status,
     sortField: (params.get('sortField') as TransactionSortField) || DEFAULT_FILTERS.sortField,
-    sortDirection:
-      (params.get('sortDirection') as SortDirection) || DEFAULT_FILTERS.sortDirection,
+    sortDirection: (params.get('sortDirection') as SortDirection) || DEFAULT_FILTERS.sortDirection,
   };
 }
 
@@ -66,7 +65,8 @@ export function applyTransactionFilters(
   }
 
   if (filters.dateTo) {
-    const to = new Date(filters.dateTo).getTime();
+    // Date inputs represent a calendar day; include the entire selected day.
+    const to = new Date(`${filters.dateTo}T23:59:59.999`).getTime();
     result = result.filter((t) => new Date(t.createdAt).getTime() <= to);
   }
 
@@ -122,9 +122,7 @@ export function transactionsToCsv(transactions: Transaction[]): string {
     return field;
   };
 
-  return [headers, ...rows]
-    .map((row) => row.map(escapeCsvField).join(','))
-    .join('\n');
+  return [headers, ...rows].map((row) => row.map(escapeCsvField).join(',')).join('\n');
 }
 
 export function downloadCsv(csvContent: string, filename: string): void {
