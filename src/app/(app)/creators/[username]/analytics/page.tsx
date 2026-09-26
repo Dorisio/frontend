@@ -26,9 +26,16 @@ export default function CreatorAnalyticsPage(): JSX.Element {
   const router = useRouter();
   const username = params.username as string;
   const user = useAuthStore((state) => state.user);
+  const today = new Date().toISOString().slice(0, 10);
+  const thirtyDaysAgo = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const [range, setRange] = useState<AnalyticsDateRangePreset>('30d');
+  const [customRange, setCustomRange] = useState({ startDate: thirtyDaysAgo, endDate: today });
 
-  const { data, isLoading, isError, error } = useCreatorAnalytics(username, range);
+  const { data, isLoading, isError, error } = useCreatorAnalytics(username, {
+    preset: range,
+    startDate: customRange.startDate,
+    endDate: customRange.endDate,
+  });
 
   // Mirrors the auth guard used by the sibling `/creators/[username]/dashboard`
   // page: only the creator viewing their own analytics can see this page.
@@ -52,7 +59,11 @@ export default function CreatorAnalyticsPage(): JSX.Element {
 
   function handleExportCsv(): void {
     if (!data) return;
-    downloadAnalyticsCsv(data, `dorisio-analytics-${username}-${range}.csv`);
+    const suffix =
+      range === 'custom'
+        ? `${customRange.startDate}-to-${customRange.endDate}`
+        : range;
+    downloadAnalyticsCsv(data, `dorisio-analytics-${username}-${suffix}.csv`);
   }
 
   return (
@@ -64,7 +75,15 @@ export default function CreatorAnalyticsPage(): JSX.Element {
           <p className="text-muted-foreground">Earnings trends, tip sources, and top supporters</p>
         </div>
         <div className="flex items-center gap-3">
-          <AnalyticsDateRangePicker value={range} onChange={setRange} />
+          <AnalyticsDateRangePicker
+            value={range}
+            startDate={customRange.startDate}
+            endDate={customRange.endDate}
+            onChange={setRange}
+            onCustomDateChange={(field, value) =>
+              setCustomRange((current) => ({ ...current, [field]: value }))
+            }
+          />
           <Button
             type="button"
             variant="outline"

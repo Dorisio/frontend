@@ -14,12 +14,24 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import type { AnalyticsDateRangePreset, CreatorAnalytics } from '@/types';
 
+export interface CreatorAnalyticsRangeOptions {
+  preset: AnalyticsDateRangePreset;
+  startDate?: string;
+  endDate?: string;
+}
+
 async function fetchCreatorAnalytics(
   username: string,
-  range: AnalyticsDateRangePreset
+  range: CreatorAnalyticsRangeOptions
 ): Promise<CreatorAnalytics> {
+  const params = new URLSearchParams({ range: range.preset });
+  if (range.preset === 'custom') {
+    if (range.startDate) params.set('startDate', range.startDate);
+    if (range.endDate) params.set('endDate', range.endDate);
+  }
+
   const response = await fetch(
-    `/api/creators/${encodeURIComponent(username)}/analytics?range=${range}`
+    `/api/creators/${encodeURIComponent(username)}/analytics?${params.toString()}`
   );
 
   if (!response.ok) {
@@ -31,10 +43,10 @@ async function fetchCreatorAnalytics(
 
 export function useCreatorAnalytics(
   username: string | null | undefined,
-  range: AnalyticsDateRangePreset = '30d'
+  range: CreatorAnalyticsRangeOptions = { preset: '30d' }
 ): UseQueryResult<CreatorAnalytics, Error> {
   return useQuery({
-    queryKey: ['creatorAnalytics', username, range],
+    queryKey: ['creatorAnalytics', username, range.preset, range.startDate, range.endDate],
     queryFn: () => fetchCreatorAnalytics(username as string, range),
     enabled: Boolean(username),
   });
