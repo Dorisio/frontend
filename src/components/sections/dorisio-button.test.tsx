@@ -17,6 +17,39 @@ vi.mock('@/hooks/use-create-tip', () => ({
   }),
 }));
 
+const mockWallets = [
+  { id: 'wallet-1', publicKey: 'GABC123', name: 'Main Wallet', verified: true },
+  { id: 'wallet-2', publicKey: 'GXYZ987', name: 'Trading Wallet', verified: false },
+];
+
+vi.mock('@/hooks/use-wallet', () => ({
+  useWallet: () => ({
+    wallets: mockWallets,
+    getPreferredWalletId: () => 'wallet-1',
+    setLastUsedWallet: vi.fn(),
+  }),
+}));
+
+vi.mock('@/components/sections/wallet-selector', () => ({
+  WalletSelector: ({ value, onChange, disabled }: { value: string | null; onChange: (id: string) => void; disabled: boolean }) => (
+    <div data-testid="wallet-selector">
+      <select
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        data-testid="wallet-select"
+      >
+        <option value="">Select wallet</option>
+        {mockWallets.map((w) => (
+          <option key={w.id} value={w.id}>
+            {w.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  ),
+}));
+
 const successMock = vi.fn();
 const errorMock = vi.fn();
 
@@ -46,6 +79,9 @@ describe('DorisioButton (Send Tip flow)', () => {
 
   async function openModalAndSelectAmount(user: ReturnType<typeof userEvent.setup>): Promise<void> {
     await user.click(screen.getByRole('button', { name: /send a tip/i }));
+    // Wallet is auto-selected, but we can manually select a different one if needed
+    const walletSelect = screen.getByTestId('wallet-select');
+    await user.selectOptions(walletSelect, 'wallet-1');
     await user.click(screen.getByRole('button', { name: '$5' }));
   }
 
@@ -63,12 +99,13 @@ describe('DorisioButton (Send Tip flow)', () => {
     expect(fiveDollarOption).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('disables Continue until an amount is selected', async () => {
+  it('disables Continue until an amount is selected (wallet is auto-selected)', async () => {
     const user = userEvent.setup();
     render(<DorisioButton creatorId="creator-1" />);
 
     await user.click(screen.getByRole('button', { name: /send a tip/i }));
 
+    // Wallet is auto-selected, but amount is not yet selected
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
   });
 
@@ -129,5 +166,37 @@ describe('DorisioButton (Send Tip flow)', () => {
     await waitFor(() => {
       expect(errorMock).toHaveBeenCalledWith('Insufficient funds', 'Tip failed');
     });
+  });
+
+  it('displays wallet selector in the modal', async () => {
+    const user = userEvent.setup();
+    render(<DorisioButton creatorId="creator-1" />);
+
+    await user.click(screen.getByRole('button', { name: /send a tip/i }));
+
+    expect(screen.getByTestId('wallet-selector')).toBeInTheDocument();
+    expect(screen.getByTestId('wallet-select')).toBeInTheDocument();
+  });
+
+  it('auto-selects preferred wallet when modal opens', async () => {
+    const user = userEvent.setup();
+    render(<DorisioButton creatorId="creator-1" />);
+
+    await user.click(screen.getByRole('button', { name: /send a tip/i }));
+
+    const walletSelect = screen.getByTestId('wallet-select') as HTMLSelectElement;
+    expect(walletSelect.value).toBe('wallet-1');
+  });
+
+  it('allows switching wallets before sending tip', async () => {
+    const user = userEvent.setup();
+    render(<DorisioButton creatorId="creator-1" />);
+
+    await user.click(screen.getByRole('button', { name: /send a tip/i }));
+
+    const walletSelect = screen.getByTestId('wallet-select');
+    await user.selectOptions(walletSelect, 'wallet-2');
+
+    expect((walletSelect as HTMLSelectElement).value).toBe('wallet-2');
   });
 });
