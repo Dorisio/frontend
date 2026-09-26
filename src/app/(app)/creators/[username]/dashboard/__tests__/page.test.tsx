@@ -10,8 +10,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render as testingLibraryRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   useCreatorBalance as sdkUseCreatorBalance,
   useTransactionHistory as sdkUseTransactionHistory,
@@ -21,6 +22,17 @@ import { useAuthStore } from '@/stores/auth-store';
 import CreatorDashboardPage from '../page';
 
 const replace = vi.fn();
+
+function render(ui: Parameters<typeof testingLibraryRender>[0]) {
+  return testingLibraryRender(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      {ui}
+    </QueryClientProvider>
+  );
+}
+
 vi.mock('next/navigation', () => ({
   useParams: () => ({ username: 'testcreator' }),
   useRouter: () => ({ replace, push: vi.fn() }),
@@ -94,6 +106,9 @@ function walletResult(
 }
 
 vi.mock('dorisio-sdk/react', () => ({
+  useDorisio: vi.fn(() => ({
+    client: { isTransactionVerified: vi.fn() },
+  })),
   useCreatorBalance: vi.fn(() => ({
     balance: null,
     loading: false,
@@ -134,7 +149,7 @@ vi.mock('dorisio-sdk/react', () => ({
   })),
 }));
 
-const REALISTIC_TRANSACTIONS = ([
+const REALISTIC_TRANSACTIONS = [
   {
     id: 'tx-1',
     senderUsername: 'fan_alice',
@@ -150,7 +165,7 @@ const REALISTIC_TRANSACTIONS = ([
     status: 'pending' as const,
     createdAt: '2026-08-02T09:30:00.000Z',
   },
-] as unknown as ReturnType<typeof sdkUseTransactionHistory>['transactions']);
+] as unknown as ReturnType<typeof sdkUseTransactionHistory>['transactions'];
 
 describe('CreatorDashboardPage data loading (#7)', () => {
   beforeEach(() => {
@@ -194,9 +209,7 @@ describe('CreatorDashboardPage data loading (#7)', () => {
 
   describe('loading states', () => {
     it('shows earnings card skeletons while the balance is loading', () => {
-      vi.mocked(sdkUseCreatorBalance).mockImplementation(() =>
-        balanceResult({ loading: true })
-      );
+      vi.mocked(sdkUseCreatorBalance).mockImplementation(() => balanceResult({ loading: true }));
 
       render(<CreatorDashboardPage />);
 

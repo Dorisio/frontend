@@ -13,6 +13,7 @@ import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
 import { useTransactionFilter } from '@/hooks/use-transaction-filter';
 import { TransactionFilterBar } from '@/components/sections/transaction-filter-bar';
+import { TransactionVerification } from '@/components/sections/transaction-verification';
 import { useWallet } from '@/hooks/use-wallet';
 import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications';
 import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
@@ -154,9 +155,7 @@ function CreatorDashboardPageContent() {
           {/* Available Balance */}
           <div className="bg-background border rounded-lg p-6 space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Available Balance</h3>
-            <p className="text-3xl font-bold">
-              {formatCurrency(balance?.availableBalance || 0)}
-            </p>
+            <p className="text-3xl font-bold">{formatCurrency(balance?.availableBalance || 0)}</p>
             <p className="text-xs text-muted-foreground">Ready to withdraw</p>
           </div>
 
@@ -255,15 +254,21 @@ function CreatorDashboardPageContent() {
                       </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground truncate">
                         {tx.transactionHash ? (
-                          <a
-                            href={`https://stellar.expert/explorer/testnet/tx/${tx.transactionHash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:text-primary"
-                            title={tx.transactionHash}
-                          >
-                            {tx.transactionHash.slice(0, 8)}...
-                          </a>
+                          <div className="space-y-1">
+                            <a
+                              href={`https://stellar.expert/explorer/testnet/tx/${tx.transactionHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-primary"
+                              title={tx.transactionHash}
+                            >
+                              {tx.transactionHash.slice(0, 8)}...
+                            </a>
+                            <TransactionVerification
+                              transactionId={tx.id}
+                              transactionHash={tx.transactionHash}
+                            />
+                          </div>
                         ) : (
                           '-'
                         )}
