@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Modal,
   ModalContent,
@@ -15,8 +15,10 @@ import {
   ModalFooter,
 } from '@/components/ui/modal';
 import { useCreateTip } from '@/hooks/use-create-tip';
+import { useWallet } from '@/hooks/use-wallet';
 import { useNotification } from '@/components/notification-provider';
 import { dedupedRequest } from '@/lib/request-deduplicator';
+import { WalletSelector } from '@/components/sections/wallet-selector';
 
 interface DorisioButtonProps {
   creatorId: string;
@@ -35,8 +37,22 @@ export default function DorisioButton({
 }: DorisioButtonProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
   const { createTip, loading } = useCreateTip();
   const { success, error: notifyError } = useNotification();
+  const { wallets, getPreferredWalletId, setLastUsedWallet } = useWallet();
+
+  // Auto-select preferred wallet when modal opens
+  useEffect(() => {
+    if (isOpen && !selectedWalletId) {
+      const preferredId = getPreferredWalletId(creatorId);
+      if (preferredId && wallets.some((w) => w.id === preferredId)) {
+        setSelectedWalletId(preferredId);
+      } else if (wallets.length > 0) {
+        setSelectedWalletId(wallets[0].id);
+      }
+    }
+  }, [isOpen, selectedWalletId, creatorId, wallets, getPreferredWalletId]);
 
   const sizeClasses = {
     sm: 'px-3 py-1 text-sm',
@@ -53,16 +69,19 @@ export default function DorisioButton({
     setIsOpen(open);
     if (!open) {
       setSelectedAmount(null);
+      setSelectedWalletId(null);
     }
   }
 
   async function handleSendTip(): Promise<void> {
-    if (!selectedAmount || loading) return;
+    if (!selectedAmount || !selectedWalletId || loading) return;
 
-    const dedupeKey = `create-tip:${creatorId}:${selectedAmount}`;
+    const dedupeKey = `create-tip:${creatorId}:${selectedAmount}:${selectedWalletId}`;
 
     try {
       await dedupedRequest(() => createTip({ creatorId, amount: selectedAmount }), dedupeKey);
+      // Track wallet preference for this creator
+      setLastUsedWallet(creatorId, selectedWalletId);
       success(`Tip of $${selectedAmount} sent!`, 'Thank you');
       handleClose(false);
     } catch (err) {
@@ -86,10 +105,22 @@ export default function DorisioButton({
             <ModalTitle>Send a Tip</ModalTitle>
             <ModalDescription>Support this creator with an instant USDC payment</ModalDescription>
           </ModalHeader>
-          <div className="px-6 py-4">
-            <p className="text-sm text-muted-foreground mb-4">Creator ID: {creatorId}</p>
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Select amount:</p>
+          <div className="px-6 py-4 space-y-4">
+            <p className="text-sm text-muted-foreground">Creator ID: {creatorId}</p>
+
+            {/* Wallet Selector */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select wallet:</label>
+              <WalletSelector
+                value={selectedWalletId}
+                onChange={setSelectedWalletId}
+                disabled={loading}
+              />
+            </div>
+
+            {/* Amount Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select amount:</label>
               <div className="grid grid-cols-4 gap-2">
                 {TIP_AMOUNTS.map((amount) => (
                   <button
@@ -119,7 +150,7 @@ export default function DorisioButton({
             </button>
             <button
               onClick={handleSendTip}
-              disabled={!selectedAmount || loading}
+              disabled={!selectedAmount || !selectedWalletId || loading}
               className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Sending...' : 'Continue'}
