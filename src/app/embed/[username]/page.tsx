@@ -12,6 +12,7 @@ import { Creator } from '@/types';
 import { useDorisio } from 'dorisio-sdk/react';
 import { formatCurrency } from '@/utils/formatters';
 import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
+import { CreatorBio } from '@/components/sections/creator-bio';
 import DorisioButton from '@/components/sections/dorisio-button';
 
 interface EmbedWidgetState {
@@ -126,9 +127,7 @@ export default function EmbedTipWidget(): JSX.Element {
           {/* Creator Info */}
           <div className="bg-background rounded-lg p-4 mb-4 border">
             <h2 className="font-semibold mb-2">{state.creator.displayName}</h2>
-            {state.creator.bio && (
-              <p className="text-sm text-muted-foreground line-clamp-3">{state.creator.bio}</p>
-            )}
+            {state.creator.bio && <CreatorBio value={state.creator.bio} className="line-clamp-3 text-sm text-muted-foreground" />}
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3 mt-4">

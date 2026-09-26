@@ -21,6 +21,7 @@ import {
   TransactionTableSkeleton,
 } from '@/components/shared/creator-skeletons';
 import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
+import { CreatorBio } from '@/components/sections/creator-bio';
 
 interface CreatorPageState {
   creator: Creator | null;
@@ -138,7 +139,7 @@ export default function CreatorProfilePage(): JSX.Element {
 
               <p className="text-muted-foreground mb-4">@{state.creator.username}</p>
 
-              {state.creator.bio && <p className="text-lg mb-6 max-w-2xl">{state.creator.bio}</p>}
+              {state.creator.bio && <CreatorBio value={state.creator.bio} className="mb-6 max-w-2xl text-lg" />}
 
               <div className="flex gap-8 mb-6">
                 <div>

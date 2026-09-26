@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useWallet } from '@/hooks/use-wallet';
+import { CreatorBioEditor } from '@/components/sections/creator-bio';
 
 interface Settings {
   displayName: string;
@@ -141,16 +142,13 @@ export default function SettingsPage(): JSX.Element {
 
             <div>
               <Label htmlFor="bio">Bio</Label>
-              <textarea
-                id="bio"
-                name="bio"
+              <CreatorBioEditor
                 value={settings.bio}
-                onChange={handleInputChange}
-                placeholder="Tell us about yourself"
-                className="mt-2 w-full px-3 py-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                rows={4}
+                onChange={(bio) => {
+                  setSettings((prev) => ({ ...prev, bio }));
+                  setStatus({ type: null, message: '' });
+                }}
               />
-              <p className="text-xs text-muted-foreground mt-1">Max 500 characters</p>
             </div>
 
             <div>

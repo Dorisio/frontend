@@ -10,6 +10,7 @@ import { useCreatorSearch } from '@/hooks/use-creator-search';
 import { formatCurrency } from '@/utils/formatters';
 import { CreatorSearchBar } from '@/components/sections/creator-search-bar';
 import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
+import { CreatorBio } from '@/components/sections/creator-bio';
 import DorisioButton from '@/components/sections/dorisio-button';
 import Link from 'next/link';
 
@@ -110,11 +111,7 @@ function CreatorDiscoveryPageContent() {
                     </div>
 
                     {/* Bio */}
-                    {creator.bio && (
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                        {creator.bio}
-                      </p>
-                    )}
+                    {creator.bio && <CreatorBio value={creator.bio} className="mb-4 line-clamp-2 text-sm text-muted-foreground" />}
 
                     {/* Stats */}
                     <div className="bg-muted rounded-lg p-3 mb-4 text-sm">
