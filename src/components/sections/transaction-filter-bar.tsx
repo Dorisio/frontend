@@ -1,7 +1,7 @@
 /**
  * Transaction Filter Bar
  * Date range, amount range, status, and sort controls for transaction history,
- * plus CSV export of the currently filtered rows.
+ * plus CSV, Excel, and PDF export of the currently filtered rows.
  */
 
 'use client';
@@ -17,6 +17,8 @@ export interface TransactionFilterBarProps {
   ) => void;
   onReset: () => void;
   onExport: () => void;
+  onExportExcel?: () => void;
+  onExportPdf?: () => void;
   resultCount: number;
 }
 
@@ -25,8 +27,12 @@ export function TransactionFilterBar({
   onChange,
   onReset,
   onExport,
+  onExportExcel,
+  onExportPdf,
   resultCount,
 }: TransactionFilterBarProps): JSX.Element {
+  const exportDisabled = resultCount === 0;
+
   return (
     <div className="border rounded-lg p-4 space-y-3" data-testid="transaction-filter-bar">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -139,7 +145,10 @@ export function TransactionFilterBar({
         </div>
 
         <div>
-          <label htmlFor="filter-sort-direction" className="text-xs font-medium text-muted-foreground">
+          <label
+            htmlFor="filter-sort-direction"
+            className="text-xs font-medium text-muted-foreground"
+          >
             Order
           </label>
           <select
@@ -163,15 +172,38 @@ export function TransactionFilterBar({
           Reset
         </button>
 
-        <button
-          type="button"
-          onClick={onExport}
-          disabled={resultCount === 0}
-          className="ml-auto flex items-center gap-2 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Download className="h-4 w-4" aria-hidden="true" />
-          Export CSV ({resultCount})
-        </button>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onExport}
+            disabled={exportDisabled}
+            aria-label={`Export CSV (${resultCount})`}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            CSV ({resultCount})
+          </button>
+          {onExportExcel && (
+            <button
+              type="button"
+              onClick={onExportExcel}
+              disabled={exportDisabled}
+              className="px-3 py-1.5 text-sm border rounded hover:bg-muted transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Excel
+            </button>
+          )}
+          {onExportPdf && (
+            <button
+              type="button"
+              onClick={onExportPdf}
+              disabled={exportDisabled}
+              className="px-3 py-1.5 text-sm border rounded hover:bg-muted transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              PDF
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

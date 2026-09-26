@@ -125,6 +125,94 @@ export function transactionsToCsv(transactions: Transaction[]): string {
   return [headers, ...rows].map((row) => row.map(escapeCsvField).join(',')).join('\n');
 }
 
+function escapeHtml(value: string | number): string {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function transactionRows(transactions: Transaction[]): string {
+  return transactions
+    .map(
+      (t) => `
+        <tr>
+          <td>${escapeHtml(t.createdAt)}</td>
+          <td>${escapeHtml(t.amount.toString())}</td>
+          <td>${escapeHtml(t.senderUsername || t.senderId || '')}</td>
+          <td>${escapeHtml(t.message || '')}</td>
+          <td>${escapeHtml(t.status)}</td>
+          <td>${escapeHtml(t.transactionHash || '')}</td>
+        </tr>`
+    )
+    .join('');
+}
+
+export function transactionsToExcelHtml(transactions: Transaction[]): string {
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      table { border-collapse: collapse; }
+      th, td { border: 1px solid #d0d7de; padding: 6px 8px; text-align: left; }
+      th { background: #f6f8fa; }
+    </style>
+  </head>
+  <body>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>From</th>
+          <th>Message</th>
+          <th>Status</th>
+          <th>Transaction Hash</th>
+        </tr>
+      </thead>
+      <tbody>${transactionRows(transactions)}</tbody>
+    </table>
+  </body>
+</html>`;
+}
+
+export function transactionsToPrintableHtml(transactions: Transaction[], title: string): string {
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(title)}</title>
+    <style>
+      body { color: #111827; font-family: Arial, sans-serif; margin: 32px; }
+      h1 { font-size: 22px; margin: 0 0 16px; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border-bottom: 1px solid #d1d5db; padding: 8px; text-align: left; }
+      th { background: #f3f4f6; font-size: 12px; text-transform: uppercase; }
+      td { font-size: 12px; vertical-align: top; }
+    </style>
+  </head>
+  <body>
+    <h1>${escapeHtml(title)}</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>From</th>
+          <th>Message</th>
+          <th>Status</th>
+          <th>Transaction Hash</th>
+        </tr>
+      </thead>
+      <tbody>${transactionRows(transactions)}</tbody>
+    </table>
+  </body>
+</html>`;
+}
+
 export function downloadCsv(csvContent: string, filename: string): void {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -137,6 +225,29 @@ export function downloadCsv(csvContent: string, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
+export function downloadExcel(htmlContent: string, filename: string): void {
+  const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export function printPdfReport(htmlContent: string): void {
+  const reportWindow = window.open('', '_blank', 'noopener,noreferrer');
+  if (!reportWindow) return;
+
+  reportWindow.document.open();
+  reportWindow.document.write(htmlContent);
+  reportWindow.document.close();
+  reportWindow.focus();
+  reportWindow.print();
+}
+
 export function useTransactionFilter(transactions: Transaction[]): {
   filters: TransactionFilterState;
   setFilter: <K extends keyof TransactionFilterState>(
@@ -146,6 +257,8 @@ export function useTransactionFilter(transactions: Transaction[]): {
   resetFilters: () => void;
   filteredTransactions: Transaction[];
   exportToCsv: (filenamePrefix?: string) => void;
+  exportToExcel: (filenamePrefix?: string) => void;
+  exportToPdf: (title?: string) => void;
 } {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -197,5 +310,30 @@ export function useTransactionFilter(transactions: Transaction[]): {
     [filteredTransactions]
   );
 
-  return { filters, setFilter, resetFilters, filteredTransactions, exportToCsv };
+  const exportToExcel = useCallback(
+    (filenamePrefix = 'transactions') => {
+      const html = transactionsToExcelHtml(filteredTransactions);
+      const date = new Date().toISOString().slice(0, 10);
+      downloadExcel(html, `${filenamePrefix}-${date}.xls`);
+    },
+    [filteredTransactions]
+  );
+
+  const exportToPdf = useCallback(
+    (title = 'Transaction History') => {
+      const html = transactionsToPrintableHtml(filteredTransactions, title);
+      printPdfReport(html);
+    },
+    [filteredTransactions]
+  );
+
+  return {
+    filters,
+    setFilter,
+    resetFilters,
+    filteredTransactions,
+    exportToCsv,
+    exportToExcel,
+    exportToPdf,
+  };
 }

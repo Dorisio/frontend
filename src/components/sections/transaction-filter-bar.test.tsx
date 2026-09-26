@@ -82,7 +82,7 @@ describe('TransactionFilterBar', () => {
       />
     );
 
-    const exportButton = screen.getByText(/Export CSV \(0\)/);
+    const exportButton = screen.getByRole('button', { name: /export csv \(0\)/i });
     expect((exportButton.closest('button') as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -99,10 +99,34 @@ describe('TransactionFilterBar', () => {
       />
     );
 
-    const exportButton = screen.getByText(/Export CSV \(5\)/).closest('button');
+    const exportButton = screen.getByRole('button', { name: /export csv \(5\)/i });
     expect((exportButton as HTMLButtonElement).disabled).toBe(false);
 
     await user.click(exportButton as HTMLButtonElement);
     expect(onExport).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders optional Excel and PDF export actions', async () => {
+    const user = userEvent.setup();
+    const onExportExcel = vi.fn();
+    const onExportPdf = vi.fn();
+
+    render(
+      <TransactionFilterBar
+        filters={baseFilters}
+        onChange={vi.fn()}
+        onReset={vi.fn()}
+        onExport={vi.fn()}
+        onExportExcel={onExportExcel}
+        onExportPdf={onExportPdf}
+        resultCount={2}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Excel' }));
+    await user.click(screen.getByRole('button', { name: 'PDF' }));
+
+    expect(onExportExcel).toHaveBeenCalledTimes(1);
+    expect(onExportPdf).toHaveBeenCalledTimes(1);
   });
 });

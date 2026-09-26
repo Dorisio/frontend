@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { CreatorAnalytics } from '@/types';
 
@@ -39,8 +39,12 @@ vi.mock('@/hooks/use-creator-analytics', () => ({
 }));
 
 const downloadAnalyticsCsvMock = vi.fn();
+const downloadAnalyticsExcelMock = vi.fn();
+const printAnalyticsPdfMock = vi.fn();
 vi.mock('@/lib/csv-export', () => ({
   downloadAnalyticsCsv: (...args: unknown[]) => downloadAnalyticsCsvMock(...args),
+  downloadAnalyticsExcel: (...args: unknown[]) => downloadAnalyticsExcelMock(...args),
+  printAnalyticsPdf: (...args: unknown[]) => printAnalyticsPdfMock(...args),
 }));
 
 import CreatorAnalyticsPage from './page';
@@ -88,8 +92,8 @@ describe('CreatorAnalyticsPage', () => {
   it('renders the earnings trend chart, source breakdown, and top tippers table', () => {
     render(<CreatorAnalyticsPage />);
 
-    expect(screen.getByTestId('earnings-trend-chart')).toBeInTheDocument();
-    expect(screen.getByTestId('tip-source-breakdown-chart')).toBeInTheDocument();
+    expect(screen.getByText('Earnings Trend')).toBeInTheDocument();
+    expect(screen.getByText('Tip Source Breakdown')).toBeInTheDocument();
     expect(screen.getByTestId('top-tippers-table')).toBeInTheDocument();
     expect(screen.getByText('Bob')).toBeInTheDocument();
   });
@@ -124,23 +128,41 @@ describe('CreatorAnalyticsPage', () => {
     const user = userEvent.setup();
     render(<CreatorAnalyticsPage />);
 
-    expect(useCreatorAnalyticsMock).toHaveBeenCalledWith('alice', '30d');
+    expect(useCreatorAnalyticsMock).toHaveBeenCalledWith(
+      'alice',
+      expect.objectContaining({ preset: '30d' })
+    );
 
     await user.click(screen.getByRole('button', { name: '90 Days' }));
 
-    expect(useCreatorAnalyticsMock).toHaveBeenCalledWith('alice', '90d');
+    expect(useCreatorAnalyticsMock).toHaveBeenCalledWith(
+      'alice',
+      expect.objectContaining({ preset: '90d' })
+    );
   });
 
   it('exports a CSV with the currently loaded data and range when Export CSV is clicked', async () => {
-    const user = userEvent.setup();
     render(<CreatorAnalyticsPage />);
 
-    await user.click(screen.getByRole('button', { name: 'Export CSV' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
 
     expect(downloadAnalyticsCsvMock).toHaveBeenCalledWith(
       sampleAnalytics,
       'dorisio-analytics-alice-30d.csv'
     );
+  });
+
+  it('exports Excel and PDF reports with the currently loaded analytics data', async () => {
+    render(<CreatorAnalyticsPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export Excel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
+
+    expect(downloadAnalyticsExcelMock).toHaveBeenCalledWith(
+      sampleAnalytics,
+      'dorisio-analytics-alice-30d.xls'
+    );
+    expect(printAnalyticsPdfMock).toHaveBeenCalledWith(sampleAnalytics, 'alice Creator Analytics');
   });
 
   it('disables the Export CSV button while data is loading', () => {
@@ -154,5 +176,7 @@ describe('CreatorAnalyticsPage', () => {
     render(<CreatorAnalyticsPage />);
 
     expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Export Excel' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Export PDF' })).toBeDisabled();
   });
 });

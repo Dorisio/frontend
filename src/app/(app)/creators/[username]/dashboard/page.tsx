@@ -50,8 +50,15 @@ function CreatorDashboardPageContent() {
     loading: transactionsLoading,
     error: transactionsError,
   } = useTransactionHistory(username, 1, 20);
-  const { filters, setFilter, resetFilters, filteredTransactions, exportToCsv } =
-    useTransactionFilter(transactions);
+  const {
+    filters,
+    setFilter,
+    resetFilters,
+    filteredTransactions,
+    exportToCsv,
+    exportToExcel,
+    exportToPdf,
+  } = useTransactionFilter(transactions);
   const {
     wallets,
     loading: walletLoading,
@@ -106,7 +113,10 @@ function CreatorDashboardPageContent() {
 
       <SubscriptionManagement creatorId={username} />
 
-      <section aria-labelledby="creator-verification-heading" className="border rounded-lg p-4 sm:p-6">
+      <section
+        aria-labelledby="creator-verification-heading"
+        className="border rounded-lg p-4 sm:p-6"
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="creator-verification-heading" className="font-semibold">
@@ -190,6 +200,8 @@ function CreatorDashboardPageContent() {
           onChange={setFilter}
           onReset={resetFilters}
           onExport={() => exportToCsv(`${username}-transactions`)}
+          onExportExcel={() => exportToExcel(`${username}-transactions`)}
+          onExportPdf={() => exportToPdf(`${username} Transaction History`)}
           resultCount={filteredTransactions.length}
         />
 
