@@ -72,7 +72,7 @@ function buildEarningsTrend(
   range: AnalyticsDateRangePreset,
   now: Date,
   dayCount?: number,
-  seedSuffix = range
+  seedSuffix: string = range
 ): EarningsTrendPoint[] {
   const days = dayCount ?? rangeToDays(range, now);
   const random = seededRandom(`${username}:${seedSuffix}:trend`);

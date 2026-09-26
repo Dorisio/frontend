@@ -9,6 +9,7 @@ import { NotificationProvider } from '@/components/notification-provider';
 import { getQueryClient } from '@/lib/query-client';
 import { useAuthHydration } from '@/hooks/use-auth-hydration';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
+import { BackgroundRefreshIndicator } from '@/components/shared/background-refresh-indicator';
 
 const CompatibleDorisioProvider = DorisioProvider as unknown as ComponentType<{
   client: DorisioClient;
@@ -58,6 +59,7 @@ export function Providers({ children }: { children: ReactNode }): JSX.Element {
       <QueryClientProvider client={queryClient}>
         <CompatibleDorisioProvider client={dorisioClient} config={dorisioClient.getConfig()}>
           <NotificationProvider />
+          <BackgroundRefreshIndicator />
           {children}
         </CompatibleDorisioProvider>
       </QueryClientProvider>

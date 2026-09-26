@@ -7,6 +7,7 @@
 'use client';
 
 import { Suspense, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCreatorBalance } from '@/hooks/use-creator-balance';
@@ -23,6 +24,7 @@ import {
 } from '@/components/shared/creator-skeletons';
 import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
 import Link from 'next/link';
+import { fetchCreatorAnalytics } from '@/hooks/use-creator-analytics';
 
 export default function CreatorDashboardPage() {
   return (
@@ -37,6 +39,17 @@ function CreatorDashboardPageContent() {
   const router = useRouter();
   const username = params.username as string;
   const user = useAuthStore((state) => state.user);
+  const queryClient = useQueryClient();
+
+  // Warm the analytics tab while the dashboard is visible. React Query
+  // deduplicates this with the analytics page if navigation happens during
+  // the request, and the five-minute analytics policy keeps it fresh.
+  useEffect(() => {
+    void queryClient.prefetchQuery({
+      queryKey: ['creatorAnalytics', username, '30d', undefined, undefined],
+      queryFn: () => fetchCreatorAnalytics(username, { preset: '30d' }),
+    });
+  }, [queryClient, username]);
 
   const { balance, loading: balanceLoading, error: balanceError } = useCreatorBalance(username);
   const {

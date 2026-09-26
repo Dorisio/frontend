@@ -9,7 +9,7 @@ interface ErrorWithStatus extends Error {
 }
 
 export const createQueryClient = (): QueryClient => {
-  return new QueryClient({
+  const client = new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 1000 * 60 * 5, // 5 minutes
@@ -33,6 +33,28 @@ export const createQueryClient = (): QueryClient => {
       },
     },
   });
+
+  // Data lifetimes reflect how quickly each dashboard surface changes. The
+  // query keys are shared by all consumers, so duplicate mounts reuse the
+  // same in-flight promise and cached result.
+  client.setQueryDefaults(['creatorAnalytics'], {
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+  client.setQueryDefaults(['transactionHistory'], {
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+  });
+  client.setQueryDefaults(['creatorBalance'], {
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+  });
+  client.setQueryDefaults(['creators'], {
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+
+  return client;
 };
 
 // Create a singleton query client for the application

@@ -20,7 +20,7 @@ export interface CreatorAnalyticsRangeOptions {
   endDate?: string;
 }
 
-async function fetchCreatorAnalytics(
+export async function fetchCreatorAnalytics(
   username: string,
   range: CreatorAnalyticsRangeOptions
 ): Promise<CreatorAnalytics> {
@@ -43,11 +43,13 @@ async function fetchCreatorAnalytics(
 
 export function useCreatorAnalytics(
   username: string | null | undefined,
-  range: CreatorAnalyticsRangeOptions = { preset: '30d' }
+  range: CreatorAnalyticsRangeOptions | AnalyticsDateRangePreset = { preset: '30d' }
 ): UseQueryResult<CreatorAnalytics, Error> {
+  const normalizedRange: CreatorAnalyticsRangeOptions =
+    typeof range === 'string' ? { preset: range } : range;
   return useQuery({
-    queryKey: ['creatorAnalytics', username, range.preset, range.startDate, range.endDate],
-    queryFn: () => fetchCreatorAnalytics(username as string, range),
+    queryKey: ['creatorAnalytics', username, normalizedRange.preset, normalizedRange.startDate, normalizedRange.endDate],
+    queryFn: () => fetchCreatorAnalytics(username as string, normalizedRange),
     enabled: Boolean(username),
   });
 }

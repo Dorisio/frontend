@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/modal';
 import { useCreateTip } from '@/hooks/use-create-tip';
 import { useWallet } from '@/hooks/use-wallet';
+import { WalletSelector } from '@/components/sections/wallet-selector';
 import { useNotification } from '@/components/notification-provider';
 import { dedupedRequest } from '@/lib/request-deduplicator';
 import {
@@ -47,7 +48,8 @@ export default function DorisioButton({
   const [messageError, setMessageError] = useState<string | null>(null);
   const { createTip, loading } = useCreateTip();
   const { success, error: notifyError } = useNotification();
-  const { wallets, getPreferredWalletId, setLastUsedWallet } = useWallet();
+  const { wallets, getPreferredWalletId } = useWallet();
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
 
   // Auto-select preferred wallet when modal opens
   useEffect(() => {
