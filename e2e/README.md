@@ -15,3 +15,5 @@ pnpm test:e2e:report
 ```
 
 The suite starts the Next.js dev server through `playwright.config.ts`, records screenshots/videos/traces on failure, and mocks backend analytics responses with Playwright route interception.
+
+Visual regression coverage lives in `visual-regression.spec.ts`. It captures the creator analytics and dashboard pages with mocked backend data and disabled animations. Review screenshot diffs in the Playwright HTML report before accepting snapshot updates.

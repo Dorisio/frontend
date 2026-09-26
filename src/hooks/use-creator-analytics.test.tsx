@@ -55,7 +55,8 @@ describe('useCreatorAnalytics', () => {
   it('refetches with updated params when the range changes', async () => {
     const { wrapper } = createWrapper();
     const { result, rerender } = renderHook(
-      ({ range }: { range: '30d' | '90d' | 'ytd' }) => useCreatorAnalytics('alice', range),
+      ({ range }: { range: '30d' | '90d' | 'ytd' }) =>
+        useCreatorAnalytics('alice', { preset: range }),
       { wrapper, initialProps: { range: '30d' } }
     );
 

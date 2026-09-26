@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { applyTransactionFilters, transactionsToCsv } from './use-transaction-filter';
+import {
+  applyTransactionFilters,
+  transactionsToCsv,
+  transactionsToExcelHtml,
+  transactionsToPrintableHtml,
+} from './use-transaction-filter';
 import type { Transaction } from './use-transaction-history';
 import type { TransactionFilterState } from './use-transaction-filter';
 
@@ -181,5 +186,33 @@ describe('transactionsToCsv', () => {
   it('returns just the header row for an empty transaction list', () => {
     const csv = transactionsToCsv([]);
     expect(csv).toBe('Date,Amount,From,Message,Status,Transaction Hash');
+  });
+});
+
+describe('transaction report exports', () => {
+  it('builds an Excel-compatible HTML table with transaction rows', () => {
+    const html = transactionsToExcelHtml(transactions);
+
+    expect(html).toContain('<table>');
+    expect(html).toContain('<th>Transaction Hash</th>');
+    expect(html).toContain('<td>Amazing tutorial</td>');
+  });
+
+  it('escapes HTML in generated transaction reports', () => {
+    const html = transactionsToPrintableHtml(
+      [
+        {
+          id: '1',
+          amount: 10,
+          status: 'confirmed',
+          createdAt: '2026-01-01T00:00:00Z',
+          senderUsername: '<script>alert(1)</script>',
+        },
+      ],
+      'Tip History'
+    );
+
+    expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(html).not.toContain('<script>alert(1)</script>');
   });
 });
