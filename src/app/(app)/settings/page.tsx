@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useWallet } from '@/hooks/use-wallet';
 import { CreatorBioEditor } from '@/components/sections/creator-bio';
+import { SubscriptionSettings } from '@/components/sections/subscription-settings';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface Settings {
   displayName: string;
@@ -32,6 +34,7 @@ export default function SettingsPage(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<SettingsStatus>({ type: null, message: '' });
   const { wallets, preferredWallet, setDefaultWalletId } = useWallet();
+  const user = useAuthStore((state) => state.user);
   const [settings, setSettings] = useState<Settings>({
     displayName: '',
     email: '',
@@ -172,6 +175,8 @@ export default function SettingsPage(): JSX.Element {
             </Button>
           </form>
         </Card>
+
+        {user?.username && <SubscriptionSettings creatorId={user.username} />}
 
         {/* Default Wallet Settings */}
         <Card className="p-6 mb-6">

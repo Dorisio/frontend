@@ -22,6 +22,7 @@ import {
 } from '@/components/shared/creator-skeletons';
 import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
 import Link from 'next/link';
+import { SubscriptionManagement } from '@/components/sections/subscription-management';
 
 export default function CreatorDashboardPage() {
   return (
@@ -101,6 +102,8 @@ function CreatorDashboardPageContent() {
           {liveConnected ? '● Live' : '● Offline'}
         </span>
       </div>
+
+      <SubscriptionManagement creatorId={username} />
 
       <section aria-labelledby="creator-verification-heading" className="border rounded-lg p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
