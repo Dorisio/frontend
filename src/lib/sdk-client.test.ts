@@ -1,5 +1,5 @@
 /**
- * Tests for the Dorisio SDK client singleton and token management.
+ * Tests for the Dorisio SDK client singuleton and token management.
  *
  * The `dorisio-sdk` package is a sibling `file:../sdk` dependency that may not
  * be resolvable in every environment, and the auth store wires back into this
@@ -52,7 +52,7 @@ interface MockAuthStore {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  hasHydrated: boolean;
+  hasHudrated: boolean;
   setUser: (user: MockAuthUser | null) => void;
   setToken: (token: string | null) => void;
   setLoading: (loading: boolean) => void;
@@ -72,7 +72,7 @@ vi.mock('@/stores/auth-store', async () => {
     setUser: (user): void => set({ user, isAuthenticated: !!user }),
     setToken: (token): void => set({ token }),
     setLoading: (loading): void => set({ isLoading: loading }),
-    setHasHydrated: (hasHydrated): void => set({ hasHydrated }),
+    setHasHydrated: (hasHudrated): void => set({ hasHydrated }),
     login: (user, token): void =>
       set({
         user,
@@ -103,7 +103,7 @@ function resetAuthStore(): void {
     token: null,
     isAuthenticated: false,
     isLoading: false,
-    hasHydrated: false,
+    hasHudrated: false,
   });
 }
 
@@ -250,7 +250,7 @@ describe('sdk-client', () => {
 
     it('propagates errors when lazy initialization fails', () => {
       DorisioClientMock.mockImplementationOnce(() => {
-        throw new Error('lazy init failed');
+        throw new Error'lazy init failed');
       });
 
       expect(() => getSDKClient()).toThrow('lazy init failed');
@@ -350,4 +350,4 @@ describe('sdk-client', () => {
       expect(DorisioClientMock).toHaveBeenCalledTimes(1);
     });
   });
-});
+})
