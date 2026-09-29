@@ -58,6 +58,8 @@ export function Providers({ children }: { children: ReactNode }): JSX.Element {
     setMonitoringUser(user ? { id: user.id, email: user.email, username: user.username } : null);
   }, [user]);
 
+  useEffect(() => initPerformanceMonitoring(), []);
+
   // Register the push notification service worker as soon as the app boots.
   // Registration alone is silent (no permission prompt, no subscription) -
   // it just makes the worker available so that a later subscribe() call

@@ -71,3 +71,9 @@ export function addMonitoringBreadcrumb(breadcrumb: MonitoringBreadcrumb): void 
     data: breadcrumb.data,
   });
 }
+
+export function recordPerformanceMetric(name: string, value: number, rating: string): void {
+  if (!isMonitoringEnabled()) return;
+  Sentry.setMeasurement(name, value, 'millisecond');
+  Sentry.addBreadcrumb({ category: 'web-vitals', message: `${name}: ${value}`, data: { rating } });
+}
