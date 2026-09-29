@@ -1,0 +1,29 @@
+version: 2
+discovery:
+  request-headers:
+    User-Agent: Percy
+  allowed-hostnames:
+    - localhost
+snapshot:
+  widths:
+    - 375
+    - 1280
+  min-height: 1024
+  percy-css: |
+    /* Hide dynamic content that causes flaky tests */
+    [data-testid="timestamp"],
+    .timestamp,
+    .loading-spinner {
+      visibility: hidden !important;
+    }
+    
+    /* Ensure consistent font rendering */
+    * {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+    }
+static-snapshots:
+  base-url: http://localhost:3100
+  snapshot-files: '**/*.html'
+  ignore-files: 
+    - '**/*test*'
+    - '**/node_modules/**'

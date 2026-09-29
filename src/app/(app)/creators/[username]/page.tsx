@@ -25,6 +25,7 @@ import { CreatorBio } from '@/components/sections/creator-bio';
 import { SubscriptionTiers } from '@/components/sections/subscription-tiers';
 import { SubscriberOnlyContent } from '@/components/sections/subscriber-only-content';
 import { ExclusiveContentFeed } from '@/components/sections/exclusive-content-feed';
+import { AnnouncementFeed } from '@/components/sections/announcement-feed';
 import { SupporterLeaderboard } from '@/components/sections/supporter-leaderboard';
 import { SupporterLoyaltyCard } from '@/components/sections/supporter-loyalty-card';
 import { CreatorLiveStreamSection } from '@/components/sections/creator-live-stream';
@@ -202,6 +203,14 @@ export default function CreatorProfilePage(): JSX.Element {
           creatorName={state.creator.displayName || state.creator.username}
           currentUserId={user?.id}
         />
+
+        {/* Creator announcements / bulletin board for followers */}
+        <div className="mt-12">
+          <AnnouncementFeed
+            creatorId={state.creator.id}
+            creatorName={state.creator.displayName || state.creator.username}
+          />
+        </div>
 
         {/* Supporter loyalty: earned badge, progress to next tier, opt-in */}
         {user && (
