@@ -230,6 +230,74 @@ jobs:
           name: playwright-report
           path: ./frontend/playwright-report/
 
+  contract:
+    runs-on: ubuntu-latest
+    needs: [lint, type-check]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: frontend
+
+      - uses: actions/checkout@v4
+        with:
+          repository: Dorisio/sdk
+          path: sdk
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install and build SDK
+        working-directory: ./sdk
+        run: |
+          npm install
+          npm run build
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
+        working-directory: ./frontend
+
+      - name: Run consumer contract tests
+        run: pnpm test:contract
+        working-directory: ./frontend
+
+      - name: Publish pacts to broker
+        if: github.ref == 'refs/heads/main' && env.PACT_BROKER_BASE_URL != ''
+        run: pnpm pact:publish
+        working-directory: ./frontend
+
+      - name: Verify provider contracts
+        if: env.PACT_BROKER_BASE_URL != ''
+        run: pnpm pact:verify
+        working-directory: ./frontend
+
+      - name: Upload pact artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pacts
+          path: ./frontend/pacts/
+
   benchmark:
     runs-on: ubuntu-latest
     needs: [lint, type-check]
@@ -292,74 +360,6 @@ jobs:
           name: benchmark-results
           path: ./frontend/benchmark-results/
 
-  contract:
-    runs-on: ubuntu-latest
-    needs: [lint, type-check]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          path: frontend
-
-      - uses: actions/checkout@v4
-        with:
-          repository: Dorisio/sdk
-          path: sdk
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install and build SDK
-        working-directory: ./sdk
-        run: |
-          npm install
-          npm run build
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
-        working-directory: ./frontend
-
-      - name: Run contract tests (consumer)
-        run: pnpm test:contract
-        working-directory: ./frontend
-
-      - name: Publish pacts to broker
-        if: github.event_name == 'push' && env.PACT_BROKER_BASE_URL != ''
-        run: pnpm pact:publish
-        working-directory: ./frontend
-
-      - name: Can I deploy?
-        if: github.event_name == 'pull_request' && env.PACT_BROKER_BASE_URL != ''
-        run: pnpm pact:can-i-deploy
-        working-directory: ./frontend
-
-      - name: Upload pact artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pact-contracts
-          path: ./frontend/pacts/
-
   # deploy:
   #   runs-on: ubuntu-latest
   #   needs: build
@@ -417,3 +417,11 @@ jobs:
   #       run: |
   #         npm install -g vercel
   #         vercel --prod --token $VERCEL_TOKEN
+  #   contract:
+  #     runs-on: ubuntu-latest
+  #     needs: [contract]
+  #     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #     steps:
+  #       - name: Can I deploy?
+  #         run: pnpm pact:can-i-deploy
+  #         working-directory: ./frontend
