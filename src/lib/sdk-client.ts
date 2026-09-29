@@ -5,6 +5,7 @@
 
 import { DorisioClient } from 'dorisio-sdk';
 import { useAuthStore } from '@/stores/auth-store';
+import { getContractForIntegration, validateContractResponse } from '@/lib/contracts';
 
 let sdkClient: DorisioClient | null = null;
 
@@ -43,6 +44,14 @@ export function initSDKClient(token?: string): DorisioClient {
     token: authToken,
     timeout: 30000,
   });
+
+  // Validate SDK client against the defined API contract for the Dorisio integration.
+  // This ensures the client configuration matches the provider contract expectations
+  // and surfaces contract violations early (e.g., in CI contract tests).
+  const contract = getContractForIntegration('dorisio-sdk');
+  if (contract) {
+    validateContractResponse(contract, { baseUrl, timeout: 30000 });
+  }
 
   return sdkClient;
 }
