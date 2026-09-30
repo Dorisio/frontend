@@ -10,12 +10,26 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: { children: React.ReactNode; href: string }) => (
-    <a href={href} {...props}>{children}</a>
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
 vi.mock('dorisio-sdk/react', () => ({
   useDorisio: () => ({ client: { getCreatorProfile } }),
+  // The page renders SupporterCommissionRequest, which uses the SDK tip hook.
+  useCreateTip: () => ({
+    createTip: vi.fn().mockResolvedValue({ id: 'tip-1', status: 'confirmed' }),
+    buildTransaction: vi.fn(),
+    submitTransaction: vi.fn(),
+    confirmTransaction: vi.fn(),
+    data: null,
+    loading: false,
+    error: null,
+    step: undefined,
+    reset: vi.fn(),
+  }),
 }));
 
 vi.mock('@/hooks/use-creator-balance', () => ({
@@ -23,7 +37,13 @@ vi.mock('@/hooks/use-creator-balance', () => ({
 }));
 
 vi.mock('@/hooks/use-transaction-history', () => ({
-  useTransactionHistory: () => ({ transactions: [], total: 0, pageSize: 10, page: 1, loading: false }),
+  useTransactionHistory: () => ({
+    transactions: [],
+    total: 0,
+    pageSize: 10,
+    page: 1,
+    loading: false,
+  }),
 }));
 
 vi.mock('@/components/sections/dorisio-button', () => ({
