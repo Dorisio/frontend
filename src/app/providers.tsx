@@ -29,9 +29,11 @@ export function Providers({ children }: { children: ReactNode }): JSX.Element {
   // Initialize Dorisio client
   const dorisioClient = useMemo(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    return new DorisioClient({
+    const client = new DorisioClient({
       baseUrl: apiUrl,
     });
+    installRequestTracing(client as unknown as Parameters<typeof installRequestTracing>[0]);
+    return client;
   }, []);
 
   // The auth store's `persist` middleware rehydrates from localStorage
