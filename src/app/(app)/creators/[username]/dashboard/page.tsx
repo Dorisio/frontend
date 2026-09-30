@@ -29,6 +29,7 @@ import { SubscriptionManagement } from '@/components/sections/subscription-manag
 import { TipTierSettings } from '@/components/sections/tip-tier-settings';
 import { ScheduledTipsDashboard } from '@/components/sections/scheduled-tips-dashboard';
 import { CreatorCollaborations } from '@/components/sections/creator-collaborations';
+import { CommissionRequests } from '@/components/sections/commission-requests';
 import { ExclusiveContentCreatorPanel } from '@/components/sections/exclusive-content-creator-panel';
 import { CreatorAnnouncementPanel } from '@/components/sections/creator-announcement-panel';
 import { fetchCreatorAnalytics } from '@/hooks/use-creator-analytics';
@@ -136,6 +137,17 @@ function CreatorDashboardPageContent() {
       <TipTierSettings creatorId={username} />
       <ScheduledTipsDashboard creatorId={username} />
       <CreatorCollaborations username={username} userId={user.id} userName={user.name} />
+      <CommissionRequests
+        creatorId={username}
+        creatorUserId={user.id}
+        creatorUsername={username}
+        creatorName={user.name || username}
+        viewerId={username}
+        viewerUserId={user.id}
+        viewerUsername={username}
+        viewerName={user.name || username}
+        role="creator"
+      />
       <ExclusiveContentCreatorPanel creatorId={username} />
       <CreatorAnnouncementPanel creatorId={username} />
 

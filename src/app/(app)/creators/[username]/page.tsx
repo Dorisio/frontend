@@ -29,6 +29,7 @@ import { AnnouncementFeed } from '@/components/sections/announcement-feed';
 import { SupporterLeaderboard } from '@/components/sections/supporter-leaderboard';
 import { SupporterLoyaltyCard } from '@/components/sections/supporter-loyalty-card';
 import { CreatorLiveStreamSection } from '@/components/sections/creator-live-stream';
+import { CommissionRequests } from '@/components/sections/commission-requests';
 import { useCreatorSupporters } from '@/hooks/use-creator-supporters';
 import { useCreatorBadgeThresholds } from '@/hooks/use-badge-thresholds';
 import { useAuthStore } from '@/stores/auth-store';
@@ -198,6 +199,22 @@ export default function CreatorProfilePage(): JSX.Element {
             <p className="mt-1 text-sm text-muted-foreground">Thanks for supporting this creator.</p>
           </div>
         </SubscriberOnlyContent>
+
+        {user && (
+          <section className="mb-12">
+            <CommissionRequests
+              creatorId={state.creator.username}
+              creatorUserId={state.creator.userId}
+              creatorUsername={state.creator.username}
+              creatorName={state.creator.displayName || state.creator.username}
+              viewerId={user.id}
+              viewerUserId={user.id}
+              viewerUsername={user.username || user.id}
+              viewerName={user.name || user.username || 'You'}
+              role="supporter"
+            />
+          </section>
+        )}
 
         {collaborations.length > 0 && (
           <section className="mb-12" aria-labelledby="creator-collaborations-heading">
