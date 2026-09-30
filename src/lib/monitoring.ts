@@ -77,3 +77,23 @@ export function recordPerformanceMetric(name: string, value: number, rating: str
   Sentry.setMeasurement(name, value, 'millisecond');
   Sentry.addBreadcrumb({ category: 'web-vitals', message: `${name}: ${value}`, data: { rating } });
 }
+
+/**
+ * Record a memory measurement (in bytes) so it can be charted and alerted on
+ * in the Sentry dashboard. See docs/MEMORY_MONITORING.md for the dashboard
+ * setup and alert thresholds.
+ */
+export function recordMemoryMetric(
+  name: string,
+  bytes: number,
+  context?: Record<string, unknown>
+): void {
+  if (!isMonitoringEnabled()) return;
+  Sentry.setMeasurement(name, bytes, 'byte');
+  Sentry.addBreadcrumb({
+    category: 'memory',
+    level: 'info',
+    message: `${name}: ${(bytes / (1024 * 1024)).toFixed(2)} MB`,
+    data: { bytes, ...context },
+  });
+}

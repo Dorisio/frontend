@@ -15,6 +15,15 @@ import { retryWithBackoff, type RetryOptions } from './retry-backoff';
 
 const DEFAULT_WINDOW_MS = 500;
 
+/**
+ * Upper bound on tracked keys. Entries normally evict themselves a `windowMs`
+ * after they settle, but a request that never settles (a hung/aborted fetch)
+ * would otherwise live in the map forever. Evicting the oldest entry keeps the
+ * map bounded; the worst case is that a duplicate for an evicted key executes
+ * again, which is the same behaviour as the dedup window simply expiring.
+ */
+const MAX_PENDING_ENTRIES = 200;
+
 interface PendingEntry<T> {
   promise: Promise<T>;
   expiresAt: number;
@@ -23,6 +32,10 @@ interface PendingEntry<T> {
 // Module-level so dedup works across independent callers/components that
 // use the same key, not just repeated calls from a single hook instance.
 const pending = new Map<string, PendingEntry<unknown>>();
+
+// Cleanup timers, tracked so `clearDedupedRequests()` (used by tests) can
+// cancel them instead of leaving stray timers behind.
+const cleanupTimers = new Set<ReturnType<typeof setTimeout>>();
 
 export interface DedupedRequestOptions extends RetryOptions {
   /** How long a completed call's result stays eligible for reuse, in ms. Default 500ms. */
@@ -61,6 +74,18 @@ export function dedupedRequest<T>(
     expiresAt: Date.now() + windowMs,
   });
 
+  // Bound the map: Map iteration is insertion-ordered, so the first key is
+  // the oldest. Skip the key we just inserted so a burst of distinct keys can
+  // still dedup the current call.
+  if (pending.size > MAX_PENDING_ENTRIES) {
+    for (const oldestKey of pending.keys()) {
+      if (oldestKey !== key) {
+        pending.delete(oldestKey);
+        break;
+      }
+    }
+  }
+
   // Once settled, drop the entry after the window elapses (rather than
   // immediately) so a duplicate click that lands just after resolution
   // still reuses the result instead of firing a fresh request.
@@ -71,19 +96,30 @@ export function dedupedRequest<T>(
   // as an unhandled rejection.
   promise
     .finally(() => {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
+        cleanupTimers.delete(timer);
         const current = pending.get(key);
         if (current && current.promise === promise) {
           pending.delete(key);
         }
       }, windowMs);
+      cleanupTimers.add(timer);
     })
     .catch(() => {});
 
   return promise;
 }
 
-/** Clears all tracked in-flight/recent requests. Intended for tests. */
+/** Clears all tracked in-flight/recent requests and pending cleanup timers. */
 export function clearDedupedRequests(): void {
   pending.clear();
+  for (const timer of cleanupTimers) {
+    clearTimeout(timer);
+  }
+  cleanupTimers.clear();
+}
+
+/** Exposed for tests: current number of tracked keys. */
+export function getDedupedRequestCount(): number {
+  return pending.size;
 }

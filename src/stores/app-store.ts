@@ -27,6 +27,13 @@ export interface Notification {
   duration?: number;
 }
 
+/**
+ * Hard cap on retained toasts. Without it, a long-lived tab accumulates every
+ * notification ever shown, since each one is only removed when its timer fires
+ * or the user dismisses it. Oldest entries are evicted first.
+ */
+export const MAX_NOTIFICATIONS = 50;
+
 export const useAppStore = create<AppStore>((set) => ({
   sidebarOpen: true,
   theme: 'system',
@@ -49,7 +56,7 @@ export const useAppStore = create<AppStore>((set) => ({
           ...notification,
           id: Math.random().toString(36).slice(2),
         },
-      ],
+      ].slice(-MAX_NOTIFICATIONS),
     })),
 
   removeNotification: (id) =>

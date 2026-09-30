@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTipTiers } from '@/hooks/use-tip-tiers';
+import { useSafeTimeout } from '@/hooks/use-timeout';
 
 interface TipTierSettingsProps {
   creatorId: string;
@@ -18,13 +19,14 @@ interface TipTierSettingsProps {
 
 export function TipTierSettings({ creatorId }: TipTierSettingsProps): JSX.Element {
   const { tiers, addTier, removeTier, resetTiers } = useTipTiers(creatorId);
+  const { schedule } = useSafeTimeout();
   const [newTierAmount, setNewTierAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const showNotification = (message: string): void => {
     setSuccessMessage(message);
-    setTimeout(() => {
+    schedule(() => {
       setSuccessMessage(null);
     }, 3000);
   };

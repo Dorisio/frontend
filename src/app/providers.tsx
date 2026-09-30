@@ -13,6 +13,7 @@ import { BackgroundRefreshIndicator } from '@/components/shared/background-refre
 import { RouteTracker } from '@/components/route-tracker';
 import { useAuthStore } from '@/stores/auth-store';
 import { setMonitoringUser } from '@/lib/monitoring';
+import { startMemoryMonitor } from '@/lib/memory-monitor';
 import { I18nProvider } from '@/lib/i18n';
 import { registerServiceWorker } from '@/lib/push-notifications';
 
@@ -59,6 +60,14 @@ export function Providers({ children }: { children: ReactNode }): JSX.Element {
   }, [user]);
 
   useEffect(() => initPerformanceMonitoring(), []);
+
+  // Sample the JS heap for the lifetime of the app so sustained growth is
+  // reported to Sentry (and available via window.__dorisioMemory in dev).
+  // Set NEXT_PUBLIC_MEMORY_MONITOR=off to disable in a given environment.
+  useEffect(() => {
+    const monitor = startMemoryMonitor();
+    return () => monitor.stop();
+  }, []);
 
   // Register the push notification service worker as soon as the app boots.
   // Registration alone is silent (no permission prompt, no subscription) -
