@@ -16,7 +16,6 @@ import {
   ModalFooter,
 } from '@/components/ui/modal';
 import { useCreateTip } from '@/hooks/use-create-tip';
-import { useWallet } from '@/hooks/use-wallet';
 import { WalletSelector } from '@/components/sections/wallet-selector';
 import { useNotification } from '@/components/notification-provider';
 import { dedupedRequest } from '@/lib/request-deduplicator';
@@ -32,7 +31,6 @@ import {
   validateTipMessage,
 } from '@/lib/tip-message';
 import { EmojiPicker } from '@/components/shared/emoji-picker';
-import { useWallet } from '@/hooks/use-wallet';
 
 interface DorisioButtonProps {
   creatorId: string;
@@ -71,20 +69,18 @@ export default function DorisioButton({
   const { createTip, loading } = useCreateTip();
   const { scheduleTip } = useScheduledTips(creatorId);
   const { success, error: notifyError } = useNotification();
-  const { wallets, getPreferredWalletId, setLastUsedWallet } = useWallet();
+  const { wallets, fetchWallets, getPreferredWalletId, setLastUsedWallet } = useWallet();
   const {
     tiers: activeTiers,
     recentCustomAmounts,
     addRecentCustomAmount,
   } = useTipTiers(creatorId, propTipTiers);
-  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [message, setMessage] = useState('');
-  const { createTip, loading } = useCreateTip();
-  const { success: notifySuccess, error: notifyError } = useNotification();
-
   // Auto-select preferred wallet when modal opens
   useEffect(() => {
+    if (isOpen && wallets.length === 0) {
+      void fetchWallets().catch(() => undefined);
+    }
+
     if (isOpen && !selectedWalletId) {
       const preferredId = getPreferredWalletId(creatorId);
       if (preferredId && wallets.some((w) => w.id === preferredId)) {
@@ -93,7 +89,7 @@ export default function DorisioButton({
         setSelectedWalletId(wallets[0].id);
       }
     }
-  }, [isOpen, selectedWalletId, creatorId, wallets, getPreferredWalletId]);
+  }, [isOpen, selectedWalletId, creatorId, wallets, getPreferredWalletId, fetchWallets]);
 
   const sizeClasses = {
     sm: 'px-3 py-1 text-sm',
@@ -223,7 +219,7 @@ export default function DorisioButton({
     const dedupeKey = `create-tip:${creatorId}:${selectedAmount}:${selectedWalletId}:${normalizedMsg}`;
 
     try {
-      await dedupedRequest(
+      const result = await dedupedRequest(
         () =>
           createTip({
             creatorId,
@@ -236,7 +232,18 @@ export default function DorisioButton({
         addRecentCustomAmount(selectedAmount);
       }
       setLastUsedWallet(creatorId, selectedWalletId);
-      success(`Tip of $${selectedAmount} sent!`, 'Thank you');
+      if (result.status === 'failed' || result.status === 'error') {
+        notifyError('The payment could not be completed. Please try again.', 'Tip failed');
+        return;
+      }
+      success(
+        result.status === 'confirmed' || result.status === 'success'
+          ? `Tip of $${selectedAmount} confirmed!`
+          : `Tip of $${selectedAmount} submitted. Confirmation is pending.`,
+        result.status === 'confirmed' || result.status === 'success'
+          ? 'Thank you'
+          : 'Payment pending'
+      );
       handleClose(false);
     } catch (err) {
       const errMessage = err instanceof Error ? err.message : 'Failed to send tip';

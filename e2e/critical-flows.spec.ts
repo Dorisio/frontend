@@ -1,9 +1,70 @@
 import { expect, test, type Page } from '@playwright/test';
 
+interface MockBackendOptions {
+  wallets?: Array<Record<string, unknown>>;
+  tip?: { status: string; stellarTxHash?: string };
+  tipFailure?: string;
+}
 
-async function mockBackend(page: Page): Promise<void> {
+async function mockBackend(page: Page, options: MockBackendOptions = {}): Promise<void> {
   await page.route('http://localhost:5000/**', async (route) => {
     const url = route.request().url();
+    const pathname = new URL(url).pathname;
+
+    if (pathname.endsWith('/api/v1/wallet/list')) {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: options.wallets ?? [],
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      return;
+    }
+
+    if (pathname.endsWith('/api/v1/transactions/tip')) {
+      if (options.tipFailure) {
+        await route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: false,
+            error: { code: 'PAYMENT_FAILED', message: options.tipFailure },
+            timestamp: new Date().toISOString(),
+          }),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            id: 'tip-e2e-1',
+            creatorId: 'creator-demo',
+            amount: 5,
+            status: options.tip?.status ?? 'confirmed',
+            stellarTxHash: options.tip?.stellarTxHash ?? 'mock-stellar-hash-123',
+            createdAt: new Date().toISOString(),
+          },
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      return;
+    }
+
+    if (pathname.endsWith('/api/v1/wallet/wallet-e2e-1/balance')) {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { available: 25, pending: 0, total: 25 },
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      return;
+    }
 
     if (url.includes('/creators/demo')) {
       await route.fulfill({
@@ -26,7 +87,10 @@ async function mockBackend(page: Page): Promise<void> {
     }
 
     if (url.includes('/wallet')) {
-      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ wallets: [] }) });
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ wallets: [] }),
+      });
       return;
     }
 
@@ -74,8 +138,20 @@ async function mockCreatorAnalytics(page: Page): Promise<void> {
           { source: 'Shared link', amount: 200, count: 20 },
         ],
         topTippers: [
-          { id: 'tipper-1', name: 'Maya Chen', totalAmount: 300, tipCount: 6, lastTipAt: '2026-09-30T00:00:00.000Z' },
-          { id: 'tipper-2', name: 'Jonas K.', totalAmount: 180, tipCount: 4, lastTipAt: '2026-09-29T00:00:00.000Z' },
+          {
+            id: 'tipper-1',
+            name: 'Maya Chen',
+            totalAmount: 300,
+            tipCount: 6,
+            lastTipAt: '2026-09-30T00:00:00.000Z',
+          },
+          {
+            id: 'tipper-2',
+            name: 'Jonas K.',
+            totalAmount: 180,
+            tipCount: 4,
+            lastTipAt: '2026-09-29T00:00:00.000Z',
+          },
         ],
       }),
     });
@@ -93,14 +169,22 @@ test.describe('critical frontend flows', () => {
     await expect(page.getByText(/password must be at least 8 characters/i)).toBeVisible();
   });
 
-  test('tip creation supports optional messages, emoji insertion, and moderation', async ({ page }) => {
+  test('tip creation supports optional messages, emoji insertion, and moderation', async ({
+    page,
+  }) => {
     await mockBackend(page);
     await page.goto('/creators/demo');
 
-    await page.getByRole('button', { name: /send a tip/i }).first().click();
+    await page
+      .getByRole('button', { name: /send a tip/i })
+      .first()
+      .click();
     await page.getByRole('button', { name: '$5' }).click();
     await page.getByLabel(/message/i).fill('Love this work');
-    await page.getByRole('button', { name: /add .* emoji/i }).first().click();
+    await page
+      .getByRole('button', { name: /add .* emoji/i })
+      .first()
+      .click();
 
     await expect(page.getByLabel(/message/i)).toHaveValue(/Love this work/);
 
@@ -109,13 +193,87 @@ test.describe('critical frontend flows', () => {
     await expect(page.getByRole('button', { name: /continue/i })).toBeDisabled();
   });
 
-  test('creator analytics renders charts, custom range controls, and export action', async ({ page }) => {
+  test('mock wallet completes a tip and verifies the confirmed transaction', async ({ page }) => {
+    await mockBackend(page, {
+      wallets: [
+        {
+          id: 'wallet-e2e-1',
+          userId: 'u1',
+          publicKey: 'GMOCKWALLET123456789',
+          name: 'Playwright Wallet',
+          verified: true,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      tip: { status: 'confirmed', stellarTxHash: 'mock-stellar-hash-123' },
+    });
+    await setAuthenticatedUser(page);
+
+    const flowStartedAt = Date.now();
+    await page.goto('/creators/demo');
+    await page
+      .getByRole('button', { name: /send a tip/i })
+      .first()
+      .click();
+    await expect(page.getByText('Playwright Wallet')).toBeVisible();
+    await page.getByRole('button', { name: '$5' }).click();
+    const paymentResponse = page.waitForResponse((response) =>
+      response.url().endsWith('/api/v1/transactions/tip')
+    );
+    await page.getByRole('button', { name: /continue/i }).click();
+
+    const response = await paymentResponse;
+    const payload = await response.json();
+    expect(payload.data.stellarTxHash).toBe('mock-stellar-hash-123');
+    await expect(page.getByText(/tip of \$5 confirmed/i)).toBeVisible();
+    const durationMs = Date.now() - flowStartedAt;
+    test.info().annotations.push({
+      type: 'payment-flow-duration-ms',
+      description: String(durationMs),
+    });
+    expect(durationMs).toBeLessThan(10_000);
+  });
+
+  test('payment failure is shown and the tip dialog stays open', async ({ page }) => {
+    await mockBackend(page, {
+      wallets: [
+        {
+          id: 'wallet-e2e-1',
+          userId: 'u1',
+          publicKey: 'GMOCKWALLET123456789',
+          name: 'Playwright Wallet',
+          verified: true,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      tipFailure: 'Insufficient funds',
+    });
+    await setAuthenticatedUser(page);
+    await page.goto('/creators/demo');
+    await page
+      .getByRole('button', { name: /send a tip/i })
+      .first()
+      .click();
+    await expect(page.getByText('Playwright Wallet')).toBeVisible();
+    await page.getByRole('button', { name: '$5' }).click();
+    await page.getByRole('button', { name: /continue/i }).click();
+
+    await expect(page.getByText('Insufficient funds')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Send a Tip' })).toBeVisible();
+  });
+
+  test('creator analytics renders charts, custom range controls, and export action', async ({
+    page,
+  }) => {
     await mockBackend(page);
     await mockCreatorAnalytics(page);
     await page.addInitScript(() => {
       window.localStorage.setItem(
         'Dorisio-auth',
-        JSON.stringify({ state: { user: { id: 'u1', username: 'demo', role: 'creator' }, isAuthenticated: true }, version: 0 })
+        JSON.stringify({
+          state: { user: { id: 'u1', username: 'demo', role: 'creator' }, isAuthenticated: true },
+          version: 0,
+        })
       );
     });
 
@@ -128,12 +286,17 @@ test.describe('critical frontend flows', () => {
     await expect(page.getByRole('button', { name: /export csv/i })).toBeEnabled();
   });
 
-  test('wallet settings flow exposes default wallet empty state on mobile and desktop', async ({ page }) => {
+  test('wallet settings flow exposes default wallet empty state on mobile and desktop', async ({
+    page,
+  }) => {
     await mockBackend(page);
     await page.addInitScript(() => {
       window.localStorage.setItem(
         'Dorisio-auth',
-        JSON.stringify({ state: { user: { id: 'u1', username: 'demo', role: 'creator' }, isAuthenticated: true }, version: 0 })
+        JSON.stringify({
+          state: { user: { id: 'u1', username: 'demo', role: 'creator' }, isAuthenticated: true },
+          version: 0,
+        })
       );
     });
 
@@ -143,3 +306,19 @@ test.describe('critical frontend flows', () => {
     await expect(page.getByText(/connect a wallet to set a default/i)).toBeVisible();
   });
 });
+
+async function setAuthenticatedUser(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'Dorisio-auth',
+      JSON.stringify({
+        state: {
+          user: { id: 'u1', username: 'demo', role: 'fan' },
+          token: 'playwright-test-token',
+          isAuthenticated: true,
+        },
+        version: 0,
+      })
+    );
+  });
+}
