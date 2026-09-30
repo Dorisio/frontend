@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-30",
+  "notes": "Baseline memory metrics and budgets. `unit` drives the vitest memory suite (src/test/memory); `browser.scenarios` is populated by `pnpm memory:baseline` from a Chromium heap-profiling run and read by `pnpm memory:check`. Bytes throughout.",
+  "unit": {
+    "warmupCycles": 200,
+    "measureCycles": 1000,
+    "maxRetainedGrowthBytes": 4194304,
+    "maxGrowthRatio": 1.5
+  },
+  "browser": {
+    "thresholds": {
+      "maxGrowthBytes": 3145728,
+      "maxGrowthRatio": 1.25
+    },
+    "scenarios": {}
+  }
+}

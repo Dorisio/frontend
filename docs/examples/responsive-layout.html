@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dorisio responsive layout example</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #0a0a0a;
+        color: #ffffff;
+        line-height: 1.5;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      main {
+        width: 100%;
+        max-width: 72rem;
+        margin: auto;
+        padding: 1rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: 2rem;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+      }
+      h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        overflow-wrap: anywhere;
+      }
+      p {
+        color: #cccccc;
+        overflow-wrap: anywhere;
+      }
+      a {
+        color: #ffbf1f;
+      }
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid #ffbf1f;
+        outline-offset: 4px;
+      }
+      header {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      header > div,
+      .card,
+      .dashboard > * {
+        min-width: 0;
+      }
+      .action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ffbf1f;
+        border-radius: 0.5rem;
+        width: 100%;
+      }
+      .creator-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+        padding: 0;
+        list-style: none;
+      }
+      .card,
+      aside {
+        border: 1px solid #404040;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        background: #1a1a1a;
+      }
+      .card a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+      }
+      .dashboard {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.5rem;
+        margin-top: 2rem;
+      }
+      summary {
+        min-height: 44px;
+        padding: 0.75rem 0;
+        cursor: pointer;
+      }
+
+      /* Equivalent to sm:flex-row and sm:w-auto in Tailwind 3. */
+      @media (min-width: 640px) {
+        header {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .action {
+          width: auto;
+          flex-shrink: 0;
+        }
+      }
+
+      /* Equivalent to md:grid-cols-2. */
+      @media (min-width: 768px) {
+        .creator-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      /* Equivalent to lg:grid-cols-3 and lg:grid-cols-[minmax(0,1fr)_16rem]. */
+      @media (min-width: 1024px) {
+        .creator-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .dashboard {
+          grid-template-columns: minmax(0, 1fr) 16rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>Discover creators</h1>
+          <p>Resize this page: cards stack, then use two and three columns.</p>
+        </div>
+        <a class="action" href="#layout-notes">Review layout checklist</a>
+      </header>
+
+      <section aria-labelledby="creators-title">
+        <h2 id="creators-title">Creator grid</h2>
+        <ul class="creator-grid">
+          <li class="card">
+            <h2>Ada's illustration studio</h2>
+            <p>Drawings, behind-the-scenes notes, and tutorials.</p>
+            <a href="#layout-notes">Review Ada's card layout</a>
+          </li>
+          <li class="card">
+            <h2>Music from the neighborhood</h2>
+            <p>Weekly sessions and new releases for supporters.</p>
+            <a href="#layout-notes">Review the music card layout</a>
+          </li>
+          <li class="card">
+            <h2>AveryLongCreatorNameWithoutSpacesToCheckWrapping</h2>
+            <p>Long content must wrap inside its column instead of widening the page.</p>
+            <a href="#layout-notes">Review the long-name card layout</a>
+          </li>
+          <li class="card">
+            <h2>Community learning</h2>
+            <p>Accessible resources for learners on every screen.</p>
+            <a href="#layout-notes">Review the learning card layout</a>
+          </li>
+          <li class="card">
+            <h2>Independent reporting</h2>
+            <p>Stories from the community with room for longer descriptions.</p>
+            <a href="#layout-notes">Review the reporting card layout</a>
+          </li>
+          <li class="card">
+            <h2>The maker workshop</h2>
+            <p>Projects, process notes, and practical demonstrations.</p>
+            <a href="#layout-notes">Review the workshop card layout</a>
+          </li>
+        </ul>
+      </section>
+
+      <div class="dashboard">
+        <section aria-labelledby="earnings-title">
+          <h2 id="earnings-title">Content and sidebar example</h2>
+          <p>The sidebar follows this section in reading order. It moves beside it at 1024px.</p>
+          <p>This fixture illustrates layout only. It makes no API or wallet requests.</p>
+        </section>
+        <aside id="layout-notes" aria-labelledby="checklist-title">
+          <h2 id="checklist-title">Layout checklist</h2>
+          <details open>
+            <summary>Review at each width</summary>
+            <ul>
+              <li>Cards and long names fit.</li>
+              <li>Focus outlines stay visible.</li>
+              <li>Links and disclosure work with the keyboard.</li>
+              <li>Zoom and scrolling remain available.</li>
+            </ul>
+          </details>
+        </aside>
+      </div>
+    </main>
+  </body>
+</html>

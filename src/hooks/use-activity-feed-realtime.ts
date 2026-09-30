@@ -16,6 +16,9 @@ interface UseActivityFeedRealtimeResult {
 const INITIAL_BACKOFF_MS = 100;
 const MAX_BACKOFF_MS = 30_000;
 
+/** Cap on retained realtime activity items (long-lived sessions). */
+export const MAX_RETAINED_ACTIVITY_ITEMS = 100;
+
 function getWebSocketUrl(): string | null {
   const base = process.env.NEXT_PUBLIC_SDK_WS_URL;
   return base ? base.replace(/\/$/, '') : null;
@@ -109,7 +112,7 @@ export function useActivityFeedRealtime(userId: string | null | undefined): UseA
       const activity = parseActivityMessage(String(event.data));
       if (!activity) return;
 
-      setNewItems((prev) => [activity, ...prev]);
+      setNewItems((prev) => [activity, ...prev].slice(0, MAX_RETAINED_ACTIVITY_ITEMS));
 
       // Invalidate the activity feed query to trigger a refetch
       void queryClient.invalidateQueries({ queryKey: ['activityFeed'] });

@@ -1,12 +1,13 @@
-/**
+/*
  * React Query Configuration
+
+ * Retry behavior is delegated to the shared retry layer (`@/lib/retry-backoff`)
+ * so timeouts, exponential backoff, and jitter are applied consistently across
+ * the app. React Query's own retry count is set to 0 to avoid double-retrying.
  */
 
 import { QueryClient } from '@tanstack/react-query';
-
-interface ErrorWithStatus extends Error {
-  status?: number;
-}
+import { isRetryableError } from '@/lib/retry-backoff';
 
 export const createQueryClient = (): QueryClient => {
   const client = new QueryClient({
@@ -14,22 +15,17 @@ export const createQueryClient = (): QueryClient => {
       queries: {
         staleTime: 1000 * 60 * 5, // 5 minutes
         gcTime: 1000 * 60 * 10, // 10 minutes (garbage collection time)
-        retry: (failureCount, error) => {
-          // Don't retry on 4xx errors (except 408)
-          if (error instanceof Error) {
-            const status = (error as ErrorWithStatus).status;
-            if (status && status >= 400 && status < 500 && status !== 408) {
-              return false;
-            }
-          }
-          return failureCount < 3;
-        },
+        // The retry layer handles retries with backoff, jitter, and
+        // timeouts. React Query should not retry again on top.
+        retry: 0,
+        retryDelay: 0,
         refetchOnWindowFocus: true,
         refetchOnReconnect: true,
         refetchOnMount: true,
       },
       mutations: {
-        retry: 1,
+        retry: 0,
+        retryDelay: 0,
       },
     },
   });
@@ -66,3 +62,6 @@ export const getQueryClient = (): QueryClient => {
   }
   return queryClient;
 };
+
+/** Exposed for consumers that need to classify errors for their own retry logic. */
+export { isRetryableError };
