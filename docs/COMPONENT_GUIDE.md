@@ -2,6 +2,8 @@
 
 This is the component catalogue and usage guide for the frontend. Prefer these primitives over one-off markup so keyboard behaviour, focus styles, theme tokens, and responsive layout stay consistent.
 
+For breakpoints, mobile-first grids, touch targets, and device testing, see the [mobile-first and responsive layout guide](MOBILE_FIRST_RESPONSIVE_GUIDE.md).
+
 ## Quick examples
 
 ```tsx
