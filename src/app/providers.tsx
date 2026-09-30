@@ -15,7 +15,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { setMonitoringUser } from '@/lib/monitoring';
 import { I18nProvider } from '@/lib/i18n';
 import { registerServiceWorker } from '@/lib/push-notifications';
-import { installRequestTracing } from '@/lib/request-tracing';
+import { FeatureFlagsProvider } from '@/lib/feature-flags';
 
 const CompatibleDorisioProvider = DorisioProvider as unknown as ComponentType<{
   client: DorisioClient;
@@ -83,16 +83,18 @@ export function Providers({ children }: { children: ReactNode }): JSX.Element {
 
   return (
     <I18nProvider>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <QueryClientProvider client={queryClient}>
-        <CompatibleDorisioProvider client={dorisioClient} config={dorisioClient.getConfig()}>
-          <NotificationProvider />
-          <BackgroundRefreshIndicator />
-          <RouteTracker />
-          {children}
-        </CompatibleDorisioProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+      <FeatureFlagsProvider distinctId={user?.id}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <QueryClientProvider client={queryClient}>
+            <CompatibleDorisioProvider client={dorisioClient} config={dorisioClient.getConfig()}>
+              <NotificationProvider />
+              <BackgroundRefreshIndicator />
+              <RouteTracker />
+              {children}
+            </CompatibleDorisioProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
+      </FeatureFlagsProvider>
     </I18nProvider>
   );
 }
