@@ -16,6 +16,9 @@ import {
   ModalFooter,
 } from '@/components/ui/modal';
 import { useCreateTip } from '@/hooks/use-create-tip';
+import { useWallet } from '@/hooks/use-wallet';
+import { captureFeatureEvent, useFeatureFlag } from '@/lib/feature-flags';
+import { WalletSelector } from '@/components/sections/wallet-selector';
 import { useNotification } from '@/components/notification-provider';
 import { dedupedRequest } from '@/lib/request-deduplicator';
 import { useTipTiers } from '@/hooks/use-tip-tiers';
@@ -28,7 +31,6 @@ import {
   TIP_MESSAGE_MAX_LENGTH,
   validateTipMessage,
 } from '@/lib/tip-message';
-import { EmojiPicker } from '@/components/shared/emoji-picker';
 
 interface DorisioButtonProps {
   creatorId: string;
@@ -68,15 +70,20 @@ export default function DorisioButton({
   const { scheduleTip } = useScheduledTips(creatorId);
   const { success, error: notifyError } = useNotification();
   const { wallets, fetchWallets, getPreferredWalletId, setLastUsedWallet } = useWallet();
+  const schedulingEnabled = useFeatureFlag('scheduled_tips', true) !== false;
   const {
     tiers: activeTiers,
     recentCustomAmounts,
     addRecentCustomAmount,
   } = useTipTiers(creatorId, propTipTiers);
+
   // Auto-select preferred wallet when modal opens
   useEffect(() => {
     if (isOpen && wallets.length === 0) {
-      void fetchWallets().catch(() => undefined);
+      void fetchWallets().catch(() => {
+        // The wallet selector owns its empty/error presentation; opening the
+        // tip dialog must not leave an unhandled promise rejection.
+      });
     }
 
     if (isOpen && !selectedWalletId) {
@@ -226,25 +233,32 @@ export default function DorisioButton({
           }),
         dedupeKey
       );
+      const paymentFailed = result.status === 'failed' || result.status === 'error';
+      captureFeatureEvent(paymentFailed ? 'tip_failed' : 'tip_succeeded', {
+        amount: selectedAmount,
+        scheduled: false,
+      });
+      if (paymentFailed) {
+        notifyError('The payment could not be completed. Please try again.', 'Tip failed');
+        return;
+      }
       if (isCustom && selectedAmount > 0) {
         addRecentCustomAmount(selectedAmount);
       }
       setLastUsedWallet(creatorId, selectedWalletId);
-      if (result.status === 'failed' || result.status === 'error') {
-        notifyError('The payment could not be completed. Please try again.', 'Tip failed');
-        return;
-      }
+      const paymentConfirmed = result.status === 'confirmed' || result.status === 'success';
       success(
-        result.status === 'confirmed' || result.status === 'success'
+        paymentConfirmed
           ? `Tip of $${selectedAmount} confirmed!`
           : `Tip of $${selectedAmount} submitted. Confirmation is pending.`,
-        result.status === 'confirmed' || result.status === 'success'
-          ? 'Thank you'
-          : 'Payment pending'
+        paymentConfirmed ? 'Thank you' : 'Payment pending'
       );
       handleClose(false);
     } catch (err) {
       const errMessage = err instanceof Error ? err.message : 'Failed to send tip';
+      captureFeatureEvent('tip_failed', {
+        amount: selectedAmount,
+      });
       notifyError(errMessage, 'Tip failed');
     }
   }
@@ -382,99 +396,101 @@ export default function DorisioButton({
             </div>
 
             {/* Scheduled Tips Section */}
-            <div className="pt-2 border-t space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-medium">Schedule for future delivery</span>
-                  <p className="text-xs text-muted-foreground">
-                    Plan tips for birthdays, special dates, or recurring support
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = !isScheduled;
-                    setIsScheduled(next);
-                    if (next && !scheduledDate) {
-                      const tomorrow = new Date();
-                      tomorrow.setDate(tomorrow.getDate() + 1);
-                      setScheduledDate(tomorrow);
-                      setScheduledDateError(null);
-                    }
-                  }}
-                  aria-pressed={isScheduled}
-                  className={`px-3 py-1 text-xs font-semibold rounded border transition ${
-                    isScheduled
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'hover:bg-muted text-foreground'
-                  }`}
-                >
-                  {isScheduled ? 'Scheduled ✓' : 'Schedule Tip ⏰'}
-                </button>
-              </div>
-
-              {isScheduled && (
-                <div className="p-3 bg-muted/30 border rounded-lg space-y-3 animate-fade-in">
-                  <div className="space-y-1.5">
-                    <label htmlFor="scheduled-date-picker" className="text-xs font-medium">
-                      Select Delivery Date & Time:
-                    </label>
-                    <DateTimePicker
-                      id="scheduled-date-picker"
-                      selected={scheduledDate}
-                      onChange={(date: Date | null) => {
-                        setScheduledDate(date);
-                        if (date && date.getTime() > Date.now()) {
-                          setScheduledDateError(null);
-                        } else if (date) {
-                          setScheduledDateError('Scheduled date must be in the future');
-                        }
-                      }}
-                      disabled={loading}
-                      minDate={new Date()}
-                    />
-                    {scheduledDateError && (
-                      <p role="alert" className="text-xs text-destructive">
-                        {scheduledDateError}
-                      </p>
-                    )}
+            {schedulingEnabled && (
+              <div className="pt-2 border-t space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium">Schedule for future delivery</span>
+                    <p className="text-xs text-muted-foreground">
+                      Plan tips for birthdays, special dates, or recurring support
+                    </p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !isScheduled;
+                      setIsScheduled(next);
+                      if (next && !scheduledDate) {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        setScheduledDate(tomorrow);
+                        setScheduledDateError(null);
+                      }
+                    }}
+                    aria-pressed={isScheduled}
+                    className={`px-3 py-1 text-xs font-semibold rounded border transition ${
+                      isScheduled
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'hover:bg-muted text-foreground'
+                    }`}
+                  >
+                    {isScheduled ? 'Scheduled ✓' : 'Schedule Tip ⏰'}
+                  </button>
+                </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium">Repeat frequency:</label>
-                    <div
-                      className="grid grid-cols-4 gap-1.5"
-                      role="radiogroup"
-                      aria-label="Recurring frequency"
-                    >
-                      {(
-                        [
-                          { value: 'once', label: 'One-time' },
-                          { value: 'daily', label: 'Daily' },
-                          { value: 'weekly', label: 'Weekly' },
-                          { value: 'monthly', label: 'Monthly' },
-                        ] as const
-                      ).map((opt) => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => setFrequency(opt.value)}
-                          aria-checked={frequency === opt.value}
-                          role="radio"
-                          className={`py-1.5 px-2 text-xs font-medium rounded border transition text-center ${
-                            frequency === opt.value
-                              ? 'bg-primary text-primary-foreground border-primary font-semibold'
-                              : 'bg-background hover:bg-muted text-foreground'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
+                {isScheduled && (
+                  <div className="p-3 bg-muted/30 border rounded-lg space-y-3 animate-fade-in">
+                    <div className="space-y-1.5">
+                      <label htmlFor="scheduled-date-picker" className="text-xs font-medium">
+                        Select Delivery Date & Time:
+                      </label>
+                      <DateTimePicker
+                        id="scheduled-date-picker"
+                        selected={scheduledDate}
+                        onChange={(date: Date | null) => {
+                          setScheduledDate(date);
+                          if (date && date.getTime() > Date.now()) {
+                            setScheduledDateError(null);
+                          } else if (date) {
+                            setScheduledDateError('Scheduled date must be in the future');
+                          }
+                        }}
+                        disabled={loading}
+                        minDate={new Date()}
+                      />
+                      {scheduledDateError && (
+                        <p role="alert" className="text-xs text-destructive">
+                          {scheduledDateError}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium">Repeat frequency:</label>
+                      <div
+                        className="grid grid-cols-4 gap-1.5"
+                        role="radiogroup"
+                        aria-label="Recurring frequency"
+                      >
+                        {(
+                          [
+                            { value: 'once', label: 'One-time' },
+                            { value: 'daily', label: 'Daily' },
+                            { value: 'weekly', label: 'Weekly' },
+                            { value: 'monthly', label: 'Monthly' },
+                          ] as const
+                        ).map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setFrequency(opt.value)}
+                            aria-checked={frequency === opt.value}
+                            role="radio"
+                            className={`py-1.5 px-2 text-xs font-medium rounded border transition text-center ${
+                              frequency === opt.value
+                                ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                                : 'bg-background hover:bg-muted text-foreground'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Message input */}
             <div className="space-y-3 mt-5">
