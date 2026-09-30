@@ -5,6 +5,7 @@
 
 import { DorisioClient } from 'dorisio-sdk';
 import { useAuthStore } from '@/stores/auth-store';
+import { installRequestTracing } from '@/lib/request-tracing';
 
 let sdkClient: DorisioClient | null = null;
 
@@ -43,6 +44,7 @@ export function initSDKClient(token?: string): DorisioClient {
     token: authToken,
     timeout: 30000,
   });
+  installRequestTracing(sdkClient as unknown as Parameters<typeof installRequestTracing>[0]);
 
   return sdkClient;
 }
