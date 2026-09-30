@@ -12,6 +12,10 @@ node_modules/
 # Testing
 coverage/
 
+# Benchmark & memory-profiling output (CI artifacts, not source)
+benchmark-results/
+benchmarks/results.json
+
 # Misc
 .DS_Store
 *.pem

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useWallet } from '@/hooks/use-wallet';
+import { useSafeTimeout } from '@/hooks/use-timeout';
 import { CreatorBioEditor } from '@/components/sections/creator-bio';
 import { SubscriptionSettings } from '@/components/sections/subscription-settings';
 import { TipTierSettings } from '@/components/sections/tip-tier-settings';
@@ -38,6 +39,7 @@ export default function SettingsPage(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<SettingsStatus>({ type: null, message: '' });
   const { wallets, preferredWallet, setDefaultWalletId } = useWallet();
+  const { schedule } = useSafeTimeout();
   const user = useAuthStore((state) => state.user);
   const [settings, setSettings] = useState<Settings>({
     displayName: '',
@@ -75,7 +77,7 @@ export default function SettingsPage(): JSX.Element {
       // if (!response.ok) throw new Error('Failed to save settings');
 
       setStatus({ type: 'success', message: 'Settings saved successfully!' });
-      setTimeout(() => setStatus({ type: null, message: '' }), 3000);
+      schedule(() => setStatus({ type: null, message: '' }), 3000);
     } catch (error) {
       setStatus({
         type: 'error',
@@ -88,7 +90,7 @@ export default function SettingsPage(): JSX.Element {
 
   const handleResetPassword = () => {
     setStatus({ type: 'success', message: 'Password reset email sent!' });
-    setTimeout(() => setStatus({ type: null, message: '' }), 3000);
+    schedule(() => setStatus({ type: null, message: '' }), 3000);
   };
 
   return (
