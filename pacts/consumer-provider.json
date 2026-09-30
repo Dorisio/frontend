@@ -1,0 +1,95 @@
+{
+  "consumer": {
+    "name": "dorisio-app"
+  },
+  "provider": {
+    "name": "dorisio-api"
+  },
+  "interactions": [
+    {
+      "description": "a request to create a tip",
+      "providerState": "a creator exists with id 123",
+      "request": {
+        "method": "POST",
+        "path": "/tips",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer token"
+        },
+        "body": {
+          "creatorId": "123",
+          "amount": 100
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "id": "tip_1",
+          "creatorId": "123",
+          "amount": 100,
+          "status": "pending",
+          "createdAt": "2024-01-01T00:00:00Z"
+        }
+      }
+    },
+    {
+      "description": "a request to fetch a creator by ID",
+      "providerState": "a creator exists with id 123",
+      "request": {
+        "method": "GET",
+        "path": "/creators/123",
+        "headers": {
+          "Authorization": "Bearer token"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "id": "123",
+          "name": "Jane Doe",
+          "email": "jane@dorisio.io",
+          "createdAt": "2024-01-01T00:00:00Z"
+        }
+      }
+    },
+    {
+      "description": "a request to list tips for a creator",
+      "providerState": "a creator exists with id 123",
+      "request": {
+        "method": "GET",
+        "path": "/tips",
+        "query": "creatorId=123",
+        "headers": {
+          "Authorization": "Bearer token"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": [
+          {
+            "id": "tip_1",
+            "creatorId": "123",
+            "amount": 100,
+            "status": "pending",
+            "createdAt": "2024-01-01T00:00:00Z"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    },
+    "pactVersion": "1.0.0"
+  }
+}

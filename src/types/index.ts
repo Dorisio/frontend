@@ -246,3 +246,70 @@ export interface ActivityFeedFilters {
   startDate?: string;
   endDate?: string;
 }
+
+export type ModerationStatus = 'pending' | 'approved' | 'rejected' | 'hidden' | 'deleted';
+export type ModerationItemType = 'comment' | 'tip_message' | 'announcement';
+
+export interface ModerationItem {
+  id: string;
+  type: ModerationItemType;
+  content: string;
+  authorId: string;
+  authorName: string;
+  creatorId: string;
+  status: ModerationStatus;
+  createdAt: string;
+  updatedAt?: string;
+  reportCount?: number;
+  isReported?: boolean;
+}
+
+export interface UserBlock {
+  id: string;
+  creatorId: string;
+  blockedUserId: string;
+  blockedUserName: string;
+  reason: string;
+  createdAt: string;
+  blockedAt: string;
+}
+
+export type ModerationAction = 'block_user' | 'unblock_user' | 'delete_content' | 'hide_content' | 'approve_content';
+
+export interface ModerationActionLog {
+  id: string;
+  itemId: string;
+  action: ModerationAction;
+  performedBy: string;
+  performedByName: string;
+  targetUserId?: string;
+  targetUserName?: string;
+  reason?: string;
+  createdAt: string;
+}
+
+export interface ContentReport {
+  id: string;
+  itemId: string;
+  itemType: ModerationItemType;
+  reportedBy: string;
+  reportedByName: string;
+  reason: string;
+  description?: string;
+  status: 'pending' | 'reviewed' | 'dismissed';
+  createdAt: string;
+}
+
+export interface ModerationStats {
+  totalItems: number;
+  pendingItems: number;
+  blockedUsers: number;
+  reportsThisWeek: number;
+  actionsThisMonth: number;
+}
+
+export interface ModerationFilters {
+  status?: ModerationStatus;
+  type?: ModerationItemType;
+  reportedOnly?: boolean;
+}

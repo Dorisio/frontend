@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial project setup and scaffolding
+- Memory profiling and leak detection: runtime heap monitor with Sentry metrics (`src/lib/memory-monitor.ts`), development dashboard at `/dev/memory`, `pnpm test:memory` suite (run with `--expose-gc`), Playwright heap profiler + threshold gate (`pnpm memory:profile|baseline|check`), committed baseline budgets, and a CI `memory` job. Guides: `docs/MEMORY_PROFILING.md`, `docs/MEMORY_LEAK_PITFALLS.md`, `docs/MEMORY_MONITORING.md`
 - Supporter loyalty system: bronze/silver/gold/platinum badges based on cumulative support, per-creator configurable thresholds, badge progress indicator, top-supporter leaderboard, and supporter opt-in/opt-out for a public badge profile (#42)
 - Error monitoring with Sentry: client/server/edge initialization, React error-boundary reporting, signed-in user context, navigation breadcrumbs, and optional source map upload (#45)
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- Memory leaks: untracked timers in realtime/polling hooks and transient success banners are now cleared via `useSafeTimeout`; realtime tip/activity/notification state, the toast store, and the request-deduplicator map are bounded so long sessions no longer grow without limit
 
 ### Security
 

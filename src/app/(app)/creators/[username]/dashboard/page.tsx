@@ -29,7 +29,7 @@ import { SubscriptionManagement } from '@/components/sections/subscription-manag
 import { TipTierSettings } from '@/components/sections/tip-tier-settings';
 import { ScheduledTipsDashboard } from '@/components/sections/scheduled-tips-dashboard';
 import { CreatorCollaborations } from '@/components/sections/creator-collaborations';
-import { CreatorCommissionRequests } from '@/components/sections/creator-commission-requests';
+import { CommissionRequests } from '@/components/sections/commission-requests';
 import { ExclusiveContentCreatorPanel } from '@/components/sections/exclusive-content-creator-panel';
 import { CreatorAnnouncementPanel } from '@/components/sections/creator-announcement-panel';
 import { fetchCreatorAnalytics } from '@/hooks/use-creator-analytics';

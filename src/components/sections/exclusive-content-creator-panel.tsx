@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { useSafeTimeout } from '@/hooks/use-timeout';
 import {
   useExclusiveContentStore,
   type SupporterTierLevel,
@@ -25,6 +26,7 @@ export function ExclusiveContentCreatorPanel({
   );
   const addContent = useExclusiveContentStore((state) => state.addContent);
   const deleteContent = useExclusiveContentStore((state) => state.deleteContent);
+  const { schedule } = useSafeTimeout();
 
   const [isOpenForm, setIsOpenForm] = useState(false);
   const [title, setTitle] = useState('');
@@ -59,7 +61,7 @@ export function ExclusiveContentCreatorPanel({
     setPreviewSnippet('');
     setIsOpenForm(false);
     setSuccessMessage('Tier-exclusive content published successfully!');
-    setTimeout(() => setSuccessMessage(null), 4000);
+    schedule(() => setSuccessMessage(null), 4000);
   };
 
   return (

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useScheduledTips } from '@/hooks/use-scheduled-tips';
+import { useSafeTimeout } from '@/hooks/use-timeout';
 import { getCountdown, CountdownInfo } from '@/stores/scheduled-tips-store';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { ScheduledTip, ScheduledTipFrequency } from '@/types';
@@ -25,6 +26,7 @@ interface ScheduledTipsDashboardProps {
 export function ScheduledTipsDashboard({ creatorId }: ScheduledTipsDashboardProps): JSX.Element {
   const { scheduledTips, pendingTips, editScheduledTip, cancelScheduledTip, executeScheduledTip } =
     useScheduledTips(creatorId);
+  const { schedule } = useSafeTimeout();
 
   // Live countdown timer state (ticks every 10 seconds for real-time update)
   const [, setTick] = useState(0);
@@ -46,7 +48,8 @@ export function ScheduledTipsDashboard({ creatorId }: ScheduledTipsDashboardProp
 
   const showStatus = (msg: string): void => {
     setActionSuccess(msg);
-    setTimeout(() => setActionSuccess(null), 4000);
+    // Tracked so the timer is cleared if the dashboard unmounts first.
+    schedule(() => setActionSuccess(null), 4000);
   };
 
   const handleStartEdit = (tip: ScheduledTip): void => {
