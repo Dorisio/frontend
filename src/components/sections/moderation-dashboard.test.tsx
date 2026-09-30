@@ -2,8 +2,8 @@
  * Moderation Dashboard Component Tests
  */
 
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { ModerationDashboard } from './moderation-dashboard';
 import type { ModerationItem } from '@/types';
 
@@ -33,6 +33,15 @@ const mockItems: ModerationItem[] = [
 ];
 
 describe('ModerationDashboard', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ items: mockItems, blockedUsers: [], actionLogs: [], total: mockItems.length }),
+    }));
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
   it('renders moderation dashboard', () => {
     render(<ModerationDashboard username="creator1" />);
 
