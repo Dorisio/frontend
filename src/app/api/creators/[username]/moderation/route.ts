@@ -281,6 +281,7 @@ function deleteContent(body: any, username: string) {
   if (index !== -1) {
     mockModerationItems[index].status = 'deleted';
     mockModerationItems[index].updatedAt = new Date().toISOString();
+    recordAction(username, itemId, 'delete_content');
   }
 
   return NextResponse.json({ success: true });
@@ -293,6 +294,7 @@ function hideContent(body: any, username: string) {
   if (index !== -1) {
     mockModerationItems[index].status = 'hidden';
     mockModerationItems[index].updatedAt = new Date().toISOString();
+    recordAction(username, itemId, 'hide_content');
   }
 
   return NextResponse.json({ success: true });
@@ -305,9 +307,30 @@ function approveContent(body: any, username: string) {
   if (index !== -1) {
     mockModerationItems[index].status = 'approved';
     mockModerationItems[index].updatedAt = new Date().toISOString();
+    recordAction(username, itemId, 'approve_content');
   }
 
   return NextResponse.json({ success: true });
+}
+
+function recordAction(
+  username: string,
+  itemId: string,
+  action: ModerationActionLog['action'],
+  reason?: string
+) {
+  const item = mockModerationItems.find((entry) => entry.id === itemId);
+  mockActionLogs.unshift({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    itemId,
+    action,
+    performedBy: username,
+    performedByName: username,
+    targetUserId: item?.authorId,
+    targetUserName: item?.authorName,
+    reason,
+    createdAt: new Date().toISOString(),
+  });
 }
 
 function reportContent(body: any, username: string) {

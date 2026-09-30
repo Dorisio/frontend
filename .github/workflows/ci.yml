@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+env:
+  PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+  PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -226,7 +230,7 @@ jobs:
           name: playwright-report
           path: ./frontend/playwright-report/
 
-  memory:
+  contract:
     runs-on: ubuntu-latest
     needs: [lint, type-check]
     steps:
@@ -273,16 +277,26 @@ jobs:
         run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
         working-directory: ./frontend
 
-      - name: Run memory tests (leak detection)
-        run: pnpm test:memory
+      - name: Run consumer contract tests
+        run: pnpm test:contract
         working-directory: ./frontend
 
-      - name: Upload memory test results
+      - name: Publish pacts to broker
+        if: github.ref == 'refs/heads/main' && env.PACT_BROKER_BASE_URL != ''
+        run: pnpm pact:publish
+        working-directory: ./frontend
+
+      - name: Verify provider contracts
+        if: env.PACT_BROKER_BASE_URL != ''
+        run: pnpm pact:verify
+        working-directory: ./frontend
+
+      - name: Upload pact artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: memory-results
-          path: ./frontend/benchmark-results/
+          name: pacts
+          path: ./frontend/pacts/
 
   benchmark:
     runs-on: ubuntu-latest
@@ -403,3 +417,11 @@ jobs:
   #       run: |
   #         npm install -g vercel
   #         vercel --prod --token $VERCEL_TOKEN
+  #   contract:
+  #     runs-on: ubuntu-latest
+  #     needs: [contract]
+  #     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #     steps:
+  #       - name: Can I deploy?
+  #         run: pnpm pact:can-i-deploy
+  #         working-directory: ./frontend
