@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import posthog from 'posthog-js';
 
 type FeatureFlagsContextValue = { ready: boolean; revision: number };
@@ -60,10 +53,7 @@ export function FeatureFlagsProvider({
 }
 
 /** Returns a boolean rollout or experiment variant. Missing flags use the safe fallback. */
-export function useFeatureFlag(
-  key: string,
-  fallback: boolean | string = false,
-): boolean | string {
+export function useFeatureFlag(key: string, fallback: boolean | string = false): boolean | string {
   const { revision } = useContext(FeatureFlagsContext);
   void revision;
   const value = posthog.getFeatureFlag(key);
@@ -72,7 +62,7 @@ export function useFeatureFlag(
 
 export function resolveFeatureFlag(
   value: boolean | string | undefined | null,
-  fallback: boolean | string,
+  fallback: boolean | string
 ): boolean | string {
   return value === undefined || value === null ? fallback : value;
 }
@@ -80,7 +70,7 @@ export function resolveFeatureFlag(
 /** Record an experiment event so PostHog can compare variant outcomes. */
 export function captureFeatureEvent(
   event: string,
-  properties: Record<string, string | number | boolean> = {},
+  properties: Record<string, string | number | boolean> = {}
 ): void {
   if (posthog.__loaded) posthog.capture(event, properties);
 }
