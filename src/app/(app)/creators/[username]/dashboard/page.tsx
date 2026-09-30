@@ -137,17 +137,7 @@ function CreatorDashboardPageContent() {
       <TipTierSettings creatorId={username} />
       <ScheduledTipsDashboard creatorId={username} />
       <CreatorCollaborations username={username} userId={user.id} userName={user.name} />
-      <CommissionRequests
-        creatorId={username}
-        creatorUserId={user.id}
-        creatorUsername={username}
-        creatorName={user.name || username}
-        viewerId={username}
-        viewerUserId={user.id}
-        viewerUsername={username}
-        viewerName={user.name || username}
-        role="creator"
-      />
+      <CreatorCommissionRequests username={username} userId={user.id} userName={user.name} />
       <ExclusiveContentCreatorPanel creatorId={username} />
       <CreatorAnnouncementPanel creatorId={username} />
 

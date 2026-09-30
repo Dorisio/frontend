@@ -199,7 +199,8 @@ export interface CreatorAnalytics {
 /**
  * Notification types
  */
-export type NotificationType = 'tip' | 'subscription' | 'milestone' | 'system' | 'collaboration';
+export type NotificationType =
+  'tip' | 'subscription' | 'milestone' | 'system' | 'collaboration' | 'commission';
 
 export interface Notification {
   id: string;
