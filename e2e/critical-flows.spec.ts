@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 
 async function mockBackend(page: Page): Promise<void> {
-  await page.route('http://localhost:5000/**', async (route) => {
+  await page.route('http://localhost:3000/**', async (route) => {
     const url = route.request().url();
 
     if (url.includes('/creators/demo')) {
@@ -47,6 +47,15 @@ async function mockBackend(page: Page): Promise<void> {
     }
 
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({}) });
+  });
+}
+
+async function seedAuthenticatedSession(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'Dorisio-auth',
+      JSON.stringify({ state: { user: { id: 'u1', username: 'demo', role: 'creator' }, isAuthenticated: true }, version: 0 })
+    );
   });
 }
 
@@ -95,6 +104,7 @@ test.describe('critical frontend flows', () => {
 
   test('tip creation supports optional messages, emoji insertion, and moderation', async ({ page }) => {
     await mockBackend(page);
+    await seedAuthenticatedSession(page);
     await page.goto('/creators/demo');
 
     await page.getByRole('button', { name: /send a tip/i }).first().click();
@@ -112,17 +122,12 @@ test.describe('critical frontend flows', () => {
   test('creator analytics renders charts, custom range controls, and export action', async ({ page }) => {
     await mockBackend(page);
     await mockCreatorAnalytics(page);
-    await page.addInitScript(() => {
-      window.localStorage.setItem(
-        'Dorisio-auth',
-        JSON.stringify({ state: { user: { id: 'u1', username: 'demo', role: 'creator' }, isAuthenticated: true }, version: 0 })
-      );
-    });
+    await seedAuthenticatedSession(page);
 
     await page.goto('/creators/demo/analytics');
 
     await expect(page.getByRole('heading', { name: /creator analytics/i })).toBeVisible();
-    await expect(page.getByText(/earnings trend/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Earnings Trend' })).toBeVisible();
     await page.getByRole('button', { name: /custom/i }).click();
     await expect(page.getByLabel(/analytics start date/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /export csv/i })).toBeEnabled();
@@ -130,16 +135,11 @@ test.describe('critical frontend flows', () => {
 
   test('wallet settings flow exposes default wallet empty state on mobile and desktop', async ({ page }) => {
     await mockBackend(page);
-    await page.addInitScript(() => {
-      window.localStorage.setItem(
-        'Dorisio-auth',
-        JSON.stringify({ state: { user: { id: 'u1', username: 'demo', role: 'creator' }, isAuthenticated: true }, version: 0 })
-      );
-    });
+    await seedAuthenticatedSession(page);
 
     await page.goto('/settings');
 
-    await expect(page.getByRole('heading', { name: /settings/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
     await expect(page.getByText(/connect a wallet to set a default/i)).toBeVisible();
   });
 });

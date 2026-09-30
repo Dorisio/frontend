@@ -24,10 +24,6 @@ const nextConfig = {
         source: '/api/:path*',
         headers: [
           {
-            key: 'Content-Encoding',
-            value: 'gzip',
-          },
-          {
             key: 'Cache-Control',
             value: 'public, max-age=300, s-maxage=600',
           },
@@ -39,10 +35,6 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
-          },
-          {
-            key: 'Content-Encoding',
-            value: 'gzip',
           },
         ],
       },
@@ -58,10 +50,6 @@ const nextConfig = {
       {
         source: '/:path*\\.(js|css|json)',
         headers: [
-          {
-            key: 'Content-Encoding',
-            value: 'gzip',
-          },
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',

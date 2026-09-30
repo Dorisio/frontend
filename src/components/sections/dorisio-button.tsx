@@ -20,7 +20,6 @@ import { useWallet } from '@/hooks/use-wallet';
 import { WalletSelector } from '@/components/sections/wallet-selector';
 import { useNotification } from '@/components/notification-provider';
 import { dedupedRequest } from '@/lib/request-deduplicator';
-import { WalletSelector } from '@/components/sections/wallet-selector';
 import { useTipTiers } from '@/hooks/use-tip-tiers';
 import { useScheduledTips } from '@/hooks/use-scheduled-tips';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
@@ -31,8 +30,6 @@ import {
   TIP_MESSAGE_MAX_LENGTH,
   validateTipMessage,
 } from '@/lib/tip-message';
-import { EmojiPicker } from '@/components/shared/emoji-picker';
-import { useWallet } from '@/hooks/use-wallet';
 
 interface DorisioButtonProps {
   creatorId: string;
@@ -77,11 +74,6 @@ export default function DorisioButton({
     recentCustomAmounts,
     addRecentCustomAmount,
   } = useTipTiers(creatorId, propTipTiers);
-  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [message, setMessage] = useState('');
-  const { createTip, loading } = useCreateTip();
-  const { success: notifySuccess, error: notifyError } = useNotification();
 
   // Auto-select preferred wallet when modal opens
   useEffect(() => {

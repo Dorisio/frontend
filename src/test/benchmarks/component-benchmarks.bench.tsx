@@ -1,4 +1,4 @@
-import { describe, bench, vi } from 'vitest';
+import { describe, bench } from 'vitest';
 import { render } from '@testing-library/react';
 import React from 'react';
 import {
@@ -13,28 +13,30 @@ import {
   Label,
   Badge,
 } from '@/components/ui';
-import { Avatar } from '@/components/Avatar';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { Skeleton } from '@/components/Skeleton';
-import { EmptyState } from '@/components/EmptyState';
-import { ErrorMessage } from '@/components/ErrorMessage';
-import { CreatorVerificationBadge } from '@/components/CreatorVerificationBadge';
-import { SupporterBadge } from '@/components/SupporterBadge';
-import { SubscriberBadge } from '@/components/SubscriberBadge';
-import { CreatorBio } from '@/components/CreatorBio';
-import { CreatorPortfolio } from '@/components/CreatorPortfolio';
-import { CreatorSearchBar } from '@/components/CreatorSearchBar';
-import { DorisioButton } from '@/components/DorisioButton';
-import { TransactionFilterBar } from '@/components/TransactionFilterBar';
-import { TipSourceBreakdown } from '@/components/TipSourceBreakdown';
-import { TopTippersTable } from '@/components/TopTippersTable';
-import { SupporterLeaderboard } from '@/components/SupporterLeaderboard';
-import { AnalyticsSummaryCards } from '@/components/AnalyticsSummaryCards';
-import { AnalyticsDateRangePicker } from '@/components/AnalyticsDateRangePicker';
-import { EarningsTrendChart } from '@/components/EarningsTrendChart';
-import { SubscriptionTiers } from '@/components/SubscriptionTiers';
-import { SubscriptionManagement } from '@/components/SubscriptionManagement';
-import { SubscriptionSettings } from '@/components/SubscriptionSettings';
+import { Avatar } from '@/components/shared/avatar';
+import { LoadingSpinner } from '@/components/shared/loading-spinner';
+import { ProfileHeaderSkeleton } from '@/components/shared/creator-skeletons';
+import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorMessage } from '@/components/shared/error-message';
+import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
+import { SupporterBadge } from '@/components/shared/supporter-badge';
+import { SubscriberBadge } from '@/components/shared/subscriber-badge';
+import { CreatorBio } from '@/components/sections/creator-bio';
+import { CreatorPortfolio } from '@/components/sections/creator-portfolio';
+import { CreatorSearchBar } from '@/components/sections/creator-search-bar';
+import DorisioButton from '@/components/sections/dorisio-button';
+import { TransactionFilterBar } from '@/components/sections/transaction-filter-bar';
+import { TipSourceBreakdown } from '@/components/sections/tip-source-breakdown';
+import { TopTippersTable } from '@/components/sections/top-tippers-table';
+import { SupporterLeaderboard } from '@/components/sections/supporter-leaderboard';
+import { AnalyticsSummaryCards } from '@/components/sections/analytics-summary-cards';
+import { AnalyticsDateRangePicker } from '@/components/sections/analytics-date-range-picker';
+import { EarningsTrendChart } from '@/components/sections/earnings-trend-chart';
+import { SubscriptionTiers } from '@/components/sections/subscription-tiers';
+import { SubscriptionManagement } from '@/components/sections/subscription-management';
+import { SubscriptionSettings } from '@/components/sections/subscription-settings';
+import type { CreatorSearchFilters } from '@/hooks/use-creator-search';
+import type { TransactionFilterState } from '@/hooks/use-transaction-filter';
 
 // -----------------------------------------------------------------------------
 // Benchmark infrastructure
@@ -51,7 +53,7 @@ export const PERF_THRESHOLDS: Record<string, number> = {
   Badge: 3,
   Avatar: 5,
   LoadingSpinner: 5,
-  Skeleton: 5,
+  ProfileHeaderSkeleton: 5,
   EmptyState: 8,
   ErrorMessage: 5,
   CreatorVerificationBadge: 5,
@@ -81,6 +83,26 @@ export interface BenchmarkCase {
 }
 
 const noop = () => {};
+
+const SEARCH_FILTERS: CreatorSearchFilters = {
+  search: '',
+  verifiedOnly: false,
+  minEarnings: '',
+  maxEarnings: '',
+  sort: 'trending',
+  page: 1,
+};
+
+const TRANSACTION_FILTERS: TransactionFilterState = {
+  dateFrom: '',
+  dateTo: '',
+  minAmount: '',
+  maxAmount: '',
+  messageKeyword: '',
+  status: 'all',
+  sortField: 'date',
+  sortDirection: 'desc',
+};
 
 export const BENCHMARK_CASES: BenchmarkCase[] = [
   {
@@ -121,8 +143,8 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
     render: () => <LoadingSpinner />,
   },
   {
-    name: 'Skeleton',
-    render: () => <Skeleton className="h-4 w-24" />,
+    name: 'ProfileHeaderSkeleton',
+    render: () => <ProfileHeaderSkeleton />,
   },
   {
     name: 'EmptyState',
@@ -130,7 +152,7 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
   },
   {
     name: 'ErrorMessage',
-    render: () => <ErrorMessage>Something went wrong</ErrorMessage>,
+    render: () => <ErrorMessage message="Something went wrong" />,
   },
   {
     name: 'CreatorVerificationBadge',
@@ -138,7 +160,7 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
   },
   {
     name: 'SupporterBadge',
-    render: () => <SupporterBadge />,
+    render: () => <SupporterBadge tier="gold" />,
   },
   {
     name: 'SubscriberBadge',
@@ -146,23 +168,33 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
   },
   {
     name: 'CreatorBio',
-    render: () => <CreatorBio bio="Creator biography text" />,
+    render: () => <CreatorBio value="Creator biography text" />,
   },
   {
     name: 'CreatorPortfolio',
-    render: () => <CreatorPortfolio items={[]} />,
+    render: () => <CreatorPortfolio mediaItems={[]} externalLinks={[]} />,
   },
   {
     name: 'CreatorSearchBar',
-    render: () => <CreatorSearchBar onChange={noop} />,
+    render: () => (
+      <CreatorSearchBar filters={SEARCH_FILTERS} onChange={noop} onReset={noop} />
+    ),
   },
   {
     name: 'DorisioButton',
-    render: () => <DorisioButton onClick={noop}>Send</DorisioButton>,
+    render: () => <DorisioButton creatorId="creator-1" />,
   },
   {
     name: 'TransactionFilterBar',
-    render: () => <TransactionFilterBar onChange={noop} />,
+    render: () => (
+      <TransactionFilterBar
+        filters={TRANSACTION_FILTERS}
+        onChange={noop}
+        onReset={noop}
+        onExport={noop}
+        resultCount={0}
+      />
+    ),
   },
   {
     name: 'TipSourceBreakdown',
@@ -174,22 +206,24 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
   },
   {
     name: 'SupporterLeaderboard',
-    render: () => <SupporterLeaderboard data={[]} />,
+    render: () => <SupporterLeaderboard entries={[]} />,
   },
   {
     name: 'AnalyticsSummaryCards',
     render: () => (
       <AnalyticsSummaryCards
-        totalEarnings={0}
-        totalTips={0}
-        uniqueSupporters={0}
-        averageTip={0}
+        summary={{
+          totalEarnings: 0,
+          earningsThisMonth: 0,
+          earningsThisWeek: 0,
+          totalTips: 0,
+        }}
       />
     ),
   },
   {
     name: 'AnalyticsDateRangePicker',
-    render: () => <AnalyticsDateRangePicker onChange={noop} />,
+    render: () => <AnalyticsDateRangePicker value="30d" onChange={noop} />,
   },
   {
     name: 'EarningsTrendChart',
@@ -197,15 +231,15 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
   },
   {
     name: 'SubscriptionTiers',
-    render: () => <SubscriptionTiers tiers={{}} />,
+    render: () => <SubscriptionTiers creatorId="creator-1" />,
   },
   {
     name: 'SubscriptionManagement',
-    render: () => <SubscriptionManagement />,
+    render: () => <SubscriptionManagement creatorId="creator-1" />,
   },
   {
     name: 'SubscriptionSettings',
-    render: () => <SubscriptionSettings />,
+    render: () => <SubscriptionSettings creatorId="creator-1" />,
   },
 ];
 
@@ -214,9 +248,9 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
 // -----------------------------------------------------------------------------
 
 describe('component render performance', () => {
-  for (const case of BENCHMARK_CASES) {
-    bench(case.name, () => {
-      const { unmount } = render(case.render());
+  for (const benchmarkCase of BENCHMARK_CASES) {
+    bench(benchmarkCase.name, () => {
+      const { unmount } = render(benchmarkCase.render());
       unmount();
     });
   }
@@ -232,8 +266,4 @@ if (typeof globalThis !== 'undefined') {
     __PERF_THRESHOLDS__: Record<string, number>;
     __PERF_CASES__: string[];
   }).__PERF_CASES__ = BENCHMARK_CASES.map((c) => c.name);
-}
-
-if (typeof vi !== 'undefined') {
-  vi.stub?''...
 }

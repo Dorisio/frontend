@@ -36,11 +36,10 @@ export function initSDKClient(token?: string): DorisioClient {
   }
 
   const baseUrl = getBaseUrl();
-  const authToken = token || useAuthStore.getState().token || undefined;
 
   sdkClient = new DorisioClient({
     baseUrl,
-    token: authToken,
+    token,
     timeout: 30000,
   });
 
