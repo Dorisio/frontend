@@ -44,6 +44,7 @@ export function initSDKClient(token?: string): DorisioClient {
     token: authToken,
     timeout: ENDPOINT_TIMEOUTS.default,
   });
+  installRequestTracing(sdkClient as unknown as Parameters<typeof installRequestTracing>[0]);
 
   return sdkClient;
 }
