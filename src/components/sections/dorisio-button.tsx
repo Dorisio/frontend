@@ -17,10 +17,10 @@ import {
 } from '@/components/ui/modal';
 import { useCreateTip } from '@/hooks/use-create-tip';
 import { useWallet } from '@/hooks/use-wallet';
+import { captureFeatureEvent, useFeatureFlag } from '@/lib/feature-flags';
 import { WalletSelector } from '@/components/sections/wallet-selector';
 import { useNotification } from '@/components/notification-provider';
 import { dedupedRequest } from '@/lib/request-deduplicator';
-import { WalletSelector } from '@/components/sections/wallet-selector';
 import { useTipTiers } from '@/hooks/use-tip-tiers';
 import { useScheduledTips } from '@/hooks/use-scheduled-tips';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
@@ -32,7 +32,6 @@ import {
   validateTipMessage,
 } from '@/lib/tip-message';
 import { EmojiPicker } from '@/components/shared/emoji-picker';
-import { useWallet } from '@/hooks/use-wallet';
 
 interface DorisioButtonProps {
   creatorId: string;
@@ -71,20 +70,23 @@ export default function DorisioButton({
   const { createTip, loading } = useCreateTip();
   const { scheduleTip } = useScheduledTips(creatorId);
   const { success, error: notifyError } = useNotification();
-  const { wallets, getPreferredWalletId, setLastUsedWallet } = useWallet();
+  const { wallets, fetchWallets, getPreferredWalletId, setLastUsedWallet } = useWallet();
+  const schedulingEnabled = useFeatureFlag('scheduled_tips', true) !== false;
   const {
     tiers: activeTiers,
     recentCustomAmounts,
     addRecentCustomAmount,
   } = useTipTiers(creatorId, propTipTiers);
-  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [message, setMessage] = useState('');
-  const { createTip, loading } = useCreateTip();
-  const { success: notifySuccess, error: notifyError } = useNotification();
 
   // Auto-select preferred wallet when modal opens
   useEffect(() => {
+    if (isOpen && wallets.length === 0) {
+      void fetchWallets().catch(() => {
+        // The wallet selector owns its empty/error presentation; opening the
+        // tip dialog must not leave an unhandled promise rejection.
+      });
+    }
+
     if (isOpen && !selectedWalletId) {
       const preferredId = getPreferredWalletId(creatorId);
       if (preferredId && wallets.some((w) => w.id === preferredId)) {
@@ -93,7 +95,7 @@ export default function DorisioButton({
         setSelectedWalletId(wallets[0].id);
       }
     }
-  }, [isOpen, selectedWalletId, creatorId, wallets, getPreferredWalletId]);
+  }, [isOpen, selectedWalletId, creatorId, wallets, getPreferredWalletId, fetchWallets]);
 
   const sizeClasses = {
     sm: 'px-3 py-1 text-sm',
@@ -223,7 +225,7 @@ export default function DorisioButton({
     const dedupeKey = `create-tip:${creatorId}:${selectedAmount}:${selectedWalletId}:${normalizedMsg}`;
 
     try {
-      await dedupedRequest(
+      const result = await dedupedRequest(
         () =>
           createTip({
             creatorId,
@@ -232,14 +234,32 @@ export default function DorisioButton({
           }),
         dedupeKey
       );
+      const paymentFailed = result.status === 'failed' || result.status === 'error';
+      captureFeatureEvent(paymentFailed ? 'tip_failed' : 'tip_succeeded', {
+        amount: selectedAmount,
+        scheduled: false,
+      });
+      if (paymentFailed) {
+        notifyError('The payment could not be completed. Please try again.', 'Tip failed');
+        return;
+      }
       if (isCustom && selectedAmount > 0) {
         addRecentCustomAmount(selectedAmount);
       }
       setLastUsedWallet(creatorId, selectedWalletId);
-      success(`Tip of $${selectedAmount} sent!`, 'Thank you');
+      const paymentConfirmed = result.status === 'confirmed' || result.status === 'success';
+      success(
+        paymentConfirmed
+          ? `Tip of $${selectedAmount} confirmed!`
+          : `Tip of $${selectedAmount} submitted. Confirmation is pending.`,
+        paymentConfirmed ? 'Thank you' : 'Payment pending'
+      );
       handleClose(false);
     } catch (err) {
       const errMessage = err instanceof Error ? err.message : 'Failed to send tip';
+      captureFeatureEvent('tip_failed', {
+        amount: selectedAmount,
+      });
       notifyError(errMessage, 'Tip failed');
     }
   }
@@ -377,6 +397,7 @@ export default function DorisioButton({
             </div>
 
             {/* Scheduled Tips Section */}
+            {schedulingEnabled && (
             <div className="pt-2 border-t space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -470,6 +491,7 @@ export default function DorisioButton({
                 </div>
               )}
             </div>
+            )}
 
             {/* Message input */}
             <div className="space-y-3 mt-5">
