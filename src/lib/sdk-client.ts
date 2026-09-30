@@ -7,6 +7,59 @@ import { DorisioClient } from 'dorisio-sdk';
 import { useAuthStore } from '@/stores/auth-store';
 import { installRequestTracing } from '@/lib/request-tracing';
 
+/**
+ * Contract testing support for third-party API integrations.
+ *
+ * These helpers expose the client-server expectations (contracts) that the
+ * SDK relies on so they can be validated in CI with Pact. The contracts are
+ * intentionally declarative and framework-agnostic; the test harness consumes
+ * them to generate provider/consumer contract tests.
+ */
+export interface ApiContract {
+  /** Human readable description of the interaction. */
+  description: string;
+  /** HTTP method used by the SDK. */
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  /** Path template (may include :params). */
+  path: string;
+  /** Expected request body shape (optional). */
+  requestBody?: Record<string, unknown>;
+  /** Expected response status. */
+  status: number;
+  /** Expected response body shape. */
+  responseBody?: Record<string, unknown>;
+}
+
+/**
+ * Canonical API contracts for the third-party integrations used by the SDK.
+ * Update these whenever the SDK's expectations of the API change so that
+ * contract violations are caught in CI before they reach production.
+ */
+export const API_CONTRACTS: ApiContract[] = [
+  {
+    description: 'create a tip',
+    method: 'POST',
+    path: '/tips',
+    requestBody: { creatorId: 'string', amount: 'number' },
+    status: 201,
+    responseBody: { id: 'string', creatorId: 'string', amount: 'number' },
+  },
+  {
+    description: 'get current user',
+    method: 'GET',
+    path: '/me',
+    status: 200,
+    responseBody: { id: 'string', email: 'string' },
+  },
+];
+
+/**
+ * Return the API contracts for contract testing.
+ */
+export function getApiContracts(): ApiContract[] {
+  return API_CONTRACTS;
+}
+
 let sdkClient: DorisioClient | null = null;
 
 /**
