@@ -7,7 +7,7 @@ interface MockBackendOptions {
 }
 
 async function mockBackend(page: Page, options: MockBackendOptions = {}): Promise<void> {
-  await page.route('http://localhost:5000/**', async (route) => {
+  await page.route('**/api/v1/**', async (route) => {
     const url = route.request().url();
     const pathname = new URL(url).pathname;
 
@@ -66,21 +66,24 @@ async function mockBackend(page: Page, options: MockBackendOptions = {}): Promis
       return;
     }
 
-    if (url.includes('/creators/demo')) {
+    if (url.includes('/creators/profile/demo')) {
       await route.fulfill({
         contentType: 'application/json',
         body: JSON.stringify({
-          id: 'creator-demo',
-          userId: 'u1',
-          username: 'demo',
-          displayName: 'Demo Creator',
-          bio: 'Independent creator testing tips.',
-          verified: true,
-          verificationStatus: 'verified',
-          isPublic: true,
-          totalEarnings: 1200,
-          pendingBalance: 45,
-          createdAt: '2026-09-01T00:00:00.000Z',
+          success: true,
+          data: {
+            id: 'creator-demo',
+            userId: 'u1',
+            username: 'demo',
+            displayName: 'Demo Creator',
+            bio: 'Independent creator testing tips.',
+            verified: true,
+            verificationStatus: 'verified',
+            isPublic: true,
+            totalEarnings: 1200,
+            pendingBalance: 45,
+            createdAt: '2026-09-01T00:00:00.000Z',
+          },
         }),
       });
       return;

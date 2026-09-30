@@ -16,10 +16,8 @@ import {
   ModalFooter,
 } from '@/components/ui/modal';
 import { useCreateTip } from '@/hooks/use-create-tip';
-import { WalletSelector } from '@/components/sections/wallet-selector';
 import { useNotification } from '@/components/notification-provider';
 import { dedupedRequest } from '@/lib/request-deduplicator';
-import { WalletSelector } from '@/components/sections/wallet-selector';
 import { useTipTiers } from '@/hooks/use-tip-tiers';
 import { useScheduledTips } from '@/hooks/use-scheduled-tips';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
