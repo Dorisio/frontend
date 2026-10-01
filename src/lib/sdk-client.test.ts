@@ -1,5 +1,5 @@
 /**
- * Tests for the Dorisio SDK client singleton and token management.
+ * Tests for the Dorisio SDK client singuleton and token management.
  *
  * The `dorisio-sdk` package is a sibling `file:../sdk` dependency that may not
  * be resolvable in every environment, and the auth store wires back into this
@@ -36,6 +36,10 @@ vi.mock('dorisio-sdk', () => {
 
     clearToken(): void {
       this.config.token = undefined;
+    }
+
+    getHttpClient(): { getInterceptors: () => { addRequestInterceptor: () => void } } {
+      return { getInterceptors: () => ({ addRequestInterceptor: vi.fn() }) };
     }
   }
   return { DorisioClient: vi.fn(MockDorisioClient) };
@@ -350,4 +354,4 @@ describe('sdk-client', () => {
       expect(DorisioClientMock).toHaveBeenCalledTimes(1);
     });
   });
-});
+})

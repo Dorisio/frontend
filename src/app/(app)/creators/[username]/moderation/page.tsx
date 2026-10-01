@@ -12,6 +12,7 @@ export default function ModerationPage({
 }: {
   params: { username: string };
 }): JSX.Element {
+  const username = params.username;
   return (
     <div className="container mx-auto py-8">
       <ModerationDashboard username={username} />

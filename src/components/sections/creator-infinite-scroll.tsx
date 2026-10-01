@@ -9,6 +9,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { formatCurrency } from '@/utils/formatters';
+import { CreatorVerificationBadge } from '@/components/shared/creator-verification-badge';
 import { Skeleton } from '@/components/shared/skeleton';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import type { Creator } from '@/types';
@@ -88,11 +89,13 @@ export function CreatorInfiniteScroll({
                   <div className="mb-2">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-bold text-lg">{creator.displayName}</h3>
-                      {creator.verified && (
-                        <span className="text-green-600" title="Verified">
-                          ✓
-                        </span>
-                      )}
+                      <CreatorVerificationBadge
+                        verified={creator.verified}
+                        status={creator.verificationStatus}
+                        verifiedAt={creator.verifiedAt}
+                        verificationType={creator.verificationType}
+                        compact
+                      />
                     </div>
                     <p className="text-sm text-muted-foreground">@{creator.username}</p>
                   </div>

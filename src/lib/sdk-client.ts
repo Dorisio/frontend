@@ -1,10 +1,12 @@
-/**
+/*
  * Dorisio SDK Client
  * Singleton SDK instance for the application with token management
  */
 
 import { DorisioClient } from 'dorisio-sdk';
 import { useAuthStore } from '@/stores/auth-store';
+import { ENDPOINT_TIMEOUTS } from '@/lib/request-timeout';
+import { installRequestTracing } from '@/lib/request-tracing';
 
 let sdkClient: DorisioClient | null = null;
 
@@ -36,12 +38,14 @@ export function initSDKClient(token?: string): DorisioClient {
   }
 
   const baseUrl = getBaseUrl();
+  const authToken = token || useAuthStore.getState().token || undefined;
 
   sdkClient = new DorisioClient({
     baseUrl,
-    token,
-    timeout: 30000,
+    token: authToken,
+    timeout: ENDPOINT_TIMEOUTS.default,
   });
+  installRequestTracing(sdkClient as unknown as Parameters<typeof installRequestTracing>[0]);
 
   return sdkClient;
 }

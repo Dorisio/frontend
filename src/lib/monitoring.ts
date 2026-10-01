@@ -77,3 +77,14 @@ export function recordPerformanceMetric(name: string, value: number, rating: str
   Sentry.setMeasurement(name, value, 'millisecond');
   Sentry.addBreadcrumb({ category: 'web-vitals', message: `${name}: ${value}`, data: { rating } });
 }
+
+/** Record a runtime memory metric (e.g. heap usage) with optional context. */
+export function recordMemoryMetric(
+  name: string,
+  value: number,
+  context?: Record<string, unknown>
+): void {
+  if (!isMonitoringEnabled()) return;
+  Sentry.setMeasurement(name, value, 'byte');
+  Sentry.addBreadcrumb({ category: 'memory', message: `${name}: ${value}`, data: context });
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { retryWithBackoff } from './retry-backoff';
+import { retryWithBackoff, computeBackoffDelay } from './retry-backoff';
 
 class HttpError extends Error {
   statusCode: number;
@@ -81,7 +81,11 @@ describe('retryWithBackoff', () => {
     const fn = vi.fn().mockRejectedValue(new Error('network error'));
     const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
 
-    const promise = retryWithBackoff(fn, { retries: 3 });
+    // Delays are fully jittered by a random factor in [0, 1] (see
+    // computeBackoffDelay); injecting a fixed random() of 1 makes the
+    // schedule deterministic so this test can assert the unjittered
+    // exponential ceiling at each attempt.
+    const promise = retryWithBackoff(fn, { retries: 3, random: () => 1 });
     const assertion = expect(promise).rejects.toThrow();
     await vi.runAllTimersAsync();
     await assertion;
@@ -94,7 +98,12 @@ describe('retryWithBackoff', () => {
     const fn = vi.fn().mockRejectedValue(new Error('network error'));
     const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
 
-    const promise = retryWithBackoff(fn, { retries: 4, baseDelayMs: 1000, maxDelayMs: 3000 });
+    const promise = retryWithBackoff(fn, {
+      retries: 4,
+      baseDelayMs: 1000,
+      maxDelayMs: 3000,
+      random: () => 1,
+    });
     const assertion = expect(promise).rejects.toThrow();
     await vi.runAllTimersAsync();
     await assertion;
@@ -132,5 +141,31 @@ describe('retryWithBackoff', () => {
     await expect(promise).rejects.toThrow('unauthorized');
 
     expect(fn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('computeBackoffDelay', () => {
+  it('scales exponentially with the attempt number before jitter', () => {
+    expect(computeBackoffDelay(0, 100, 30_000, () => 1)).toBe(100);
+    expect(computeBackoffDelay(1, 100, 30_000, () => 1)).toBe(200);
+    expect(computeBackoffDelay(2, 100, 30_000, () => 1)).toBe(400);
+  });
+
+  it('caps the pre-jitter delay at maxDelayMs', () => {
+    expect(computeBackoffDelay(10, 1000, 3000, () => 1)).toBe(3000);
+  });
+
+  it('fully jitters the delay by the injected random factor', () => {
+    expect(computeBackoffDelay(1, 100, 30_000, () => 0)).toBe(0);
+    expect(computeBackoffDelay(1, 100, 30_000, () => 0.5)).toBe(100);
+    expect(computeBackoffDelay(1, 100, 30_000, () => 1)).toBe(200);
+  });
+
+  it('defaults to Math.random when no random function is injected', () => {
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+
+    expect(computeBackoffDelay(1, 100, 30_000)).toBe(100);
+
+    randomSpy.mockRestore();
   });
 });

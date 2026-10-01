@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Shield,
   AlertTriangle,
@@ -14,7 +14,6 @@ import {
   Check,
   UserX,
   History,
-  Filter,
   Search,
   MoreVertical,
   Ban,
@@ -70,6 +69,7 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
   const [filterType, setFilterType] = useState<ModerationItemType | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
 
   // Mock data - in production this would come from API
   const [stats, setStats] = useState<ModerationStats>({
@@ -164,6 +164,45 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
     },
   ]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const base = `/api/creators/${encodeURIComponent(username)}/moderation?action=`;
+    void Promise.all([
+      fetch(`${base}items`).then((response) => response.json()),
+      fetch(`${base}blocked-users`).then((response) => response.json()),
+      fetch(`${base}action-logs`).then((response) => response.json()),
+      fetch(`${base}stats`).then((response) => response.json()),
+    ]).then(([itemData, blockData, logData, statsData]) => {
+      if (cancelled) return;
+      setItems(itemData.items ?? []);
+      setBlockedUsers(blockData.blockedUsers ?? []);
+      setActionLogs(logData.actionLogs ?? []);
+      setStats(statsData);
+    }).catch(() => {
+      if (!cancelled) setRequestError('Could not load moderation data. Please refresh and try again.');
+    });
+    return () => { cancelled = true; };
+  }, [username]);
+
+  const submitAction = async (action: string, payload: Record<string, unknown>) => {
+    const response = await fetch(`/api/creators/${encodeURIComponent(username)}/moderation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, action }),
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.error ?? `Moderation action failed (${response.status})`);
+    }
+    const result = await response.json();
+    const auditResponse = await fetch(`/api/creators/${encodeURIComponent(username)}/moderation?action=action-logs`);
+    if (auditResponse.ok) {
+      const auditData = await auditResponse.json();
+      setActionLogs(auditData.actionLogs ?? []);
+    }
+    return result;
+  };
+
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       if (filterStatus && item.status !== filterStatus) return false;
@@ -176,7 +215,7 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
   const handleApprove = async (itemId: string) => {
     setLoading(true);
     try {
-      // API call to approve content
+      await submitAction('approve-content', { itemId });
       setItems((prev) =>
         prev.map((item) =>
           item.id === itemId ? { ...item, status: 'approved' as ModerationStatus, updatedAt: new Date().toISOString() } : item
@@ -184,6 +223,7 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
       );
     } catch (error) {
       console.error('Failed to approve content:', error);
+      setRequestError('Could not approve this item. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -192,7 +232,7 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
   const handleHide = async (itemId: string) => {
     setLoading(true);
     try {
-      // API call to hide content
+      await submitAction('hide-content', { itemId });
       setItems((prev) =>
         prev.map((item) =>
           item.id === itemId ? { ...item, status: 'hidden' as ModerationStatus, updatedAt: new Date().toISOString() } : item
@@ -200,6 +240,7 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
       );
     } catch (error) {
       console.error('Failed to hide content:', error);
+      setRequestError('Could not hide this item. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -210,7 +251,7 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
 
     setLoading(true);
     try {
-      // API call to delete content
+      await submitAction('delete-content', { itemId });
       setItems((prev) =>
         prev.map((item) =>
           item.id === itemId ? { ...item, status: 'deleted' as ModerationStatus, updatedAt: new Date().toISOString() } : item
@@ -218,6 +259,7 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
       );
     } catch (error) {
       console.error('Failed to delete content:', error);
+      setRequestError('Could not delete this item. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -229,16 +271,8 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
 
     setLoading(true);
     try {
-      // API call to block user
-      const newBlock: UserBlock = {
-        id: Date.now().toString(),
-        creatorId: username,
-        blockedUserId: userId,
-        blockedUserName: userName,
-        reason,
-        createdAt: new Date().toISOString(),
-        blockedAt: new Date().toISOString(),
-      };
+      const result = await submitAction('block-user', { userId, userName, reason });
+      const newBlock: UserBlock = result.block;
 
       setBlockedUsers((prev) => [...prev, newBlock]);
 
@@ -258,6 +292,7 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
       setActionLogs((prev) => [newLog, ...prev]);
     } catch (error) {
       console.error('Failed to block user:', error);
+      setRequestError('Could not block this user. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -268,10 +303,13 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
 
     setLoading(true);
     try {
-      // API call to unblock user
+      const block = blockedUsers.find((entry) => entry.id === blockId);
+      if (!block) return;
+      await submitAction('unblock-user', { userId: block.blockedUserId });
       setBlockedUsers((prev) => prev.filter((block) => block.id !== blockId));
     } catch (error) {
       console.error('Failed to unblock user:', error);
+      setRequestError('Could not unblock this user. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -290,6 +328,7 @@ export function ModerationDashboard({ username }: ModerationDashboardProps): JSX
           Refresh
         </Button>
       </div>
+      {requestError && <p role="alert" className="text-sm text-destructive">{requestError}</p>}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

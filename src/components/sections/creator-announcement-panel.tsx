@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { useSafeTimeout } from '@/hooks/use-timeout';
 import {
   useAnnouncementStore,
   type Announcement,
@@ -51,6 +52,7 @@ export function CreatorAnnouncementPanel({
   const pinAnnouncement = useAnnouncementStore((state) => state.pinAnnouncement);
   const archiveAnnouncement = useAnnouncementStore((state) => state.archiveAnnouncement);
   const deleteAnnouncement = useAnnouncementStore((state) => state.deleteAnnouncement);
+  const { schedule } = useSafeTimeout();
 
   const [isOpenForm, setIsOpenForm] = useState(false);
   const [title, setTitle] = useState('');
@@ -84,7 +86,7 @@ export function CreatorAnnouncementPanel({
     setPinned(false);
     setIsOpenForm(false);
     setSuccessMessage('Announcement published to your followers!');
-    setTimeout(() => setSuccessMessage(null), 4000);
+    schedule(() => setSuccessMessage(null), 4000);
   };
 
   return (

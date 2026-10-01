@@ -26,9 +26,11 @@ import { SubscriptionTiers } from '@/components/sections/subscription-tiers';
 import { SubscriberOnlyContent } from '@/components/sections/subscriber-only-content';
 import { ExclusiveContentFeed } from '@/components/sections/exclusive-content-feed';
 import { AnnouncementFeed } from '@/components/sections/announcement-feed';
+import { SupporterCommissionRequest } from '@/components/sections/supporter-commission-request';
 import { SupporterLeaderboard } from '@/components/sections/supporter-leaderboard';
 import { SupporterLoyaltyCard } from '@/components/sections/supporter-loyalty-card';
 import { CreatorLiveStreamSection } from '@/components/sections/creator-live-stream';
+import { CommissionRequests } from '@/components/sections/commission-requests';
 import { useCreatorSupporters } from '@/hooks/use-creator-supporters';
 import { useCreatorBadgeThresholds } from '@/hooks/use-badge-thresholds';
 import { useAuthStore } from '@/stores/auth-store';
@@ -163,7 +165,9 @@ export default function CreatorProfilePage(): JSX.Element {
 
               <p className="text-muted-foreground mb-4">@{state.creator.username}</p>
 
-              {state.creator.bio && <CreatorBio value={state.creator.bio} className="mb-6 max-w-2xl text-lg" />}
+              {state.creator.bio && (
+                <CreatorBio value={state.creator.bio} className="mb-6 max-w-2xl text-lg" />
+              )}
 
               <div className="flex gap-8 mb-6">
                 <div>
@@ -195,9 +199,27 @@ export default function CreatorProfilePage(): JSX.Element {
         <SubscriberOnlyContent creatorId={state.creator.id} subscriberId={user?.id}>
           <div className="rounded-lg border bg-card p-6">
             <h2 className="font-semibold">Welcome, member</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Thanks for supporting this creator.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Thanks for supporting this creator.
+            </p>
           </div>
         </SubscriberOnlyContent>
+
+        {user && (
+          <section className="mb-12">
+            <CommissionRequests
+              creatorId={state.creator.username}
+              creatorUserId={state.creator.userId}
+              creatorUsername={state.creator.username}
+              creatorName={state.creator.displayName || state.creator.username}
+              viewerId={user.id}
+              viewerUserId={user.id}
+              viewerUsername={user.username || user.id}
+              viewerName={user.name || user.username || 'You'}
+              role="supporter"
+            />
+          </section>
+        )}
 
         {collaborations.length > 0 && (
           <section className="mb-12" aria-labelledby="creator-collaborations-heading">
@@ -213,17 +235,23 @@ export default function CreatorProfilePage(): JSX.Element {
                 const partnerName = isInviter
                   ? collaboration.inviteeName
                   : collaboration.inviterName;
-                const share = isInviter
-                  ? collaboration.inviterShare
-                  : collaboration.inviteeShare;
+                const share = isInviter ? collaboration.inviterShare : collaboration.inviteeShare;
 
                 return (
-                  <li key={collaboration.id} className="flex flex-wrap items-center justify-between gap-2 py-4">
-                    <Link href={`/creators/${partnerUsername}`} className="font-medium hover:underline">
-                      {partnerName} <span className="text-sm text-muted-foreground">@{partnerUsername}</span>
+                  <li
+                    key={collaboration.id}
+                    className="flex flex-wrap items-center justify-between gap-2 py-4"
+                  >
+                    <Link
+                      href={`/creators/${partnerUsername}`}
+                      className="font-medium hover:underline"
+                    >
+                      {partnerName}{' '}
+                      <span className="text-sm text-muted-foreground">@{partnerUsername}</span>
                     </Link>
                     <span className="text-sm text-muted-foreground">
-                      Agreed share: {share}% · Started {formatDate(collaboration.acceptedAt || collaboration.createdAt)}
+                      Agreed share: {share}% · Started{' '}
+                      {formatDate(collaboration.acceptedAt || collaboration.createdAt)}
                     </span>
                   </li>
                 );
@@ -237,6 +265,11 @@ export default function CreatorProfilePage(): JSX.Element {
           creatorName={state.creator.displayName || state.creator.username}
           currentUserId={user?.id}
         />
+
+        {/* Supporters can request custom content (commissions) from this creator */}
+        <div className="mt-12">
+          <SupporterCommissionRequest creator={state.creator} />
+        </div>
 
         {/* Creator announcements / bulletin board for followers */}
         <div className="mt-12">

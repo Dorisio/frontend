@@ -31,6 +31,12 @@ interface UseRealtimeNotificationsResult {
 const INITIAL_BACKOFF_MS = 100;
 const MAX_BACKOFF_MS = 30_000;
 
+/**
+ * Cap on retained notifications. A creator dashboard can stay open all day,
+ * so an uncapped array grows for the life of the tab. Newest entries win.
+ */
+export const MAX_RETAINED_NOTIFICATIONS = 100;
+
 function getWebSocketUrl(): string | null {
   const base = process.env.NEXT_PUBLIC_SDK_WS_URL;
   return base ? base.replace(/\/$/, '') : null;
@@ -123,7 +129,7 @@ export function useRealtimeNotifications(
       const tip = parseTipMessage(String(event.data));
       if (!tip) return;
 
-      setNotifications((prev) => [tip, ...prev]);
+      setNotifications((prev) => [tip, ...prev].slice(0, MAX_RETAINED_NOTIFICATIONS));
 
       addNotification({
         type: 'success',

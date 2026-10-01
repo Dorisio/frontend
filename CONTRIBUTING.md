@@ -93,6 +93,21 @@ Closes #123
 
 See the project README for development environment setup instructions.
 
+## Required Checks Before Opening a PR
+
+From the repository root, run the checks that apply to your change:
+
+```bash
+pnpm lint
+pnpm type-check
+pnpm test -- --runInBand
+pnpm build
+```
+
+For API consumer changes, also run `pnpm test:contract`. If a check cannot be
+run locally, explain why in the PR description and include the closest
+available validation.
+
 ## Code Standards
 
 - Follow the existing code style in the project
@@ -100,6 +115,15 @@ See the project README for development environment setup instructions.
 - Write meaningful comments for complex logic
 - Keep functions focused and testable
 - Add tests for new features and bug fixes
+
+## Review Process
+
+Maintainers review correctness, accessibility, security, test coverage, and
+backward compatibility. A PR should have one clear purpose, link the issue it
+resolves with a standalone `Closes #<issue-number>` line, and keep generated
+artifacts and unrelated refactors out of the diff. Reviewers may request
+changes; contributors should push follow-up commits to the same branch and
+reply to each requested change.
 
 ## Questions?
 
