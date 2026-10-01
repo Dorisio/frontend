@@ -5,7 +5,7 @@
 * real provider and publishes the results to the Pact Broker.
  */
 
-import { Verifier } from '@pact/core';
+import { Verifier } from '@pact-foundation/pact';
 
 const config = require('../pact.config');
 

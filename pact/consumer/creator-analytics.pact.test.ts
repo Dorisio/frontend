@@ -7,14 +7,14 @@
  */
 
 import path from 'path';
-import { Pact, PactV3, Matchers } from '@pact/core';
+import { PactV3, MatchersV3 } from '@pact-foundation/pact';
 
 const config = require('../pact.config');
 
-const { like, term, integer, decimal, boolean, eachLike } = Matchers;
+const { like, term, integer, decimal, boolean, eachLike } = MatchersV3;
 
 describe('Creator Analytics API Contract', () => {
-  const provider = new Pact<PactV3>({
+  const provider = new PactV3({
     consumer: config.consumer.name,
     provider: config.provider.name,
     dir: config.consumer.pactDir,
