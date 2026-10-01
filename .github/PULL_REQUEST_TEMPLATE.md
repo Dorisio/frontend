@@ -10,7 +10,7 @@ A clear and concise description of the changes in this PR.
 - [ ] Refactoring
 
 ## Related Issues
-Closes #(issue number)
+Closes #<issue-number>
 
 ## Changes Made
 - Change 1
@@ -21,6 +21,9 @@ Closes #(issue number)
 Describe the tests you've run and how to reproduce them:
 - [ ] Test 1
 - [ ] Test 2
+- [ ] `pnpm lint`
+- [ ] `pnpm type-check`
+- [ ] `pnpm test -- --runInBand`
 - [ ] Manual testing completed
 
 ## Screenshots (if applicable)
