@@ -13,7 +13,9 @@ import { BackgroundRefreshIndicator } from '@/components/shared/background-refre
 import { RouteTracker } from '@/components/route-tracker';
 import { useAuthStore } from '@/stores/auth-store';
 import { setMonitoringUser } from '@/lib/monitoring';
+import { initPerformanceMonitoring } from '@/lib/performance';
 import { startMemoryMonitor } from '@/lib/memory-monitor';
+import { installRequestTracing } from '@/lib/request-tracing';
 import { I18nProvider } from '@/lib/i18n';
 import { registerServiceWorker } from '@/lib/push-notifications';
 import { FeatureFlagsProvider } from '@/lib/feature-flags';

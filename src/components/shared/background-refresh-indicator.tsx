@@ -3,7 +3,7 @@
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
-import { classNames } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 const RETRY_WARN_THRESHOLD = 1;
 
@@ -23,7 +23,7 @@ export function BackgroundRefreshIndicator(): JSX.Element | null {
       if (event.type !== 'updated') return;
       const query = event.query;
       const state = query.state;
-      const failureCount = state.failureCount ?? 0;
+      const failureCount = state.fetchFailureCount ?? 0;
       const fetchStatus = state.fetchStatus;
 
       if (failureCount > 0 && fetchStatus === 'fetching') {
@@ -55,7 +55,7 @@ export function BackgroundRefreshIndicator(): JSX.Element | null {
     };
   }, [queryClient]);
 
-  const isRetrying = retryInfo !== null && retryInfo.count >= RETTY_WARN_THRESHOLD;
+  const isRetrying = retryInfo !== null && retryInfo.count >= RETRY_WARN_THRESHOLD;
 
   if (!fetching && !isRetrying) return null;
 
@@ -63,7 +63,7 @@ export function BackgroundRefreshIndicator(): JSX.Element | null {
     <div
       role="status"
       aria-live="polite"
-      className={classNames(
+      className={cn(
         'fixed bottom-4 right-4 z-50 rounded-full border bg-background/95 px-3 py-1.5 text-xs shadow-sm',
         isRetrying ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground',
       )}

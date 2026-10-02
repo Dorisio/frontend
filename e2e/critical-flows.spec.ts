@@ -117,6 +117,15 @@ async function mockBackend(page: Page, options: MockBackendOptions = {}): Promis
   });
 }
 
+async function seedAuthenticatedSession(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'Dorisio-auth',
+      JSON.stringify({ state: { user: { id: 'u1', username: 'demo', role: 'creator' }, isAuthenticated: true }, version: 0 })
+    );
+  });
+}
+
 async function mockCreatorAnalytics(page: Page): Promise<void> {
   await page.route('**/api/creators/*/analytics**', async (route) => {
     await route.fulfill({
@@ -176,6 +185,7 @@ test.describe('critical frontend flows', () => {
     page,
   }) => {
     await mockBackend(page);
+    await seedAuthenticatedSession(page);
     await page.goto('/creators/demo');
 
     await page
@@ -270,20 +280,12 @@ test.describe('critical frontend flows', () => {
   }) => {
     await mockBackend(page);
     await mockCreatorAnalytics(page);
-    await page.addInitScript(() => {
-      window.localStorage.setItem(
-        'Dorisio-auth',
-        JSON.stringify({
-          state: { user: { id: 'u1', username: 'demo', role: 'creator' }, isAuthenticated: true },
-          version: 0,
-        })
-      );
-    });
+    await seedAuthenticatedSession(page);
 
     await page.goto('/creators/demo/analytics');
 
     await expect(page.getByRole('heading', { name: /creator analytics/i })).toBeVisible();
-    await expect(page.getByText(/earnings trend/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Earnings Trend' })).toBeVisible();
     await page.getByRole('button', { name: /custom/i }).click();
     await expect(page.getByLabel(/analytics start date/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /export csv/i })).toBeEnabled();
@@ -293,19 +295,11 @@ test.describe('critical frontend flows', () => {
     page,
   }) => {
     await mockBackend(page);
-    await page.addInitScript(() => {
-      window.localStorage.setItem(
-        'Dorisio-auth',
-        JSON.stringify({
-          state: { user: { id: 'u1', username: 'demo', role: 'creator' }, isAuthenticated: true },
-          version: 0,
-        })
-      );
-    });
+    await seedAuthenticatedSession(page);
 
     await page.goto('/settings');
 
-    await expect(page.getByRole('heading', { name: /settings/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
     await expect(page.getByText(/connect a wallet to set a default/i)).toBeVisible();
   });
 });

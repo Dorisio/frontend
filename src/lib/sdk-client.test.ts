@@ -37,6 +37,10 @@ vi.mock('dorisio-sdk', () => {
     clearToken(): void {
       this.config.token = undefined;
     }
+
+    getHttpClient(): { getInterceptors: () => { addRequestInterceptor: () => void } } {
+      return { getInterceptors: () => ({ addRequestInterceptor: vi.fn() }) };
+    }
   }
   return { DorisioClient: vi.fn(MockDorisioClient) };
 });
@@ -52,7 +56,7 @@ interface MockAuthStore {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  hasHudrated: boolean;
+  hasHydrated: boolean;
   setUser: (user: MockAuthUser | null) => void;
   setToken: (token: string | null) => void;
   setLoading: (loading: boolean) => void;
@@ -72,7 +76,7 @@ vi.mock('@/stores/auth-store', async () => {
     setUser: (user): void => set({ user, isAuthenticated: !!user }),
     setToken: (token): void => set({ token }),
     setLoading: (loading): void => set({ isLoading: loading }),
-    setHasHydrated: (hasHudrated): void => set({ hasHydrated }),
+    setHasHydrated: (hasHydrated): void => set({ hasHydrated }),
     login: (user, token): void =>
       set({
         user,
@@ -103,7 +107,7 @@ function resetAuthStore(): void {
     token: null,
     isAuthenticated: false,
     isLoading: false,
-    hasHudrated: false,
+    hasHydrated: false,
   });
 }
 
@@ -250,7 +254,7 @@ describe('sdk-client', () => {
 
     it('propagates errors when lazy initialization fails', () => {
       DorisioClientMock.mockImplementationOnce(() => {
-        throw new Error'lazy init failed');
+        throw new Error('lazy init failed');
       });
 
       expect(() => getSDKClient()).toThrow('lazy init failed');

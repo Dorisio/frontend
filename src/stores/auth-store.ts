@@ -11,6 +11,8 @@ import {
   initSessionSync,
   shouldBroadcastStateChange,
 } from '@/lib/session-sync';
+import { unsubscribeFromPush } from '@/lib/push-notifications';
+import { usePushNotificationPreferenceStore } from '@/stores/push-notification-preference-store';
 import type { CreatorVerificationStatus } from '@/types';
 
 /**
@@ -144,7 +146,14 @@ export const useAuthStore = create<AuthStore>()(
       // `hasHydrated` so top-level providers can gate rendering until the
       // real auth state is known, avoiding a flash of "logged out" state.
       onRehydrateStorage: () => (state) => {
-        updateSDKToken(state?.token ?? null);
+        // `setHasHydrated(true)` must run even if the SDK sync below fails -
+        // it gates the entire app's render (see providers.tsx), so an SDK
+        // client error must never leave the app stuck on the loading spinner.
+        try {
+          updateSDKToken(state?.token ?? null);
+        } catch (error) {
+          console.error('Failed to sync SDK client token during auth rehydration:', error);
+        }
         state?.setHasHydrated(true);
       },
     }

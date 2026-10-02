@@ -39,5 +39,5 @@
     "noEmit": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "vitest.config.ts"]
+  "exclude": ["node_modules", "vitest.config.ts", "vitest.memory.config.ts"]
 }

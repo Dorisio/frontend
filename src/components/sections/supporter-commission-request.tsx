@@ -64,7 +64,7 @@ export function SupporterCommissionRequest({
 
   function submit(event: React.FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    if (!user || !settings) return;
+    if (!user || !user.username || !user.name || !settings) return;
     setError(null);
     setMessage(null);
     try {

@@ -7,7 +7,7 @@
  */
 
 import { QueryClient } from '@tanstack/react-query';
-import { isRetryableError } from '@/lib/retry-backoff';
+import { isTransientError as isRetryableError } from '@/lib/retry-backoff';
 
 export const createQueryClient = (): QueryClient => {
   const client = new QueryClient({

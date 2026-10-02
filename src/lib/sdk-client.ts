@@ -6,6 +6,7 @@
 import { DorisioClient } from 'dorisio-sdk';
 import { useAuthStore } from '@/stores/auth-store';
 import { ENDPOINT_TIMEOUTS } from '@/lib/request-timeout';
+import { installRequestTracing } from '@/lib/request-tracing';
 
 let sdkClient: DorisioClient | null = null;
 

@@ -74,7 +74,7 @@ function extractStatusCode(error: unknown): number | undefined {
  * 4xx client errors (bad input, auth, not found, etc.) since re-sending
  * the same request will fail the same way.
  */
-function isTransientError(error: unknown): boolean {
+export function isTransientError(error: unknown): boolean {
   const statusCode = extractStatusCode(error);
 
   // No status code at all usually means the request never completed
