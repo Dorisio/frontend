@@ -73,6 +73,11 @@ export function Navigation(): JSX.Element {
         <div className="hidden md:flex gap-3 items-center">
           <ThemeToggle />
           {isAuthenticated && <NotificationBadge onClick={() => router.push('/notifications')} />}
+          {isAuthenticated && user?.role === 'fan' && (
+            <Link href="/supporter/analytics" className="text-sm transition-smooth" style={{ color: 'var(--body)' }}>
+              Spending
+            </Link>
+          )}
           {isAuthenticated ? (
             <>
               <Link href="/dashboard">
@@ -100,7 +105,10 @@ export function Navigation(): JSX.Element {
         <div className="md:hidden flex items-center gap-1">
           <ThemeToggle />
           {isAuthenticated && (
-            <NotificationBadge onClick={() => router.push('/notifications')} />
+            <>
+              <NotificationBadge onClick={() => router.push('/notifications')} />
+              {user?.role === 'fan' && <Link href="/supporter/analytics" aria-label="Spending analytics" className="px-2 text-sm" style={{ color: 'var(--body)' }}>Spending</Link>}
+            </>
           )}
           <button
             onClick={toggleMenu}
