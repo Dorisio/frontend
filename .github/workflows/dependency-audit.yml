@@ -1,0 +1,55 @@
+name: Dependency Audit
+
+on:
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: "47 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Audit dependencies
+        id: audit
+        continue-on-error: true
+        run: pnpm audit --json > pnpm-audit.json
+
+      - name: Add audit summary
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('pnpm-audit.json', 'utf8'));
+          const counts = report.metadata?.vulnerabilities;
+          const summary = counts
+            ? `Dependency audit found ${counts.total} vulnerabilities: ${counts.critical} critical, ${counts.high} high, ${counts.moderate} moderate, and ${counts.low} low.`
+            : 'Dependency audit completed. See the attached pnpm audit report for details.';
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`);
+          console.log(summary);
+          NODE
+
+      - name: Upload audit report
+        if: always() && hashFiles('pnpm-audit.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: pnpm-audit-report
+          path: pnpm-audit.json
+          if-no-files-found: ignore
