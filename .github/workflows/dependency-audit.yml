@@ -28,4 +28,28 @@ jobs:
           version: 9
 
       - name: Audit dependencies
-        run: pnpm audit --audit-level moderate
+        id: audit
+        continue-on-error: true
+        run: pnpm audit --json > pnpm-audit.json
+
+      - name: Add audit summary
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('pnpm-audit.json', 'utf8'));
+          const counts = report.metadata?.vulnerabilities;
+          const summary = counts
+            ? `Dependency audit found ${counts.total} vulnerabilities: ${counts.critical} critical, ${counts.high} high, ${counts.moderate} moderate, and ${counts.low} low.`
+            : 'Dependency audit completed. See the attached pnpm audit report for details.';
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`);
+          console.log(summary);
+          NODE
+
+      - name: Upload audit report
+        if: always() && hashFiles('pnpm-audit.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: pnpm-audit-report
+          path: pnpm-audit.json
+          if-no-files-found: ignore

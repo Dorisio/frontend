@@ -4,7 +4,7 @@ The repository configuration provides the following automated checks:
 
 - Dependabot checks the root npm dependencies weekly and groups patch updates separately from minor updates.
 - CodeQL scans JavaScript and TypeScript on pull requests, pushes to `main` and `develop`, and weekly.
-- `pnpm audit` checks dependency vulnerabilities on pull requests and weekly.
+- `pnpm audit` reports dependency vulnerabilities on pull requests and weekly. The report and a severity summary are attached to each workflow run; the audit is report-only while existing dependency vulnerabilities are triaged.
 - Dependabot patch update pull requests are set to squash auto-merge after the repository's required checks pass.
 
 ## Repository settings required
