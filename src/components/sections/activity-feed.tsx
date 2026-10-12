@@ -10,6 +10,7 @@ import { ActivityFeedItem, ActivityFeedFilters, ActivityType } from '@/types';
 import { formatDateTime, formatCurrency } from '@/utils/formatters';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Bell,
   Gift,
@@ -126,8 +127,16 @@ export function ActivityFeed({
       </div>
 
       {/* Activity List */}
-      {filteredItems.length === 0 && !loading ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">No recent activity</p>
+      {loading ? (
+        <div className="flex items-center justify-center p-8" role="status" aria-label="Loading activity">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      ) : filteredItems.length === 0 ? (
+        <EmptyState
+          icon={Bell}
+          title="No recent activity"
+          description="Check back later or follow more creators to see their latest updates and announcements."
+        />
       ) : (
         <div className="space-y-3">
           {filteredItems.map((item) => (
