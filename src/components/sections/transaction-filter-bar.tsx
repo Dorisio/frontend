@@ -181,7 +181,7 @@ export function TransactionFilterBar({
             className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="h-4 w-4" aria-hidden="true" />
-            CSV ({resultCount})
+            Export CSV ({resultCount})
           </button>
           {onExportExcel && (
             <button
