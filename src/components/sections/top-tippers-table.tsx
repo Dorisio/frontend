@@ -5,6 +5,7 @@
 
 import type { TopTipper } from '@/types';
 import { formatCurrency, formatDate } from '@/utils/formatters';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export interface TopTippersTableProps {
   data: TopTipper[];
@@ -13,9 +14,10 @@ export interface TopTippersTableProps {
 export function TopTippersTable({ data }: TopTippersTableProps): JSX.Element {
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-        No tippers for this period
-      </div>
+      <EmptyState
+        title="No tippers for this period"
+        description="Share your creator link or QR code with your community to start receiving tips."
+      />
     );
   }
 

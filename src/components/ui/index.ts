@@ -47,3 +47,7 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
 } from './dropdown-menu';
+
+export { EmptyState } from './empty-state';
+export type { EmptyStateProps } from './empty-state';
+
