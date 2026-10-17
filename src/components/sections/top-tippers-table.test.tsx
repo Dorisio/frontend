@@ -46,4 +46,11 @@ describe('TopTippersTable', () => {
     expect(screen.queryByTestId('top-tippers-table')).not.toBeInTheDocument();
     expect(screen.getByText(/no tippers for this period/i)).toBeInTheDocument();
   });
+
+  it('renders skeleton placeholder when loading is true', () => {
+    render(<TopTippersTable data={[]} loading={true} />);
+
+    expect(screen.getByRole('status', { name: /loading top tippers/i })).toBeInTheDocument();
+    expect(screen.queryByText(/no tippers for this period/i)).not.toBeInTheDocument();
+  });
 });

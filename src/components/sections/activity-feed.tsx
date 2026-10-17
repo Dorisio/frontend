@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Loader2,
 } from 'lucide-react';
+import { ActivityFeedSkeleton } from '@/components/shared/creator-skeletons';
 
 export interface ActivityFeedProps {
   items: ActivityFeedItem[];
@@ -126,7 +127,9 @@ export function ActivityFeed({
       </div>
 
       {/* Activity List */}
-      {filteredItems.length === 0 && !loading ? (
+      {loading && filteredItems.length === 0 ? (
+        <ActivityFeedSkeleton />
+      ) : filteredItems.length === 0 ? (
         <p className="text-sm text-muted-foreground py-8 text-center">No recent activity</p>
       ) : (
         <div className="space-y-3">

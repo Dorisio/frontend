@@ -115,3 +115,85 @@ export function TransactionTableSkeleton({ rows = 5 }: { rows?: number }): JSX.E
     </div>
   );
 }
+
+/**
+ * Matches the top tippers table: header row (Rank, Tipper, Total Tipped, Tips, Last Tip, Latest Message)
+ * plus `rows` body rows, one skeleton block per column.
+ */
+export function TopTippersTableSkeleton({ rows = 5 }: { rows?: number }): JSX.Element {
+  return (
+    <div
+      aria-label="Loading top tippers"
+      className="border rounded-lg overflow-x-auto"
+      role="status"
+    >
+      <table className="w-full text-sm">
+        <thead className="border-b bg-muted/50">
+          <tr>
+            <th className="px-4 py-3 text-left font-semibold">Rank</th>
+            <th className="px-4 py-3 text-left font-semibold">Tipper</th>
+            <th className="px-4 py-3 text-left font-semibold">Total Tipped</th>
+            <th className="px-4 py-3 text-left font-semibold">Tips</th>
+            <th className="px-4 py-3 text-left font-semibold">Last Tip</th>
+            <th className="px-4 py-3 text-left font-semibold">Latest Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }).map((_, i) => (
+            <tr className="border-b" key={i}>
+              <td className="px-4 py-3">
+                <Skeleton className="h-4 w-6" />
+              </td>
+              <td className="px-4 py-3">
+                <Skeleton className="h-4 w-28" />
+              </td>
+              <td className="px-4 py-3">
+                <Skeleton className="h-4 w-20" />
+              </td>
+              <td className="px-4 py-3">
+                <Skeleton className="h-4 w-10" />
+              </td>
+              <td className="px-4 py-3">
+                <Skeleton className="h-4 w-20" />
+              </td>
+              <td className="px-4 py-3">
+                <Skeleton className="h-4 w-36" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
+ * Matches the activity feed item layout: circular icon/avatar + title + badge + description + timestamp.
+ */
+export function ActivityFeedSkeleton({ count = 3 }: { count?: number }): JSX.Element {
+  return (
+    <div
+      aria-label="Loading activity feed"
+      className="space-y-3"
+      role="status"
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-start gap-4 p-4 rounded-lg bg-muted/30 border border-muted"
+        >
+          <Skeleton className="w-10 h-10 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-16 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+          <Skeleton className="h-3 w-16 shrink-0" />
+        </div>
+      ))}
+    </div>
+  );
+}

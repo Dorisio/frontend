@@ -59,3 +59,44 @@ export function SkeletonGrid({ count = 6, cols = 3, ...props }: SkeletonGridProp
     </div>
   );
 }
+
+/**
+ * Skeleton List Item
+ * Reusable placeholder for avatar/icon + multi-line list rows
+ */
+export interface SkeletonListItemProps extends React.HTMLAttributes<HTMLDivElement> {
+  hasAvatar?: boolean;
+}
+
+export function SkeletonListItem({
+  hasAvatar = true,
+  className,
+  ...props
+}: SkeletonListItemProps): JSX.Element {
+  return (
+    <div
+      className={cn('flex items-center gap-4 p-4 rounded-lg border border-border bg-card', className)}
+      {...props}
+    >
+      {hasAvatar && <Skeleton className="h-10 w-10 shrink-0 rounded-full" />}
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-3 w-3/4" />
+      </div>
+      <Skeleton className="h-4 w-16 shrink-0" />
+    </div>
+  );
+}
+
+export function SkeletonList({
+  count = 4,
+  ...props
+}: { count?: number } & SkeletonListItemProps): JSX.Element {
+  return (
+    <div className="space-y-3" role="status" aria-label="Loading items">
+      {Array.from({ length: count }).map((_, i) => (
+        <SkeletonListItem key={i} {...props} />
+      ))}
+    </div>
+  );
+}

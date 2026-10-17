@@ -322,7 +322,12 @@ export default function CreatorProfilePage(): JSX.Element {
         )}
 
         {/* Recent Tips */}
-        {history.transactions.length > 0 && (
+        {history.loading && history.transactions.length === 0 ? (
+          <section>
+            <h2 className="text-xl font-bold mb-6">Recent Tips</h2>
+            <TransactionTableSkeleton />
+          </section>
+        ) : history.transactions.length > 0 ? (
           <section>
             <h2 className="text-xl font-bold mb-6">Recent Tips</h2>
             <div className="border rounded-lg overflow-hidden">
@@ -389,7 +394,7 @@ export default function CreatorProfilePage(): JSX.Element {
               </div>
             )}
           </section>
-        )}
+        ) : null}
 
         {history.transactions.length === 0 && !history.loading && (
           <section className="text-center py-12">

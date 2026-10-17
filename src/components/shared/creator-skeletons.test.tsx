@@ -4,6 +4,8 @@ import {
   EarningsCardSkeleton,
   ProfileHeaderSkeleton,
   TransactionTableSkeleton,
+  TopTippersTableSkeleton,
+  ActivityFeedSkeleton,
 } from './creator-skeletons';
 
 describe('ProfileHeaderSkeleton (#8)', () => {
@@ -74,6 +76,51 @@ describe('TransactionTableSkeleton (#8)', () => {
     expect(cells).toHaveLength(5);
     cells.forEach((cell) => {
       expect(cell.querySelector('.animate-pulse')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('TopTippersTableSkeleton (#163)', () => {
+  it('is accessible as a status region', () => {
+    render(<TopTippersTableSkeleton />);
+    expect(screen.getByRole('status', { name: /loading top tippers/i })).toBeInTheDocument();
+  });
+
+  it('renders column headers matching TopTippersTable layout', () => {
+    render(<TopTippersTableSkeleton />);
+    expect(screen.getByText('Rank')).toBeInTheDocument();
+    expect(screen.getByText('Tipper')).toBeInTheDocument();
+    expect(screen.getByText('Total Tipped')).toBeInTheDocument();
+    expect(screen.getByText('Tips')).toBeInTheDocument();
+    expect(screen.getByText('Last Tip')).toBeInTheDocument();
+    expect(screen.getByText('Latest Message')).toBeInTheDocument();
+  });
+
+  it('renders default number of rows with skeleton blocks in each cell', () => {
+    const { container } = render(<TopTippersTableSkeleton rows={3} />);
+    const rows = container.querySelectorAll('tbody tr');
+    expect(rows).toHaveLength(3);
+    const cells = rows[0].querySelectorAll('td');
+    expect(cells).toHaveLength(6);
+    cells.forEach((cell) => {
+      expect(cell.querySelector('.animate-pulse')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('ActivityFeedSkeleton (#163)', () => {
+  it('is accessible as a status region', () => {
+    render(<ActivityFeedSkeleton />);
+    expect(screen.getByRole('status', { name: /loading activity feed/i })).toBeInTheDocument();
+  });
+
+  it('renders specified number of item placeholders', () => {
+    const { container } = render(<ActivityFeedSkeleton count={4} />);
+    const items = container.querySelectorAll('[role="status"] > div');
+    expect(items).toHaveLength(4);
+    // each item has avatar circle + text placeholders
+    items.forEach((item) => {
+      expect(item.querySelector('.rounded-full')).toBeInTheDocument();
     });
   });
 });

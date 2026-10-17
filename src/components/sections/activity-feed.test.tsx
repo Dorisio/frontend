@@ -56,6 +56,13 @@ describe('ActivityFeed', () => {
     expect(screen.getByText('No recent activity')).toBeInTheDocument();
   });
 
+  it('renders ActivityFeedSkeleton when loading and items are empty', () => {
+    render(<ActivityFeed items={[]} loading={true} />);
+
+    expect(screen.getByRole('status', { name: /loading activity feed/i })).toBeInTheDocument();
+    expect(screen.queryByText('No recent activity')).not.toBeInTheDocument();
+  });
+
   it('filters items by type', () => {
     render(<ActivityFeed items={mockItems} filters={{ type: 'tip' }} />);
 
