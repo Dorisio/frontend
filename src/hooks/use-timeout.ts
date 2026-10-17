@@ -5,8 +5,7 @@
  *
  * A `setTimeout` wrapper that tracks every pending timer and clears them
  * automatically when the component unmounts. Use this instead of a bare
- * `setTimeout` in components/effects that fire state updates later (e.g. "hide
- * this success banner after 4s").
+ * `setTimeout` in components/effects that fire state updates later (e.g. "hide * this success banner after 4s").
  *
  * Why: a bare `setTimeout` whose callback closes over component state keeps
  * that component's closure (and whatever it references) alive until the timer
