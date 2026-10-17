@@ -15,9 +15,6 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-/** Default auto-dismiss delay for info/success toasts (5 seconds). */
-export const DEFAULT_NOTIFICATION_TIMEOUT_MS = 5000;
-
 export type SafeTimeoutId = ReturnType<typeof setTimeout>;
 
 export interface SafeTimeoutApi {
@@ -27,12 +24,6 @@ export interface SafeTimeoutApi {
   cancel: (id: SafeTimeoutId) => void;
   /** Cancel every timer scheduled through this hook. */
   cancelAll: () => void;
-  /**
-   * Schedule an auto-dismiss using the default 5s timeout unless a per-
-   * notification `timeoutMs` override is provided. Pass `null` to keep the
-   * notification visible indefinitely (e.g. error toasts).
-   */
-  scheduleDismiss: (callback: () => void, timeoutMs?: number | null) => SafeTimeoutId | null;
 }
 
 export function useSafeTimeout(): SafeTimeoutApi {
@@ -61,15 +52,7 @@ export function useSafeTimeout(): SafeTimeoutApi {
     return id;
   }, []);
 
-  const scheduleDismiss = useCallback(
-    (callback: () => void, timeoutMs: number | null = DEFAULT_NOTIFICATION_TIMEOUT_MS): SafeTimeoutId | null => {
-      if (timeoutMs === null) return null;
-      return schedule(callback, timeoutMs);
-    },
-    [schedule],
-  );
-
   useEffect(() => cancelAll, [cancelAll]);
 
-  return { schedule, cancel, cancelAll, scheduleDismiss };
+  return { schedule, cancel, cancelAll };
 }
