@@ -18,6 +18,19 @@ describe('TopTippersTable', () => {
     expect(screen.getByText('Carol')).toBeInTheDocument();
   });
 
+  it('keeps column headers sticky above the scrolling body', () => {
+    render(<TopTippersTable data={sampleData} />);
+
+    const headers = screen.getAllByRole('columnheader');
+    expect(headers.length).toBeGreaterThan(0);
+    headers.forEach((th) => {
+      expect(th).toHaveClass('sticky', 'top-0', 'z-10');
+      expect(th).toHaveClass('bg-muted');
+    });
+    // The wrapper must scroll vertically for sticky headers to take effect.
+    expect(screen.getByTestId('top-tippers-table')).toHaveClass('overflow-y-auto', 'overflow-x-auto', 'max-h-96');
+  });
+
   it('sorts tippers by total amount descending', () => {
     render(<TopTippersTable data={sampleData} />);
 

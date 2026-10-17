@@ -24,6 +24,7 @@ import { CreatorVerificationBadge } from '@/components/shared/creator-verificati
 import { CreatorTierBadge } from '@/components/shared/creator-tier-badge';
 import { CreatorBio } from '@/components/sections/creator-bio';
 import { resolveCreatorTier } from '@/lib/creator-tiers';
+import { FollowButton } from '@/components/sections/follow-button';
 import { SubscriptionTiers } from '@/components/sections/subscription-tiers';
 import { SubscriberOnlyContent } from '@/components/sections/subscriber-only-content';
 import { ExclusiveContentFeed } from '@/components/sections/exclusive-content-feed';
@@ -195,8 +196,14 @@ export default function CreatorProfilePage(): JSX.Element {
                 </div>
               </div>
 
+              <FollowButton creatorId={state.creator.id} followerId={user?.id} className="mb-4" />
+
               {/* Tip Button */}
-              <DorisioButton creatorId={state.creator.id} tipTiers={state.creator.tipTiers} />
+              <DorisioButton
+                creatorId={state.creator.id}
+                creatorName={state.creator.displayName}
+                tipTiers={state.creator.tipTiers}
+              />
               <SubscriptionTiers creatorId={state.creator.id} subscriberId={user?.id} />
             </div>
           </div>
@@ -336,15 +343,15 @@ export default function CreatorProfilePage(): JSX.Element {
         {history.transactions.length > 0 && (
           <section>
             <h2 className="text-xl font-bold mb-6">Recent Tips</h2>
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg max-h-96 overflow-auto">
               <table className="w-full">
                 <thead className="bg-muted border-b">
                   <tr>
-                    <th className="text-left px-6 py-3 font-semibold">From</th>
-                    <th className="text-left px-6 py-3 font-semibold">Amount</th>
-                    <th className="text-left px-6 py-3 font-semibold">Message</th>
-                    <th className="text-left px-6 py-3 font-semibold">Date</th>
-                    <th className="text-left px-6 py-3 font-semibold">Status</th>
+                    <th className="text-left px-6 py-3 font-semibold sticky top-0 z-10 bg-muted">From</th>
+                    <th className="text-left px-6 py-3 font-semibold sticky top-0 z-10 bg-muted">Amount</th>
+                    <th className="text-left px-6 py-3 font-semibold sticky top-0 z-10 bg-muted">Message</th>
+                    <th className="text-left px-6 py-3 font-semibold sticky top-0 z-10 bg-muted">Date</th>
+                    <th className="text-left px-6 py-3 font-semibold sticky top-0 z-10 bg-muted">Status</th>
                   </tr>
                 </thead>
                 <tbody>

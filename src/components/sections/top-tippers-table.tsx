@@ -29,7 +29,7 @@ export function TopTippersTable({ data }: TopTippersTableProps): JSX.Element {
 
   return (
     <div
-      className="w-full overflow-x-auto rounded-lg border"
+      className="w-full max-h-96 overflow-x-auto overflow-y-auto rounded-lg border"
       data-testid="top-tippers-table"
     >
       <table className="responsive-table w-full text-sm">
@@ -38,22 +38,22 @@ export function TopTippersTable({ data }: TopTippersTableProps): JSX.Element {
         </caption>
         <thead className="border-b bg-muted/50">
           <tr>
-            <th scope="col" className="px-4 py-3 text-left font-semibold">
+            <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
               Rank
             </th>
-            <th scope="col" className="px-4 py-3 text-left font-semibold">
+            <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
               Tipper
             </th>
-            <th scope="col" className="px-4 py-3 text-left font-semibold">
+            <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
               Total Tipped
             </th>
-            <th scope="col" className="px-4 py-3 text-left font-semibold">
+            <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
               Tips
             </th>
-            <th scope="col" className="px-4 py-3 text-left font-semibold">
+            <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
               Last Tip
             </th>
-            <th scope="col" className="px-4 py-3 text-left font-semibold">
+            <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
               Latest Message
             </th>
           </tr>

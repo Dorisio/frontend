@@ -254,7 +254,7 @@ function CreatorDashboardPageContent(): JSX.Element {
         {transactionsLoading && transactions.length === 0 ? (
           <TransactionTableSkeleton />
         ) : (
-          <div className="border rounded-lg overflow-x-auto animate-fade-in">
+          <div className="border rounded-lg max-h-96 overflow-x-auto overflow-y-auto animate-fade-in">
             <table className="responsive-table w-full text-sm">
               <caption className="sr-only">
                 Transaction history with the amount, date, sender, message, status, and
@@ -262,22 +262,22 @@ function CreatorDashboardPageContent(): JSX.Element {
               </caption>
               <thead className="border-b bg-muted/50">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
                     Date
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
                     Amount
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
                     From
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
                     Message
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
                     Status
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold sticky top-0 z-10 bg-muted">
                     Tx ID
                   </th>
                 </tr>

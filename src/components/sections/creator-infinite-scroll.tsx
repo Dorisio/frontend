@@ -114,6 +114,7 @@ export function CreatorInfiniteScroll({
                   {/* Tip Button */}
                   <DorisioButton
                     creatorId={creator.id}
+                    creatorName={creator.displayName}
                     variant="outline"
                     size="sm"
                     className="w-full"

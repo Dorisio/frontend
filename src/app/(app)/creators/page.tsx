@@ -136,6 +136,7 @@ function CreatorDiscoveryPageContent(): JSX.Element {
                         {/* Tip Button */}
                         <DorisioButton
                           creatorId={creator.id}
+                          creatorName={creator.displayName}
                           variant="outline"
                           size="sm"
                           className="w-full"
@@ -173,7 +174,14 @@ function CreatorDiscoveryPageContent(): JSX.Element {
             {/* No Results */}
             {!isLoading && !error && creators.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">No creators found</p>
+                <p className="text-muted-foreground mb-1" data-testid="no-creators-found">
+                  {filters.search.trim()
+                    ? `No creators found for “${filters.search.trim()}”`
+                    : 'No creators found'}
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Try a different search or adjust your filters.
+                </p>
                 <button onClick={resetFilters} className="text-primary hover:underline">
                   Clear filters
                 </button>

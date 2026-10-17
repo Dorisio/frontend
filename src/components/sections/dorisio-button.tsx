@@ -374,6 +374,13 @@ export default function DorisioButton({
           </ModalHeader>
           {tipReview && (
             <div className="px-6 py-4 space-y-4" aria-label="Tip total breakdown">
+              <p className="font-semibold" data-testid="tip-confirmation-question">
+                Send ${formatTipAmount(tipReview.amount)} tip to {creatorName ?? 'this creator'}?
+              </p>
+              <div className="flex justify-between gap-4 text-sm">
+                <span>Recipient</span>
+                <span>{creatorName ?? 'This creator'}</span>
+              </div>
               <div className="flex justify-between gap-4 text-sm">
                 <span>Tip amount</span>
                 <span>${formatTipAmount(tipReview.amount)} USDC</span>

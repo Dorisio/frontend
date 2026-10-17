@@ -236,6 +236,48 @@ describe('CreatorSearchBar', () => {
       expect(screen.getByText(/No creators found for “nonexistent-person”/i)).toBeInTheDocument();
     });
 
+    it('offers a Clear search action in the empty state that resets the query', () => {
+      vi.useFakeTimers();
+      const onChange = vi.fn();
+
+      render(
+        <CreatorSearchBar
+          filters={{ ...baseFilters, search: 'nonexistent-person' }}
+          onChange={onChange}
+          onReset={vi.fn()}
+          creators={testCreators}
+        />
+      );
+
+      fireEvent.focus(screen.getByLabelText('Search creators'));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+      expect(onChange).toHaveBeenCalledWith('search', '');
+    });
+
+    it('does not show the empty message while the query still has matches', () => {
+      vi.useFakeTimers();
+
+      render(
+        <CreatorSearchBar
+          filters={{ ...baseFilters, search: 'bob' }}
+          onChange={vi.fn()}
+          onReset={vi.fn()}
+          creators={testCreators}
+        />
+      );
+
+      fireEvent.focus(screen.getByLabelText('Search creators'));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+
+      expect(screen.queryByTestId('search-no-results')).not.toBeInTheDocument();
+    });
+
     it('selecting a suggestion calls onChange, onSelectCreator, and closes dropdown', () => {
       vi.useFakeTimers();
 

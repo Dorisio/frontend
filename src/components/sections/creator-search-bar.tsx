@@ -397,8 +397,22 @@ export function CreatorSearchBar({
                       })}
                     </div>
                   ) : (
-                    <div className="py-6 text-center text-sm text-muted-foreground">
-                      No creators found for &ldquo;{debouncedSearch}&rdquo;
+                    <div
+                      className="py-6 text-center text-sm text-muted-foreground"
+                      data-testid="search-no-results"
+                    >
+                      <p>No creators found for &ldquo;{debouncedSearch}&rdquo;</p>
+                      <p className="mt-1 text-xs">Check the spelling or try a different name.</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onChange('search', '');
+                          inputRef.current?.focus();
+                        }}
+                        className="mt-3 text-primary hover:underline"
+                      >
+                        Clear search
+                      </button>
                     </div>
                   )}
                 </div>
