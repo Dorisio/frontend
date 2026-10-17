@@ -5,6 +5,7 @@ import { Megaphone, Pin, Archive, Image as ImageIcon, Video, Link2, Music } from
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatDate } from '@/utils/formatters';
 import {
   useAnnouncementStore,
   type Announcement,
@@ -103,7 +104,7 @@ export function AnnouncementFeed({ creatorId, creatorName }: AnnouncementFeedPro
         </div>
         <p className="text-xs text-muted-foreground">
           {creatorName || announcement.creatorName || 'Creator'} ·{' '}
-          {new Date(announcement.createdAt).toLocaleDateString()}
+          {formatDate(announcement.createdAt)}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">

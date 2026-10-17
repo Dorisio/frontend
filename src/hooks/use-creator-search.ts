@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { useSDKClient } from '@/lib/sdk-client';
+import { useSDKClient } from '@/lib/sdk-provider';
 import type { Creator } from '@/types';
 
 export type CreatorSortOption = 'trending' | 'newest' | 'alphabetical' | 'earnings';

@@ -27,7 +27,7 @@ export const TOOLTIP_CONTENT_STYLE: CSSProperties = {
 };
 
 /** SVG text style used for `<XAxis>` and `<YAxis>` ticks. */
-export const AXIS_TICK_STYLE: CSSProperties & { fontSize: number; fill: string } = {
+export const AXIS_TICK_STYLE: { fontSize: number; fill: string } = {
   fontSize: 12,
   fill: '#888888',
 };

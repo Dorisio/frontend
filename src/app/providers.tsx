@@ -4,6 +4,7 @@ import { ReactNode, useCallback, useEffect, useMemo, type ComponentType } from '
 import { QueryClientProvider } from '@tanstack/react-query';
 import { DorisioClient, type ClientConfig } from 'dorisio-sdk';
 import { DorisioProvider } from 'dorisio-sdk/react';
+import { getSDKClient, updateSDKToken } from '@/lib/sdk-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { NotificationProvider } from '@/components/notification-provider';
 import { getQueryClient } from '@/lib/query-client';
@@ -29,14 +30,9 @@ const CompatibleDorisioProvider = DorisioProvider as unknown as ComponentType<{
 export function Providers({ children }: { children: ReactNode }): JSX.Element {
   const queryClient = getQueryClient();
 
-  // Initialize Dorisio client
+  // Use centralized Dorisio SDK client instance
   const dorisioClient = useMemo(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const client = new DorisioClient({
-      baseUrl: apiUrl,
-    });
-    installRequestTracing(client as unknown as Parameters<typeof installRequestTracing>[0]);
-    return client;
+    return getSDKClient();
   }, []);
 
   // The auth store's `persist` middleware rehydrates from localStorage
@@ -47,13 +43,9 @@ export function Providers({ children }: { children: ReactNode }): JSX.Element {
   // auth-dependent UI until then so users don't see a "logged out" flash.
   const syncToken = useCallback(
     (token: string | null) => {
-      if (token) {
-        dorisioClient.setToken(token);
-      } else {
-        dorisioClient.clearToken();
-      }
+      updateSDKToken(token);
     },
-    [dorisioClient]
+    []
   );
   const { hasHydrated } = useAuthHydration(syncToken);
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useDorisio } from 'dorisio-sdk/react';
 import type { Creator } from '@/types';
+import { formatDate } from '@/utils/formatters';
 import {
   COMMISSION_REQUESTS_CHANGED_EVENT,
   COMMISSION_REQUESTS_STORAGE_KEY,
@@ -273,7 +274,7 @@ export function CreatorCommissionRequests({
                 <p className="font-medium">{request.title}</p>
                 <p className="text-sm text-muted-foreground">
                   @{request.supporterUsername} · {request.currency} {request.price} ·{' '}
-                  {new Date(request.createdAt).toLocaleDateString()}
+                  {formatDate(request.createdAt)}
                 </p>
               </div>
               <span className="text-sm capitalize text-muted-foreground">{request.status}</span>

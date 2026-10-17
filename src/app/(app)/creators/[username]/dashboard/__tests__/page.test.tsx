@@ -50,7 +50,7 @@ vi.mock('@/hooks/use-realtime-notifications', () => ({
   useRealtimeNotifications: vi.fn(() => ({ notifications: [], isConnected: false, error: null })),
 }));
 function balanceResult(
-  overrides: Partial<ReturnType<typeof sdkUseCreatorBalance>> & {
+  overrides: Partial<Omit<ReturnType<typeof sdkUseCreatorBalance>, 'error'>> & {
     error?: string | Error | null;
   } = {}
 ): ReturnType<typeof sdkUseCreatorBalance> {
@@ -72,7 +72,7 @@ function balanceResult(
 }
 
 function transactionHistoryResult(
-  overrides: Partial<ReturnType<typeof sdkUseTransactionHistory>> & {
+  overrides: Partial<Omit<ReturnType<typeof sdkUseTransactionHistory>, 'error'>> & {
     error?: string | Error | null;
   } = {}
 ): ReturnType<typeof sdkUseTransactionHistory> {
@@ -127,7 +127,10 @@ function walletResult(
 
 vi.mock('dorisio-sdk/react', () => ({
   useDorisio: vi.fn(() => ({
-    client: { isTransactionVerified: vi.fn() },
+    client: {
+      isTransactionVerified: vi.fn(),
+      getCreatorProfile: vi.fn().mockResolvedValue({ id: 'creator-1', username: 'testcreator' }),
+    },
   })),
   useCreatorBalance: vi.fn(() => ({
     balance: null,
@@ -165,6 +168,14 @@ vi.mock('dorisio-sdk/react', () => ({
     unlinkWallet: vi.fn(),
     renameWallet: vi.fn(),
     getBalance: vi.fn(),
+    reset: vi.fn(),
+  })),
+  useCreateTip: vi.fn(() => ({
+    createTip: vi.fn(),
+    loading: false,
+    data: null,
+    error: null,
+    step: 'idle',
     reset: vi.fn(),
   })),
 }));
@@ -451,7 +462,7 @@ describe('CreatorDashboardPage data loading (#7)', () => {
       // Only the pending transaction remains; the confirmed one is filtered out.
       expect(screen.queryByText('fan_alice')).not.toBeInTheDocument();
       expect(screen.getByText('$5.00')).toBeInTheDocument();
-      expect(screen.getByText(/Export CSV \(1\)/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Export CSV \(1\)/ })).toBeInTheDocument();
     });
 
     it('shows a no-match message when filters exclude every transaction', async (): Promise<void> => {

@@ -11,6 +11,7 @@ declare module 'dorisio-sdk' {
     network?: string;
     horizonUrl?: string;
     baseUrl?: string;
+    requestIdGenerator?: () => string;
     [key: string]: unknown;
   }
 
@@ -86,6 +87,8 @@ declare module 'dorisio-sdk' {
     markNotificationAsRead(id: string): Promise<unknown>;
     markAllNotificationsAsRead(userIdOrParams?: string | Record<string, unknown>): Promise<unknown>;
     isTransactionVerified(transactionId: string): Promise<boolean>;
+    isSandboxMode(): boolean;
+    getMode(): string;
     [key: string]: unknown;
   }
 }
@@ -112,10 +115,14 @@ declare module 'dorisio-sdk/react' {
     wallets: Wallet[];
     selectedWallet?: Wallet | null;
     loading: boolean;
-    error: Error | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    error: any;
     generateNonce: () => Promise<string>;
     getChallenge: (publicKey: string) => Promise<string>;
-    verifyWallet: (publicKey: string, signature?: string) => Promise<boolean>;
+    verifyWallet: (
+      publicKeyOrPayload: string | { publicKey: string; signature: string; nonce?: string },
+      signature?: string
+    ) => Promise<boolean | { verified: boolean; walletId?: string }>;
     listWallets: () => Promise<Wallet[]>;
     selectWallet: (walletIdOrWallet: string | Wallet) => void;
     unlinkWallet: (walletId: string) => Promise<void>;

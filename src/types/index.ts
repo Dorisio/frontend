@@ -4,7 +4,7 @@
  */
 
 // Re-export SDK types for convenience
-export type { CreateTipRequest, TipRequest } from 'dorisio-sdk';
+export type { CreateTipRequest, TipRequest, Transaction } from 'dorisio-sdk';
 
 export type CreatorVerificationStatus = 'pending' | 'verified' | 'rejected' | 'unverified';
 

@@ -6,18 +6,44 @@
 
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
+import { MoreHorizontal } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCreatorBalance } from '@/hooks/use-creator-balance';
 import { useTransactionHistory } from '@/hooks/use-transaction-history';
 import { useTransactionFilter } from '@/hooks/use-transaction-filter';
+import { useCreateTip } from '@/hooks/use-create-tip';
+import { useNotification } from '@/components/notification-provider';
 import { TransactionFilterBar } from '@/components/sections/transaction-filter-bar';
 import { TransactionVerification } from '@/components/sections/transaction-verification';
 import { useWallet } from '@/hooks/use-wallet';
 import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications';
-import { formatCurrency, formatDate, getStatusColor } from '@/utils/formatters';
+import {
+  formatCurrency,
+  formatDate,
+  formatDateTime,
+  getStatusColor,
+  getUserTimezoneShort,
+} from '@/utils/formatters';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+} from '@/components/ui/modal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import type { Transaction } from '@/hooks/use-transaction-history';
 import {
   EarningsCardSkeleton,
   TransactionTableSkeleton,
@@ -90,6 +116,49 @@ function CreatorDashboardPageContent(): JSX.Element {
     retryAction,
   } = useWallet();
   const { isConnected: liveConnected } = useRealtimeNotifications(username);
+
+  // Quick-action modals state (#198)
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [repeatTip, setRepeatTip] = useState<{ amount: number; recipient: string } | null>(null);
+  const [repeatAmount, setRepeatAmount] = useState<string>('');
+  const [repeatRecipient, setRepeatRecipient] = useState<string>('');
+  const [repeatMessage, setRepeatMessage] = useState<string>('');
+  const [repeatSubmitting, setRepeatSubmitting] = useState(false);
+
+  const { createTip } = useCreateTip();
+  const { success: notifySuccess, error: notifyError } = useNotification();
+
+  const handleOpenRepeatTip = (tx: Transaction): void => {
+    const recipient = tx.senderUsername || username;
+    setRepeatTip({ amount: tx.amount, recipient });
+    setRepeatAmount(String(tx.amount));
+    setRepeatRecipient(recipient);
+    setRepeatMessage(tx.message ? `Repeating tip: ${tx.message}` : '');
+  };
+
+  const handleSendRepeatTip = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    const amt = parseFloat(repeatAmount);
+    if (isNaN(amt) || amt <= 0) {
+      notifyError('Please enter a valid tip amount.');
+      return;
+    }
+    setRepeatSubmitting(true);
+    try {
+      await createTip({
+        creatorId: repeatRecipient,
+        amount: amt,
+        message: repeatMessage || undefined,
+      });
+      notifySuccess(`Successfully sent tip of ${formatCurrency(amt)} to ${repeatRecipient}!`);
+      setRepeatTip(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to send tip';
+      notifyError(msg);
+    } finally {
+      setRepeatSubmitting(false);
+    }
+  };
 
   // Check if user is viewing their own dashboard
   useEffect(() => {
@@ -263,7 +332,7 @@ function CreatorDashboardPageContent(): JSX.Element {
               <thead className="border-b bg-muted/50">
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left font-semibold">
-                    Date
+                    Date ({getUserTimezoneShort()})
                   </th>
                   <th scope="col" className="px-4 py-3 text-left font-semibold">
                     Amount
@@ -280,12 +349,15 @@ function CreatorDashboardPageContent(): JSX.Element {
                   <th scope="col" className="px-4 py-3 text-left font-semibold">
                     Tx ID
                   </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                       {transactions.length === 0
                         ? 'No transactions yet'
                         : 'No transactions match the current filters'}
@@ -347,6 +419,56 @@ function CreatorDashboardPageContent(): JSX.Element {
                         ) : (
                           '-'
                         )}
+                      </td>
+                      <td data-label="Actions" className="px-4 py-3 text-right">
+                        {/* Desktop action buttons */}
+                        <div className="hidden sm:flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedTx(tx)}
+                            aria-label={`View details for transaction ${tx.id}`}
+                          >
+                            View Details
+                          </Button>
+                          {tx.amount > 0 && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleOpenRepeatTip(tx)}
+                              aria-label={`Repeat tip of ${formatCurrency(tx.amount)}`}
+                            >
+                              Repeat Tip
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Mobile dropdown menu */}
+                        <div className="sm:hidden flex justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                aria-label={`Actions for transaction ${tx.id}`}
+                              >
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setSelectedTx(tx)}>
+                                View Details
+                              </DropdownMenuItem>
+                              {tx.amount > 0 && (
+                                <DropdownMenuItem onClick={() => handleOpenRepeatTip(tx)}>
+                                  Repeat Tip
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -507,6 +629,143 @@ function CreatorDashboardPageContent(): JSX.Element {
           Back to Creators
         </Link>
       </div>
+
+      {/* Transaction Details Modal */}
+      <Modal open={!!selectedTx} onOpenChange={(open) => !open && setSelectedTx(null)}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Transaction Details</ModalTitle>
+            <ModalDescription>
+              Detailed information for transaction {selectedTx?.id}
+            </ModalDescription>
+          </ModalHeader>
+          {selectedTx && (
+            <div className="space-y-4 py-2 text-sm">
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-muted-foreground">Amount</span>
+                <span className="font-bold text-base">{formatCurrency(selectedTx.amount)}</span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-muted-foreground">Status</span>
+                <span
+                  className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(
+                    selectedTx.status
+                  )}`}
+                >
+                  {selectedTx.status.charAt(0).toUpperCase() + selectedTx.status.slice(1)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-muted-foreground">From</span>
+                <span>{selectedTx.senderUsername || selectedTx.senderId || 'Anonymous'}</span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="text-muted-foreground">Date ({getUserTimezoneShort()})</span>
+                <span>{formatDateTime(selectedTx.createdAt)}</span>
+              </div>
+              {selectedTx.message && (
+                <div className="border-b pb-2">
+                  <span className="text-muted-foreground block mb-1">Message</span>
+                  <p className="bg-muted p-2 rounded text-xs">{selectedTx.message}</p>
+                </div>
+              )}
+              {selectedTx.transactionHash && (
+                <div className="pt-1">
+                  <span className="text-muted-foreground block mb-1">Stellar Transaction Hash</span>
+                  <a
+                    href={`https://stellar.expert/explorer/testnet/tx/${selectedTx.transactionHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline break-all"
+                  >
+                    {selectedTx.transactionHash}
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+          <ModalFooter>
+            <Button variant="outline" onClick={() => setSelectedTx(null)}>
+              Close
+            </Button>
+            {selectedTx && selectedTx.amount > 0 && (
+              <Button
+                variant="default"
+                onClick={() => {
+                  const tx = selectedTx;
+                  setSelectedTx(null);
+                  handleOpenRepeatTip(tx);
+                }}
+              >
+                Repeat Tip
+              </Button>
+            )}
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Repeat Tip Modal */}
+      <Modal open={!!repeatTip} onOpenChange={(open) => !open && setRepeatTip(null)}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Repeat Tip</ModalTitle>
+            <ModalDescription>
+              Pre-filled tip details from previous transaction
+            </ModalDescription>
+          </ModalHeader>
+          <form onSubmit={handleSendRepeatTip} className="space-y-4 py-2">
+            <div>
+              <label htmlFor="repeat-recipient" className="block text-sm font-medium mb-1">
+                Recipient
+              </label>
+              <Input
+                id="repeat-recipient"
+                value={repeatRecipient}
+                onChange={(e) => setRepeatRecipient(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="repeat-amount" className="block text-sm font-medium mb-1">
+                Amount (USD)
+              </label>
+              <Input
+                id="repeat-amount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={repeatAmount}
+                onChange={(e) => setRepeatAmount(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="repeat-message" className="block text-sm font-medium mb-1">
+                Message (Optional)
+              </label>
+              <Input
+                id="repeat-message"
+                value={repeatMessage}
+                onChange={(e) => setRepeatMessage(e.target.value)}
+                placeholder="Add a nice note..."
+              />
+            </div>
+            <ModalFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRepeatTip(null)}
+                disabled={repeatSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" variant="default" disabled={repeatSubmitting}>
+                {repeatSubmitting ? 'Sending...' : `Send ${formatCurrency(Number(repeatAmount) || 0)}`}
+              </Button>
+            </ModalFooter>
+          </form>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

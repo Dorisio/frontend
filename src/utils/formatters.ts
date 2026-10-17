@@ -27,29 +27,75 @@ export function formatNumber(num: number, decimals = 2): string {
 }
 
 /**
- * Format date to readable string
+ * Get user's local timezone identifier (e.g. 'America/New_York', 'UTC')
  */
-export function formatDate(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+export function getUserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
 }
 
 /**
- * Format date and time
+ * Get short timezone name/abbreviation for the user's locale (e.g. 'EST', 'GMT+1', 'UTC')
  */
-export function formatDateTime(date: string | Date): string {
+export function getUserTimezoneShort(date: Date = new Date()): string {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZoneName: 'short',
+    }).formatToParts(date);
+    const tzPart = parts.find((p) => p.type === 'timeZoneName');
+    return tzPart ? tzPart.value : getUserTimezone();
+  } catch {
+    return 'UTC';
+  }
+}
+
+/**
+ * Format date to readable string in user's local timezone (e.g. "Jan 12, 2025")
+ */
+export function formatDate(
+  date: string | Date,
+  options?: { includeTimezone?: boolean }
+): string {
+  if (!date) return '';
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-US', {
+  if (isNaN(d.getTime())) return '';
+
+  const formatted = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-    hour: '2-digit',
+  }).format(d);
+
+  if (options?.includeTimezone) {
+    return `${formatted} (${getUserTimezoneShort(d)})`;
+  }
+  return formatted;
+}
+
+/**
+ * Format date and time in user's local timezone (e.g. "Jan 12, 2025, 3:45 PM GMT+1")
+ */
+export function formatDateTime(
+  date: string | Date,
+  options?: { includeTimezone?: boolean }
+): string {
+  if (!date) return '';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
+
+  const includeTz = options?.includeTimezone ?? true;
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
     minute: '2-digit',
-  });
+    hour12: true,
+    ...(includeTz ? { timeZoneName: 'short' } : {}),
+  }).format(d);
 }
 
 /**

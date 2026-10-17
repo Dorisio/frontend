@@ -2,7 +2,7 @@
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth-store';
-import { useSDKClient } from '@/lib/sdk-client';
+import { useSDKClient } from '@/lib/sdk-provider';
 import { calculateSupporterAnalytics } from '@/lib/supporter-analytics';
 import type { SupporterAnalytics, SupporterAnalyticsPeriod, SupporterCreator, SupporterTransaction } from '@/types/supporter-analytics';
 

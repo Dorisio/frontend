@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useDorisio } from 'dorisio-sdk/react';
 import type { Creator } from '@/types';
+import { formatDate } from '@/utils/formatters';
 import {
   createCollaborationInvite,
   COLLABORATIONS_CHANGED_EVENT,
@@ -301,7 +302,7 @@ export function CreatorCollaborations({
                     {partner.name} <span className="text-muted-foreground">@{partner.username}</span>
                   </Link>
                   <p className="text-sm text-muted-foreground">
-                    Your configured share: {partner.share}% · {new Date(collaboration.createdAt).toLocaleDateString()}
+                    Your configured share: {partner.share}% · {formatDate(collaboration.createdAt)}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

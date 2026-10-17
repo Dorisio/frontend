@@ -39,29 +39,12 @@ export function truncate(text: string, length = 50): string {
   return text.slice(0, length) + '...';
 }
 
-/**
- * Format date
- */
-export function formatDate(date: string | Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(new Date(date));
-}
-
-/**
- * Format date with time
- */
-export function formatDateTime(date: string | Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(date));
-}
+export {
+  formatDate,
+  formatDateTime,
+  getUserTimezone,
+  getUserTimezoneShort,
+} from '@/utils/formatters';
 
 /**
  * Relative time (e.g., "2 days ago")

@@ -22,6 +22,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'dorisio-sdk/react': path.resolve(__dirname, './src/test/mocks/dorisio-sdk-react.ts'),
+      'dorisio-sdk': path.resolve(__dirname, './src/test/mocks/dorisio-sdk.ts'),
     },
   },
 }) as any;

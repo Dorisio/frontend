@@ -8,7 +8,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { ENDPOINT_TIMEOUTS } from '@/lib/request-timeout';
 import { installRequestTracing } from '@/lib/request-tracing';
 
-let sdkClient: DorisioClient | null = null;
+let instance: DorisioClient | null = null;
 
 /**
  * Get the base URL for the API
@@ -27,37 +27,37 @@ function getBaseUrl(): string {
  * Initialize SDK client with proper configuration
  */
 export function initSDKClient(token?: string): DorisioClient {
-  if (sdkClient) {
+  if (instance) {
     // Update token if provided
-    if (token && sdkClient.getConfig().token !== token) {
-      sdkClient.setToken(token);
-    } else if (!token && sdkClient.getConfig().token) {
-      sdkClient.clearToken();
+    if (token && instance.getConfig().token !== token) {
+      instance.setToken(token);
+    } else if (!token && instance.getConfig().token) {
+      instance.clearToken();
     }
-    return sdkClient;
+    return instance;
   }
 
   const baseUrl = getBaseUrl();
   const authToken = token || useAuthStore.getState().token || undefined;
 
-  sdkClient = new DorisioClient({
+  instance = new DorisioClient({
     baseUrl,
     token: authToken,
     timeout: ENDPOINT_TIMEOUTS.default,
   });
-  installRequestTracing(sdkClient as unknown as Parameters<typeof installRequestTracing>[0]);
+  installRequestTracing(instance as unknown as Parameters<typeof installRequestTracing>[0]);
 
-  return sdkClient;
+  return instance;
 }
 
 /**
  * Get SDK client instance (or create if needed)
  */
 export function getSDKClient(): DorisioClient {
-  if (!sdkClient) {
+  if (!instance) {
     return initSDKClient();
   }
-  return sdkClient;
+  return instance;
 }
 
 /**
@@ -77,7 +77,7 @@ export function updateSDKToken(token: string | null): void {
  * Reset SDK client (useful for cleanup)
  */
 export function resetSDKClient(): void {
-  sdkClient = null;
+  instance = null;
 }
 
 /**
@@ -96,14 +96,30 @@ export function useSDKClient(): DorisioClient {
   const token = useAuthStore((state) => state.token);
 
   // Initialize if needed
-  if (!sdkClient) {
-    sdkClient = initSDKClient(token ?? undefined);
+  if (!instance) {
+    instance = initSDKClient(token ?? undefined);
   }
 
   // Sync token if it changed
-  if (token && sdkClient.getConfig().token !== token) {
+  if (token && instance.getConfig().token !== token) {
     updateSDKToken(token);
   }
 
-  return sdkClient;
+  return instance;
 }
+
+/**
+ * Single centralized SDK client instance proxy.
+ */
+export const sdkClient: DorisioClient = new Proxy({} as DorisioClient, {
+  get(_target, prop, receiver) {
+    const client = getSDKClient();
+    const value = Reflect.get(client, prop, receiver);
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
+  },
+});
+
+export const sdk: DorisioClient = sdkClient;

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Creator } from '@/types';
+import { formatDate } from '@/utils/formatters';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCreateTip } from '@/hooks/use-create-tip';
 import {
@@ -193,7 +194,7 @@ export function SupporterCommissionRequest({
                 <p className="font-medium">{request.title}</p>
                 <p className="text-sm text-muted-foreground">
                   {request.currency} {request.price} ·{' '}
-                  {new Date(request.createdAt).toLocaleDateString()}
+                  {formatDate(request.createdAt)}
                 </p>
               </div>
               <div className="flex items-center gap-3">
